@@ -1,0 +1,1913 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel · M&SM Advocacia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --creme: #F5EFE4;
+  --bege: #E8D9C0;
+  --bege-medio: #D4BC96;
+  --caramelo: #B8914A;
+  --dourado: #C9993A;
+  --dourado-claro: #E8C060;
+  --dourado-escuro: #9A7230;
+  --marrom: #5C3D1A;
+  --marrom-escuro: #3A2008;
+  --texto: #3A2810;
+  --texto-suave: #6B4F2A;
+  --branco: #FDFAF5;
+  --sidebar-w: 240px;
+  --vermelho: #c0392b;
+  --laranja: #e67e22;
+  --amarelo: #f1c40f;
+  --verde: #27ae60;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Lato', sans-serif; background: #f0e8d8; color: var(--texto); display: flex; min-height: 100vh; overflow-x: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w); min-height: 100vh;
+  background: var(--marrom-escuro);
+  position: fixed; left: 0; top: 0; bottom: 0;
+  display: flex; flex-direction: column;
+  z-index: 100;
+  overflow-y: auto;
+}
+.sidebar-logo {
+  padding: 1.6rem 1.4rem 1.2rem;
+  border-bottom: 1px solid rgba(201,153,58,.15);
+}
+.sidebar-logo-v {
+  width: 36px; height: 36px;
+  border: 1.5px solid var(--caramelo);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif; font-size: 1rem; color: var(--caramelo);
+  margin-bottom: .7rem;
+}
+.sidebar-logo-name {
+  font-family: 'Cinzel', serif;
+  font-size: .62rem; letter-spacing: .18em;
+  color: var(--bege); display: block;
+  line-height: 1.5;
+}
+.sidebar-logo-sub {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: .82rem; font-style: italic;
+  color: var(--bege-medio); opacity: .7;
+}
+.sidebar-nav { flex: 1; padding: .8rem 0; }
+.sidebar-section {
+  font-family: 'Cinzel', serif;
+  font-size: .52rem; letter-spacing: .25em;
+  color: rgba(201,153,58,.5); text-transform: uppercase;
+  padding: 1rem 1.4rem .4rem;
+}
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: .7rem 1.4rem;
+  cursor: pointer;
+  font-size: .85rem; color: rgba(232,217,192,.65);
+  transition: all .2s;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+}
+.nav-item:hover { color: var(--bege); background: rgba(201,153,58,.07); }
+.nav-item.active { color: var(--dourado-claro); border-left-color: var(--caramelo); background: rgba(201,153,58,.1); }
+.nav-item .icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+.sidebar-footer {
+  padding: 1rem 1.4rem;
+  border-top: 1px solid rgba(201,153,58,.15);
+}
+.user-info { font-size: .78rem; color: var(--bege-medio); margin-bottom: .7rem; opacity: .7; word-break: break-all; }
+.btn-logout {
+  width: 100%; background: transparent;
+  border: 1px solid rgba(201,153,58,.3);
+  color: var(--bege-medio); cursor: pointer;
+  padding: 8px; font-family: 'Cinzel', serif;
+  font-size: .58rem; letter-spacing: .15em;
+  text-transform: uppercase;
+  transition: all .2s;
+}
+.btn-logout:hover { background: rgba(201,153,58,.1); color: var(--bege); }
+
+/* ── MAIN ── */
+.main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  display: flex; flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  background: var(--creme);
+  border-bottom: 1px solid rgba(201,153,58,.2);
+  padding: 1rem 2rem;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 50;
+}
+.page-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.5rem; font-weight: 400;
+  color: var(--texto);
+}
+.page-title span { color: var(--caramelo); font-style: italic; }
+.topbar-date {
+  font-family: 'Cinzel', serif;
+  font-size: .6rem; letter-spacing: .15em;
+  color: var(--texto-suave); text-transform: uppercase;
+}
+.content { padding: 2rem; flex: 1; }
+
+/* ── MÓDULOS ── */
+.module { display: none; }
+.module.active { display: block; }
+
+/* ── DASHBOARD ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem; margin-bottom: 2rem;
+}
+.stat-card {
+  background: var(--branco);
+  border: 1px solid rgba(201,153,58,.2);
+  padding: 1.4rem 1.2rem;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.stat-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.stat-card.vermelho::before { background: var(--vermelho); }
+.stat-card.laranja::before { background: var(--laranja); }
+.stat-card.amarelo::before { background: var(--amarelo); }
+.stat-card.verde::before { background: var(--verde); }
+.stat-card.azul::before { background: var(--caramelo); }
+.stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 2.4rem; font-weight: 500; line-height: 1;
+  margin-bottom: .3rem;
+}
+.stat-card.vermelho .stat-num { color: var(--vermelho); }
+.stat-card.laranja .stat-num { color: var(--laranja); }
+.stat-card.amarelo .stat-num { color: #b7860b; }
+.stat-card.verde .stat-num { color: var(--verde); }
+.stat-card.azul .stat-num { color: var(--caramelo); }
+.stat-label {
+  font-family: 'Cinzel', serif;
+  font-size: .58rem; letter-spacing: .12em;
+  color: var(--texto-suave); text-transform: uppercase;
+}
+
+/* ── TABELA ── */
+.card {
+  background: var(--branco);
+  border: 1px solid rgba(201,153,58,.2);
+  margin-bottom: 1.5rem;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1rem 1.4rem;
+  border-bottom: 1px solid rgba(201,153,58,.15);
+}
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.15rem; font-weight: 500;
+  color: var(--texto);
+}
+.card-title small {
+  font-size: .75rem; color: var(--texto-suave);
+  font-family: 'Lato', sans-serif; font-weight: 300;
+  margin-left: .5rem;
+}
+.btn {
+  font-family: 'Cinzel', serif;
+  font-size: .6rem; letter-spacing: .12em;
+  text-transform: uppercase;
+  padding: 8px 16px; cursor: pointer;
+  border: none; transition: all .2s;
+}
+.btn-primary { background: var(--caramelo); color: var(--branco); }
+.btn-primary:hover { background: var(--dourado-escuro); }
+.btn-secondary { background: transparent; border: 1px solid var(--caramelo); color: var(--caramelo); }
+.btn-secondary:hover { background: rgba(201,153,58,.08); }
+.btn-sm { padding: 5px 10px; font-size: .55rem; }
+.btn-danger { background: rgba(192,57,43,.1); border: 1px solid rgba(192,57,43,.3); color: var(--vermelho); }
+.btn-danger:hover { background: rgba(192,57,43,.2); }
+
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+thead th {
+  background: rgba(201,153,58,.07);
+  padding: .6rem .9rem;
+  font-family: 'Cinzel', serif;
+  font-size: .55rem; letter-spacing: .12em;
+  color: var(--caramelo); text-transform: uppercase;
+  text-align: left; white-space: nowrap;
+  border-bottom: 1px solid rgba(201,153,58,.2);
+}
+tbody td {
+  padding: .65rem .9rem;
+  border-bottom: 1px solid rgba(201,153,58,.08);
+  color: var(--texto); font-weight: 300;
+  vertical-align: middle;
+}
+tbody tr:hover { background: rgba(201,153,58,.04); }
+tbody tr:last-child td { border-bottom: none; }
+.td-actions { display: flex; gap: 6px; }
+.empty-state {
+  text-align: center; padding: 3rem;
+  color: var(--texto-suave); font-style: italic;
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1rem;
+}
+
+/* ── SEMÁFORO ── */
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: .7rem; font-weight: 400;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+.badge-vermelho { background: rgba(192,57,43,.12); color: var(--vermelho); border: 1px solid rgba(192,57,43,.25); }
+.badge-laranja  { background: rgba(230,126,34,.12); color: #c0712b; border: 1px solid rgba(230,126,34,.25); }
+.badge-amarelo  { background: rgba(241,196,15,.12); color: #8a6d00; border: 1px solid rgba(241,196,15,.3); }
+.badge-verde    { background: rgba(39,174,96,.12); color: #1e7e4a; border: 1px solid rgba(39,174,96,.25); }
+.badge-cinza    { background: rgba(0,0,0,.06); color: #666; border: 1px solid rgba(0,0,0,.1); }
+.badge-azul     { background: rgba(184,145,74,.12); color: var(--caramelo); border: 1px solid rgba(184,145,74,.25); }
+
+/* ── MODAL / FORM ── */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(40,20,5,.55);
+  display: flex; align-items: center; justify-content: center;
+  padding: 1rem;
+  display: none;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--creme);
+  width: 100%; max-width: 680px;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+.modal::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(to right, var(--caramelo), var(--dourado), var(--caramelo));
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 1.3rem 1.6rem;
+  border-bottom: 1px solid rgba(201,153,58,.2);
+}
+.modal-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 1.2rem; font-weight: 500; color: var(--texto);
+}
+.modal-close {
+  background: none; border: none; cursor: pointer;
+  font-size: 1.3rem; color: var(--texto-suave);
+  line-height: 1; padding: 4px;
+}
+.modal-close:hover { color: var(--caramelo); }
+.modal-body { padding: 1.6rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+.form-row.three { grid-template-columns: 1fr 1fr 1fr; }
+.form-row.full { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: .4rem; }
+.form-group label {
+  font-family: 'Cinzel', serif;
+  font-size: .58rem; letter-spacing: .15em;
+  color: var(--caramelo); text-transform: uppercase;
+}
+.form-group input, .form-group select, .form-group textarea {
+  border: 1px solid rgba(184,145,74,.35);
+  background: var(--branco);
+  padding: 9px 12px;
+  font-family: 'Lato', sans-serif;
+  font-size: .9rem; color: var(--texto);
+  outline: none; transition: border-color .2s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--caramelo);
+}
+.form-group textarea { resize: vertical; min-height: 70px; }
+.modal-footer {
+  display: flex; gap: .8rem; justify-content: flex-end;
+  padding: 1rem 1.6rem;
+  border-top: 1px solid rgba(201,153,58,.15);
+}
+
+/* ── LOADING ── */
+.loading { text-align: center; padding: 2rem; color: var(--texto-suave); font-style: italic; }
+
+/* ── SEARCH BAR ── */
+.search-bar {
+  display: flex; gap: .8rem; align-items: center;
+  margin-bottom: 1rem;
+}
+.search-bar input {
+  flex: 1;
+  border: 1px solid rgba(184,145,74,.3);
+  background: var(--branco);
+  padding: 8px 12px;
+  font-family: 'Lato', sans-serif; font-size: .85rem;
+  outline: none; color: var(--texto);
+}
+.search-bar input:focus { border-color: var(--caramelo); }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 500;
+  background: var(--marrom);
+  color: var(--bege);
+  padding: 12px 20px;
+  font-size: .85rem;
+  border-left: 3px solid var(--caramelo);
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+  display: none;
+  max-width: 320px;
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .sidebar { width: 200px; }
+  .main { margin-left: 200px; }
+  .form-row { grid-template-columns: 1fr; }
+  .form-row.three { grid-template-columns: 1fr; }
+}
+@media (max-width: 600px) {
+  .sidebar { transform: translateX(-100%); transition: transform .3s; }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-v">V</div>
+    <span class="sidebar-logo-name">M&SM Advocacia</span>
+    <span class="sidebar-logo-sub">Gestão de Processos</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="sidebar-section">Visão Geral</div>
+    <a class="nav-item active" onclick="showModule('dashboard')">
+      <span class="icon">📊</span> Dashboard
+    </a>
+
+    <div class="sidebar-section">INSS</div>
+    <a class="nav-item" onclick="showModule('proc-adm')">
+      <span class="icon">📋</span> Proc. Administrativos
+    </a>
+    <a class="nav-item" onclick="showModule('proc-jud')">
+      <span class="icon">⚖️</span> Proc. Judiciais
+    </a>
+    <a class="nav-item" onclick="showModule('sal-mat')">
+      <span class="icon">👶</span> Salário-Maternidade
+    </a>
+
+    <div class="sidebar-section">Auxílio-Moradia</div>
+    <a class="nav-item" onclick="showModule('aux-mor')">
+      <span class="icon">🏥</span> Médicos Residentes
+    </a>
+    <a class="nav-item" onclick="showModule('prazos-aux')">
+      <span class="icon">📅</span> Prazos Judiciais
+    </a>
+
+    <div class="sidebar-section">Financeiro</div>
+    <a class="nav-item" onclick="showModule('cobrancas')">
+      <span class="icon">💰</span> Cobranças / Honorários
+    </a>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="user-info" id="user-email">—</div>
+    <button class="btn-logout" onclick="logout()">Sair</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Dashboard <span>· Prazos Próximos</span></div>
+    <div class="topbar-date" id="topbar-date"></div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- DASHBOARD -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="module active" id="mod-dashboard">
+      <div class="stats-grid" id="dash-stats">
+        <div class="stat-card vermelho">
+          <div class="stat-num" id="dash-vencidos">—</div>
+          <div class="stat-label">🔴 Vencidos</div>
+        </div>
+        <div class="stat-card laranja">
+          <div class="stat-num" id="dash-urgentes">—</div>
+          <div class="stat-label">🟠 Urgentes ≤ 3 dias</div>
+        </div>
+        <div class="stat-card amarelo">
+          <div class="stat-num" id="dash-atencao">—</div>
+          <div class="stat-label">🟡 Atenção ≤ 7 dias</div>
+        </div>
+        <div class="stat-card verde">
+          <div class="stat-num" id="dash-ok">—</div>
+          <div class="stat-label">🟢 No Prazo</div>
+        </div>
+        <div class="stat-card azul">
+          <div class="stat-num" id="dash-total">—</div>
+          <div class="stat-label">📂 Total de Processos</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Prazos Próximos <small>próximos 30 dias — todos os módulos</small></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Semáforo</th>
+                <th>Cliente / Médico</th>
+                <th>Módulo</th>
+                <th>Prazo</th>
+                <th>Dias</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dash-table-body">
+              <tr><td colspan="6" class="loading">Carregando prazos…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PROC. ADMINISTRATIVOS -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="module" id="mod-proc-adm">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Processos Administrativos INSS</div>
+          <button class="btn btn-primary" onclick="openModal('adm')">+ Novo Processo</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar">
+            <input type="text" placeholder="Buscar por nome, CPF ou nº processo…" oninput="filterTable('adm-body', this.value)">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th>
+                <th>Tipo Benefício</th><th>Fase Atual</th>
+                <th>Próximo Prazo</th><th>Dias</th><th>Status</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="adm-body">
+              <tr><td colspan="10" class="loading">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PROC. JUDICIAIS INSS -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="module" id="mod-proc-jud">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Processos Judiciais INSS</div>
+          <button class="btn btn-primary" onclick="openModal('jud')">+ Novo Processo</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar">
+            <input type="text" placeholder="Buscar por nome, CPF ou nº processo…" oninput="filterTable('jud-body', this.value)">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th>
+                <th>Tipo Benefício</th><th>Vara / Tribunal</th>
+                <th>Fase Atual</th><th>Próxima Data</th><th>Dias</th><th>Status</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="jud-body">
+              <tr><td colspan="11" class="loading">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SALÁRIO-MATERNIDADE -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="module" id="mod-sal-mat">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Salário-Maternidade</div>
+          <button class="btn btn-primary" onclick="openModal('sal')">+ Nova Cliente</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar">
+            <input type="text" placeholder="Buscar por nome, CPF ou nº processo…" oninput="filterTable('sal-body', this.value)">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th>
+                <th>DPP</th><th>Tipo</th><th>Valor Benefício</th>
+                <th>Limite Pgto</th><th>Dias</th><th>Status Guia</th>
+                <th>Honorário Total</th><th>Status Hon.</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="sal-body">
+              <tr><td colspan="13" class="loading">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- AUXÍLIO-MORADIA -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="module" id="mod-aux-mor">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Médicos Residentes — Auxílio-Moradia</div>
+          <button class="btn btn-primary" onclick="openModal('aux')">+ Novo Médico</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar">
+            <input type="text" placeholder="Buscar por nome, CRM, CPF ou hospital…" oninput="filterTable('aux-body', this.value)">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>⚡</th><th>Nome Médico</th><th>CRM</th><th>CPF</th>
+                <th>Hospital</th><th>Tipo Ação</th><th>Fase</th>
+                <th>Próximo Prazo</th><th>Dias</th><th>Status</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="aux-body">
+              <tr><td colspan="11" class="loading">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- PRAZOS JUDICIAIS AUXÍLIO -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="module" id="mod-prazos-aux">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Prazos Judiciais — Auxílio-Moradia</div>
+          <button class="btn btn-primary" onclick="openModal('praz')">+ Novo Prazo</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar">
+            <input type="text" placeholder="Buscar por nome, processo…" oninput="filterTable('praz-body', this.value)">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>⚡</th><th>Nº Processo</th><th>Cliente / Médico</th>
+                <th>Tipo Ação</th><th>Vara / Tribunal</th><th>Fase</th>
+                <th>Próximo Prazo</th><th>Peça Sugerida</th><th>Prioridade</th>
+                <th>Status</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="praz-body">
+              <tr><td colspan="11" class="loading">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- COBRANÇAS / HONORÁRIOS -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <div class="module" id="mod-cobrancas">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Cobranças / Honorários</div>
+          <button class="btn btn-primary" onclick="openModal('cob')">+ Nova Cobrança</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar">
+            <input type="text" placeholder="Buscar por nome, CPF ou nº processo…" oninput="filterTable('cob-body', this.value)">
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th>
+                <th>Tipo Benefício</th><th>Honorários Totais</th>
+                <th>Parcela</th><th>Valor Parcela</th>
+                <th>Data Cobrança</th><th>Data Limite</th>
+                <th>Valor Recebido</th><th>Saldo</th><th>Status</th><th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="cob-body">
+              <tr><td colspan="14" class="loading">Carregando…</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</main>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- ═══════════════════════════════════════════════════════════ -->
+<!-- MODAIS -->
+<!-- ═══════════════════════════════════════════════════════════ -->
+
+<!-- Modal Proc. Administrativo -->
+<div class="modal-overlay" id="modal-adm">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-adm-title">Novo Processo Administrativo</div>
+      <button class="modal-close" onclick="closeModal('adm')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-adm">
+        <input type="hidden" id="adm-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Processo Administrativo</label>
+            <input type="text" id="adm-numero" placeholder="NB-000.000.000-0">
+          </div>
+          <div class="form-group">
+            <label>Nº Processo Judicial Vinculado</label>
+            <input type="text" id="adm-proc-jud">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome do Cliente *</label>
+            <input type="text" id="adm-nome" required>
+          </div>
+          <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="adm-cpf" placeholder="000.000.000-00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Benefício</label>
+            <select id="adm-tipo">
+              <option value="">— Selecione —</option>
+              <option>Auxílio por Incapacidade Temporária</option>
+              <option>Aposentadoria por Invalidez</option>
+              <option>Aposentadoria por Tempo de Contribuição</option>
+              <option>Aposentadoria por Idade</option>
+              <option>BPC/LOAS</option>
+              <option>Pensão por Morte</option>
+              <option>Salário-Maternidade</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Data de Protocolo</label>
+            <input type="date" id="adm-protocolo">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fase Atual</label>
+            <input type="text" id="adm-fase" placeholder="Ex: Aguardando Recurso">
+          </div>
+          <div class="form-group">
+            <label>Próximo Prazo</label>
+            <input type="date" id="adm-prazo">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Prazo</label>
+            <input type="text" id="adm-tipo-prazo" placeholder="Ex: Prazo de Recurso (30 dias)">
+          </div>
+          <div class="form-group">
+            <label>Prazo Boleto Pagamento</label>
+            <input type="date" id="adm-boleto">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Status</label>
+            <select id="adm-status">
+              <option>Em andamento</option>
+              <option>🔴 Recurso Urgente</option>
+              <option>🟡 Atenção</option>
+              <option>🟢 Deferido</option>
+              <option>Indeferido</option>
+              <option>Arquivado</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Docs Recebidos</label>
+            <input type="number" id="adm-docs-rec" min="0" value="0">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea id="adm-obs"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('adm')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('adm')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Proc. Judicial INSS -->
+<div class="modal-overlay" id="modal-jud">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-jud-title">Novo Processo Judicial INSS</div>
+      <button class="modal-close" onclick="closeModal('jud')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-jud">
+        <input type="hidden" id="jud-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Processo Judicial</label>
+            <input type="text" id="jud-numero">
+          </div>
+          <div class="form-group">
+            <label>Nº Proc. Adm. Vinculado</label>
+            <input type="text" id="jud-proc-adm">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome do Cliente *</label>
+            <input type="text" id="jud-nome" required>
+          </div>
+          <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="jud-cpf" placeholder="000.000.000-00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Benefício</label>
+            <select id="jud-tipo">
+              <option value="">— Selecione —</option>
+              <option>Auxílio por Incapacidade Temporária</option>
+              <option>Aposentadoria por Invalidez</option>
+              <option>Aposentadoria por Tempo de Contribuição</option>
+              <option>Aposentadoria por Idade</option>
+              <option>BPC/LOAS</option>
+              <option>Pensão por Morte</option>
+              <option>Salário-Maternidade</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Vara / Tribunal</label>
+            <input type="text" id="jud-vara">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Juiz(a)</label>
+            <input type="text" id="jud-juiz">
+          </div>
+          <div class="form-group">
+            <label>Fase Atual</label>
+            <input type="text" id="jud-fase">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Próxima Audiência / Prazo</label>
+            <input type="date" id="jud-data-prazo">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Prazo</label>
+            <input type="text" id="jud-tipo-prazo">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prazo Boleto</label>
+            <input type="date" id="jud-boleto">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="jud-status">
+              <option>Em andamento</option>
+              <option>Aguardando audiência</option>
+              <option>Aguardando sentença</option>
+              <option>🟢 Procedente</option>
+              <option>Improcedente</option>
+              <option>Arquivado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea id="jud-obs"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('jud')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('jud')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Salário-Maternidade -->
+<div class="modal-overlay" id="modal-sal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-sal-title">Nova — Salário-Maternidade</div>
+      <button class="modal-close" onclick="closeModal('sal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-sal">
+        <input type="hidden" id="sal-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Processo</label>
+            <input type="text" id="sal-numero">
+          </div>
+          <div class="form-group">
+            <label>Nome da Cliente *</label>
+            <input type="text" id="sal-nome" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="sal-cpf" placeholder="000.000.000-00">
+          </div>
+          <div class="form-group">
+            <label>Previsão do Parto (DPP)</label>
+            <input type="date" id="sal-dpp">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Salário-Maternidade</label>
+            <select id="sal-tipo">
+              <option value="">— Selecione —</option>
+              <option>Salário-Maternidade (Urbano)</option>
+              <option>Salário-Maternidade (Rural)</option>
+              <option>Salário-Maternidade (MEI)</option>
+              <option>Salário-Maternidade (Desempregada)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Valor Mensal Benefício (R$)</label>
+            <input type="number" id="sal-valor" step="0.01" min="0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Guia</label>
+            <input type="text" id="sal-guia">
+          </div>
+          <div class="form-group">
+            <label>Competência Guia INSS</label>
+            <input type="text" id="sal-competencia" placeholder="MM/AAAA">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Limite Pagamento</label>
+            <input type="date" id="sal-data-limite">
+          </div>
+          <div class="form-group">
+            <label>Status Guia</label>
+            <select id="sal-status-guia">
+              <option>Pendente</option>
+              <option>Pago</option>
+              <option>Atrasado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Pgto Guia INSS</label>
+            <input type="date" id="sal-data-pgto">
+          </div>
+          <div class="form-group">
+            <label>Honorário Total (R$)</label>
+            <input type="number" id="sal-honor-total" step="0.01" min="0">
+          </div>
+        </div>
+        <div class="form-row three">
+          <div class="form-group">
+            <label>Nº Parcela</label>
+            <input type="number" id="sal-parcela-num" min="1">
+          </div>
+          <div class="form-group">
+            <label>Valor Parcela (R$)</label>
+            <input type="number" id="sal-parcela-valor" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Status Honorário</label>
+            <select id="sal-status-honor">
+              <option>Pendente</option>
+              <option>Pago</option>
+              <option>Atrasado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Cobrança</label>
+            <input type="date" id="sal-data-cob">
+          </div>
+          <div class="form-group">
+            <label>Data Recebimento</label>
+            <input type="date" id="sal-data-rec">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea id="sal-obs"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('sal')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('sal')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Auxílio-Moradia -->
+<div class="modal-overlay" id="modal-aux">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-aux-title">Novo Médico — Auxílio-Moradia</div>
+      <button class="modal-close" onclick="closeModal('aux')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-aux">
+        <input type="hidden" id="aux-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome do Médico *</label>
+            <input type="text" id="aux-nome" required>
+          </div>
+          <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="aux-cpf" placeholder="000.000.000-00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>CRM</label>
+            <input type="text" id="aux-crm">
+          </div>
+          <div class="form-group">
+            <label>RQE</label>
+            <input type="text" id="aux-rqe">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Telefone</label>
+            <input type="text" id="aux-telefone" placeholder="(85) 9 0000-0000">
+          </div>
+          <div class="form-group">
+            <label>E-mail</label>
+            <input type="email" id="aux-email">
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Hospital</label>
+            <input type="text" id="aux-hospital">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Processo</label>
+            <input type="text" id="aux-processo">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Ação</label>
+            <select id="aux-tipo-acao">
+              <option value="">— Selecione —</option>
+              <option>Ação de Cobrança</option>
+              <option>Ação de Indenização</option>
+              <option>Mandado de Segurança</option>
+              <option>Procedimento Comum</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fase do Processo</label>
+            <input type="text" id="aux-fase" placeholder="Ex: Inicial, Contestação…">
+          </div>
+          <div class="form-group">
+            <label>Próximo Prazo</label>
+            <input type="date" id="aux-prazo">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Prazo</label>
+            <input type="text" id="aux-tipo-prazo">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="aux-status">
+              <option>Em andamento</option>
+              <option>Aguardando documentos</option>
+              <option>🟢 Encerrado com êxito</option>
+              <option>Arquivado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea id="aux-obs"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('aux')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('aux')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Prazos Judiciais Auxílio -->
+<div class="modal-overlay" id="modal-praz">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-praz-title">Novo Prazo Judicial — Auxílio-Moradia</div>
+      <button class="modal-close" onclick="closeModal('praz')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-praz">
+        <input type="hidden" id="praz-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Processo</label>
+            <input type="text" id="praz-numero">
+          </div>
+          <div class="form-group">
+            <label>Cliente / Médico *</label>
+            <input type="text" id="praz-cliente" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="praz-cpf">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Ação</label>
+            <input type="text" id="praz-tipo-acao">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Vara / Tribunal</label>
+            <input type="text" id="praz-vara">
+          </div>
+          <div class="form-group">
+            <label>Juiz(a)</label>
+            <input type="text" id="praz-juiz">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Fase Atual</label>
+            <input type="text" id="praz-fase">
+          </div>
+          <div class="form-group">
+            <label>Próximo Prazo</label>
+            <input type="date" id="praz-prazo">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Prazo</label>
+            <input type="text" id="praz-tipo-prazo">
+          </div>
+          <div class="form-group">
+            <label>Peça Processual Sugerida</label>
+            <input type="text" id="praz-peca" placeholder="Ex: Petição Inicial">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Prioridade</label>
+            <select id="praz-prioridade">
+              <option value="">— Selecione —</option>
+              <option>Alta</option>
+              <option>Média</option>
+              <option>Baixa</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="praz-status">
+              <option>Em andamento</option>
+              <option>Aguardando resposta</option>
+              <option>🟢 Concluído</option>
+              <option>Arquivado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea id="praz-obs"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('praz')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('praz')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Cobranças -->
+<div class="modal-overlay" id="modal-cob">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cob-title">Nova Cobrança / Honorário</div>
+      <button class="modal-close" onclick="closeModal('cob')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-cob">
+        <input type="hidden" id="cob-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nº Processo</label>
+            <input type="text" id="cob-numero">
+          </div>
+          <div class="form-group">
+            <label>Nome do Cliente *</label>
+            <input type="text" id="cob-nome" required>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>CPF</label>
+            <input type="text" id="cob-cpf">
+          </div>
+          <div class="form-group">
+            <label>Tipo de Benefício</label>
+            <select id="cob-tipo">
+              <option value="">— Selecione —</option>
+              <option>Salário-Maternidade</option>
+              <option>Auxílio Incapacidade Temporária</option>
+              <option>BPC/LOAS</option>
+              <option>Aposentadoria</option>
+              <option>Pensão por Morte</option>
+              <option>Auxílio-Moradia</option>
+              <option>Outro</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor Mensal Benefício (R$)</label>
+            <input type="number" id="cob-valor-mensal" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Qtd. Parcelas Honorários</label>
+            <input type="number" id="cob-qtd-parc" min="1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Honorários Totais (R$)</label>
+            <input type="number" id="cob-honor-total" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Nº Parcela</label>
+            <input type="number" id="cob-parcela-num" min="1">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor da Parcela (R$)</label>
+            <input type="number" id="cob-parcela-valor" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Data de Cobrança</label>
+            <input type="date" id="cob-data-cob">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Data Limite Pagamento</label>
+            <input type="date" id="cob-data-limite">
+          </div>
+          <div class="form-group">
+            <label>Data de Recebimento</label>
+            <input type="date" id="cob-data-rec">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Valor Recebido (R$)</label>
+            <input type="number" id="cob-valor-rec" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="cob-status">
+              <option>Pendente</option>
+              <option>Pago parcialmente</option>
+              <option>🟢 Pago</option>
+              <option>Atrasado</option>
+              <option>⏳ Aguardando Recurso</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Observações</label>
+            <textarea id="cob-obs"></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('cob')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('cob')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── CONFIGURAÇÃO SUPABASE ──────────────────────────────────
+// Substitua com suas credenciais do Supabase Dashboard → Settings → API
+const SUPABASE_URL  = 'https://vabvayctriflbanhcfuy.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYnZheWN0cmlmbGJhbmhjZnV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjQzODcsImV4cCI6MjA5NTMwMDM4N30.l7j77sVAP2ejulSrT-dgoKOTORyC67LG0fy0IumstM0';
+// ──────────────────────────────────────────────────────────
+
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── AUTH GUARD ─────────────────────────────────────────────
+let currentUser = null;
+(async () => {
+  const { data } = await sb.auth.getSession();
+  if (!data.session) {
+    window.location.href = '../index.html';
+    return;
+  }
+  currentUser = data.session.user;
+  document.getElementById('user-email').textContent = currentUser.email;
+  setDate();
+  loadModule('dashboard');
+})();
+
+async function logout() {
+  await sb.auth.signOut();
+  window.location.href = '../index.html';
+}
+
+// ── UTILITÁRIOS ────────────────────────────────────────────
+function setDate() {
+  const now = new Date();
+  document.getElementById('topbar-date').textContent =
+    now.toLocaleDateString('pt-BR', { weekday:'long', day:'2-digit', month:'long', year:'numeric' });
+}
+
+function diffDias(dateStr) {
+  if (!dateStr) return null;
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+  const prazo = new Date(dateStr + 'T00:00:00');
+  return Math.ceil((prazo - hoje) / 86400000);
+}
+
+function semaforo(dias) {
+  if (dias === null) return { badge: 'cinza', label: '⚫ —' };
+  if (dias < 0)  return { badge: 'vermelho', label: '🔴 VENCIDO' };
+  if (dias <= 3) return { badge: 'laranja',  label: '🟠 URGENTE' };
+  if (dias <= 7) return { badge: 'amarelo',  label: '🟡 ATENÇÃO' };
+  return { badge: 'verde', label: '🟢 OK' };
+}
+
+function badgeHtml(dias) {
+  const s = semaforo(dias);
+  return `<span class="badge badge-${s.badge}">${s.label}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR');
+}
+
+function fmtBRL(v) {
+  if (v == null || v === '') return '—';
+  return Number(v).toLocaleString('pt-BR', { style:'currency', currency:'BRL' });
+}
+
+function statusBadge(s) {
+  if (!s) return '<span class="badge badge-cinza">—</span>';
+  const low = s.toLowerCase();
+  let cls = 'cinza';
+  if (low.includes('vencido') || low.includes('urgente') || low.includes('atrasado')) cls = 'vermelho';
+  else if (low.includes('atenção') || low.includes('pendente')) cls = 'amarelo';
+  else if (low.includes('🟢') || low.includes('pago') || low.includes('deferido') || low.includes('êxito')) cls = 'verde';
+  else if (low.includes('andamento') || low.includes('aguardando')) cls = 'azul';
+  return `<span class="badge badge-${cls}">${s}</span>`;
+}
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function toast(msg, err = false) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.style.borderLeftColor = err ? '#c0392b' : 'var(--caramelo)';
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 3500);
+}
+
+function filterTable(tbodyId, query) {
+  const tbody = document.getElementById(tbodyId);
+  const rows = tbody.querySelectorAll('tr[data-search]');
+  const q = query.toLowerCase();
+  rows.forEach(r => {
+    r.style.display = r.dataset.search.toLowerCase().includes(q) ? '' : 'none';
+  });
+}
+
+// ── NAVEGAÇÃO ──────────────────────────────────────────────
+const titles = {
+  dashboard:  'Dashboard · Prazos Próximos',
+  'proc-adm': 'Processos Administrativos · INSS',
+  'proc-jud': 'Processos Judiciais · INSS',
+  'sal-mat':  'Salário-Maternidade',
+  'aux-mor':  'Médicos Residentes · Auxílio-Moradia',
+  'prazos-aux':'Prazos Judiciais · Auxílio-Moradia',
+  cobrancas:  'Cobranças / Honorários',
+};
+
+function showModule(mod) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('mod-' + mod).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    if (n.getAttribute('onclick')?.includes(`'${mod}'`)) n.classList.add('active');
+  });
+  const t = titles[mod] || mod;
+  const parts = t.split('·');
+  document.getElementById('page-title').innerHTML =
+    parts.length > 1
+      ? escHtml(parts[0]) + '·<span>' + escHtml(parts[1]) + '</span>'
+      : escHtml(t);
+  loadModule(mod);
+}
+
+const loaded = {};
+function loadModule(mod) {
+  if (loaded[mod]) return;
+  loaded[mod] = true;
+  switch(mod) {
+    case 'dashboard':  loadDashboard(); break;
+    case 'proc-adm':   loadAdm(); break;
+    case 'proc-jud':   loadJud(); break;
+    case 'sal-mat':    loadSal(); break;
+    case 'aux-mor':    loadAux(); break;
+    case 'prazos-aux': loadPraz(); break;
+    case 'cobrancas':  loadCob(); break;
+  }
+}
+
+// ── DASHBOARD ──────────────────────────────────────────────
+async function loadDashboard() {
+  const [adm, jud, aux, sal, praz] = await Promise.all([
+    sb.from('processos_administrativos').select('nome_cliente,proximo_prazo,status'),
+    sb.from('processos_judiciais_inss').select('nome_cliente,data_proxima_audiencia,status'),
+    sb.from('auxilio_moradia').select('nome_medico,proximo_prazo,status'),
+    sb.from('salario_maternidade').select('nome_cliente,data_limite_pagamento,status_guia'),
+    sb.from('prazos_judiciais_auxilio').select('cliente_medico,proximo_prazo,status'),
+  ]);
+
+  const allPrazos = [
+    ...(adm.data||[]).map(r=>({ nome: r.nome_cliente, prazo: r.proximo_prazo, modulo:'Adm. INSS', status: r.status })),
+    ...(jud.data||[]).map(r=>({ nome: r.nome_cliente, prazo: r.data_proxima_audiencia, modulo:'Jud. INSS', status: r.status })),
+    ...(aux.data||[]).map(r=>({ nome: r.nome_medico, prazo: r.proximo_prazo, modulo:'Aux. Moradia', status: r.status })),
+    ...(sal.data||[]).map(r=>({ nome: r.nome_cliente, prazo: r.data_limite_pagamento, modulo:'Sal. Mat.', status: r.status_guia })),
+    ...(praz.data||[]).map(r=>({ nome: r.cliente_medico, prazo: r.proximo_prazo, modulo:'Prazos Aux.', status: r.status })),
+  ].map(r => ({ ...r, dias: diffDias(r.prazo) }))
+   .filter(r => r.prazo)
+   .sort((a,b) => (a.dias??9999)-(b.dias??9999));
+
+  let venc=0, urg=0, ate=0, ok=0;
+  allPrazos.forEach(r => {
+    if (r.dias < 0) venc++;
+    else if (r.dias <= 3) urg++;
+    else if (r.dias <= 7) ate++;
+    else ok++;
+  });
+
+  document.getElementById('dash-vencidos').textContent = venc;
+  document.getElementById('dash-urgentes').textContent = urg;
+  document.getElementById('dash-atencao').textContent  = ate;
+  document.getElementById('dash-ok').textContent       = ok;
+  document.getElementById('dash-total').textContent    = allPrazos.length;
+
+  const prox30 = allPrazos.filter(r => r.dias !== null && r.dias <= 30);
+  const tbody = document.getElementById('dash-table-body');
+  if (!prox30.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum prazo nos próximos 30 dias ✓</td></tr>';
+    return;
+  }
+  tbody.innerHTML = prox30.map(r => `
+    <tr>
+      <td>${badgeHtml(r.dias)}</td>
+      <td>${escHtml(r.nome)}</td>
+      <td><span class="badge badge-azul">${escHtml(r.modulo)}</span></td>
+      <td>${fmtDate(r.prazo)}</td>
+      <td>${r.dias < 0 ? '<strong style="color:var(--vermelho)">'+r.dias+' dias</strong>' : r.dias + ' dias'}</td>
+      <td>${statusBadge(r.status)}</td>
+    </tr>`).join('');
+}
+
+// ── PROCESSOS ADMINISTRATIVOS ──────────────────────────────
+let admData = [];
+async function loadAdm() {
+  const { data, error } = await sb.from('processos_administrativos').select('*').order('proximo_prazo', { ascending: true, nullsFirst: false });
+  if (error) { toast('Erro ao carregar processos administrativos.', true); return; }
+  admData = data || [];
+  renderAdm();
+}
+function renderAdm() {
+  const tbody = document.getElementById('adm-body');
+  if (!admData.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Nenhum processo cadastrado ainda.</td></tr>'; return; }
+  tbody.innerHTML = admData.map(r => {
+    const dias = diffDias(r.proximo_prazo);
+    return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
+      <td>${badgeHtml(dias)}</td>
+      <td>${escHtml(r.numero_processo)||'—'}</td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td>${escHtml(r.cpf)||'—'}</td>
+      <td>${escHtml(r.tipo_beneficio)||'—'}</td>
+      <td>${escHtml(r.fase_atual)||'—'}</td>
+      <td>${fmtDate(r.proximo_prazo)}</td>
+      <td>${dias !== null ? dias + ' dias' : '—'}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editRecord('adm','${r.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord('adm','${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PROCESSOS JUDICIAIS INSS ───────────────────────────────
+let judData = [];
+async function loadJud() {
+  const { data, error } = await sb.from('processos_judiciais_inss').select('*').order('data_proxima_audiencia', { ascending: true, nullsFirst: false });
+  if (error) { toast('Erro ao carregar.', true); return; }
+  judData = data || [];
+  renderJud();
+}
+function renderJud() {
+  const tbody = document.getElementById('jud-body');
+  if (!judData.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Nenhum processo cadastrado ainda.</td></tr>'; return; }
+  tbody.innerHTML = judData.map(r => {
+    const dias = diffDias(r.data_proxima_audiencia);
+    return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
+      <td>${badgeHtml(dias)}</td>
+      <td>${escHtml(r.numero_processo)||'—'}</td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td>${escHtml(r.cpf)||'—'}</td>
+      <td>${escHtml(r.tipo_beneficio)||'—'}</td>
+      <td>${escHtml(r.vara_tribunal)||'—'}</td>
+      <td>${escHtml(r.fase_atual)||'—'}</td>
+      <td>${fmtDate(r.data_proxima_audiencia)}</td>
+      <td>${dias !== null ? dias + ' dias' : '—'}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editRecord('jud','${r.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord('jud','${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── SALÁRIO-MATERNIDADE ────────────────────────────────────
+let salData = [];
+async function loadSal() {
+  const { data, error } = await sb.from('salario_maternidade').select('*').order('data_limite_pagamento', { ascending: true, nullsFirst: false });
+  if (error) { toast('Erro ao carregar.', true); return; }
+  salData = data || [];
+  renderSal();
+}
+function renderSal() {
+  const tbody = document.getElementById('sal-body');
+  if (!salData.length) { tbody.innerHTML = '<tr><td colspan="13" class="empty-state">Nenhum registro cadastrado ainda.</td></tr>'; return; }
+  tbody.innerHTML = salData.map(r => {
+    const dias = diffDias(r.data_limite_pagamento);
+    return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
+      <td>${badgeHtml(dias)}</td>
+      <td>${escHtml(r.numero_processo)||'—'}</td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td>${escHtml(r.cpf)||'—'}</td>
+      <td>${fmtDate(r.dpp)}</td>
+      <td>${escHtml(r.tipo_salario_mat)||'—'}</td>
+      <td>${fmtBRL(r.valor_mensal_beneficio)}</td>
+      <td>${fmtDate(r.data_limite_pagamento)}</td>
+      <td>${dias !== null ? dias + ' dias' : '—'}</td>
+      <td>${statusBadge(r.status_guia)}</td>
+      <td>${fmtBRL(r.honorario_total)}</td>
+      <td>${statusBadge(r.status_honorario)}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editRecord('sal','${r.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord('sal','${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── AUXÍLIO-MORADIA ────────────────────────────────────────
+let auxData = [];
+async function loadAux() {
+  const { data, error } = await sb.from('auxilio_moradia').select('*').order('proximo_prazo', { ascending: true, nullsFirst: false });
+  if (error) { toast('Erro ao carregar.', true); return; }
+  auxData = data || [];
+  renderAux();
+}
+function renderAux() {
+  const tbody = document.getElementById('aux-body');
+  if (!auxData.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Nenhum médico cadastrado ainda.</td></tr>'; return; }
+  tbody.innerHTML = auxData.map(r => {
+    const dias = diffDias(r.proximo_prazo);
+    return `<tr data-search="${escHtml(r.nome_medico)} ${escHtml(r.cpf)} ${escHtml(r.crm)} ${escHtml(r.hospital)}">
+      <td>${badgeHtml(dias)}</td>
+      <td><strong>${escHtml(r.nome_medico)}</strong></td>
+      <td>${escHtml(r.crm)||'—'}</td>
+      <td>${escHtml(r.cpf)||'—'}</td>
+      <td>${escHtml(r.hospital)||'—'}</td>
+      <td>${escHtml(r.tipo_acao)||'—'}</td>
+      <td>${escHtml(r.fase_processo)||'—'}</td>
+      <td>${fmtDate(r.proximo_prazo)}</td>
+      <td>${dias !== null ? dias + ' dias' : '—'}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editRecord('aux','${r.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord('aux','${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── PRAZOS JUDICIAIS AUXÍLIO ───────────────────────────────
+let prazData = [];
+async function loadPraz() {
+  const { data, error } = await sb.from('prazos_judiciais_auxilio').select('*').order('proximo_prazo', { ascending: true, nullsFirst: false });
+  if (error) { toast('Erro ao carregar.', true); return; }
+  prazData = data || [];
+  renderPraz();
+}
+function renderPraz() {
+  const tbody = document.getElementById('praz-body');
+  if (!prazData.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Nenhum prazo cadastrado ainda.</td></tr>'; return; }
+  tbody.innerHTML = prazData.map(r => {
+    const dias = diffDias(r.proximo_prazo);
+    let priCls = 'cinza';
+    if (r.prioridade === 'Alta') priCls = 'vermelho';
+    else if (r.prioridade === 'Média') priCls = 'amarelo';
+    else if (r.prioridade === 'Baixa') priCls = 'verde';
+    return `<tr data-search="${escHtml(r.cliente_medico)} ${escHtml(r.numero_processo)}">
+      <td>${badgeHtml(dias)}</td>
+      <td>${escHtml(r.numero_processo)||'—'}</td>
+      <td><strong>${escHtml(r.cliente_medico)}</strong></td>
+      <td>${escHtml(r.tipo_acao)||'—'}</td>
+      <td>${escHtml(r.vara_tribunal)||'—'}</td>
+      <td>${escHtml(r.fase_atual)||'—'}</td>
+      <td>${fmtDate(r.proximo_prazo)}</td>
+      <td>${escHtml(r.peca_sugerida)||'—'}</td>
+      <td>${r.prioridade ? '<span class="badge badge-'+priCls+'">'+escHtml(r.prioridade)+'</span>' : '—'}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editRecord('praz','${r.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord('praz','${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── COBRANÇAS ──────────────────────────────────────────────
+let cobData = [];
+async function loadCob() {
+  const { data, error } = await sb.from('controle_cobrancas').select('*').order('data_limite_pgto', { ascending: true, nullsFirst: false });
+  if (error) { toast('Erro ao carregar.', true); return; }
+  cobData = data || [];
+  renderCob();
+}
+function renderCob() {
+  const tbody = document.getElementById('cob-body');
+  if (!cobData.length) { tbody.innerHTML = '<tr><td colspan="14" class="empty-state">Nenhuma cobrança cadastrada ainda.</td></tr>'; return; }
+  tbody.innerHTML = cobData.map(r => {
+    const dias = diffDias(r.data_limite_pgto);
+    const saldo = (r.valor_parcela || 0) - (r.valor_recebido || 0);
+    return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
+      <td>${badgeHtml(dias)}</td>
+      <td>${escHtml(r.numero_processo)||'—'}</td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td>${escHtml(r.cpf)||'—'}</td>
+      <td>${escHtml(r.tipo_beneficio)||'—'}</td>
+      <td>${fmtBRL(r.honorarios_totais)}</td>
+      <td>${r.numero_parcela||'—'}</td>
+      <td>${fmtBRL(r.valor_parcela)}</td>
+      <td>${fmtDate(r.data_cobranca)}</td>
+      <td>${fmtDate(r.data_limite_pgto)}</td>
+      <td>${fmtBRL(r.valor_recebido)}</td>
+      <td style="font-weight:400;color:${saldo > 0 ? 'var(--vermelho)' : 'var(--verde)'}">${fmtBRL(saldo)}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editRecord('cob','${r.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRecord('cob','${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── MODAL OPEN/CLOSE ───────────────────────────────────────
+function openModal(type) {
+  clearForm(type);
+  document.getElementById(`modal-${type}-title`).textContent = getNewTitle(type);
+  document.getElementById(`modal-${type}`).classList.add('open');
+}
+function closeModal(type) {
+  document.getElementById(`modal-${type}`).classList.remove('open');
+}
+function getNewTitle(t) {
+  const titles = { adm:'Novo Processo Administrativo', jud:'Novo Processo Judicial INSS',
+    sal:'Nova — Salário-Maternidade', aux:'Novo Médico — Auxílio-Moradia',
+    praz:'Novo Prazo Judicial — Auxílio-Moradia', cob:'Nova Cobrança / Honorário' };
+  return titles[t];
+}
+function clearForm(type) {
+  document.getElementById('form-' + type).reset();
+  document.getElementById(type + '-id').value = '';
+}
+
+// ── SALVAR ─────────────────────────────────────────────────
+async function saveRecord(type) {
+  const id = document.getElementById(type + '-id').value;
+  const payload = buildPayload(type);
+  if (!payload) return;
+
+  let err;
+  if (id) {
+    ({ error: err } = await sb.from(tableFor(type)).update(payload).eq('id', id));
+  } else {
+    ({ error: err } = await sb.from(tableFor(type)).insert(payload));
+  }
+  if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
+  toast(id ? 'Registro atualizado com sucesso!' : 'Registro criado com sucesso!');
+  closeModal(type);
+  loaded[moduleFor(type)] = false;
+  loadModule(moduleFor(type));
+  if (loaded['dashboard']) { loaded['dashboard'] = false; loadModule('dashboard'); }
+}
+
+function tableFor(t) {
+  const map = { adm:'processos_administrativos', jud:'processos_judiciais_inss',
+    sal:'salario_maternidade', aux:'auxilio_moradia',
+    praz:'prazos_judiciais_auxilio', cob:'controle_cobrancas' };
+  return map[t];
+}
+function moduleFor(t) {
+  const map = { adm:'proc-adm', jud:'proc-jud', sal:'sal-mat',
+    aux:'aux-mor', praz:'prazos-aux', cob:'cobrancas' };
+  return map[t];
+}
+
+function v(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() || null : null;
+}
+function vd(id) { // date
+  const el = document.getElementById(id);
+  return (el && el.value) ? el.value : null;
+}
+function vn(id) { // number
+  const el = document.getElementById(id);
+  return (el && el.value !== '') ? parseFloat(el.value) : null;
+}
+function vi(id) { // int
+  const el = document.getElementById(id);
+  return (el && el.value !== '') ? parseInt(el.value) : null;
+}
+
+function buildPayload(type) {
+  switch(type) {
+    case 'adm': {
+      const nome = v('adm-nome');
+      if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      return { numero_processo: v('adm-numero'), numero_proc_judicial: v('adm-proc-jud'),
+        nome_cliente: nome, cpf: v('adm-cpf'), tipo_beneficio: v('adm-tipo'),
+        data_protocolo: vd('adm-protocolo'), fase_atual: v('adm-fase'),
+        proximo_prazo: vd('adm-prazo'), tipo_prazo: v('adm-tipo-prazo'),
+        prazo_boleto: vd('adm-boleto'), status: v('adm-status'),
+        docs_recebidos: vi('adm-docs-rec'), observacoes: v('adm-obs') };
+    }
+    case 'jud': {
+      const nome = v('jud-nome');
+      if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      return { numero_processo: v('jud-numero'), numero_proc_adm: v('jud-proc-adm'),
+        nome_cliente: nome, cpf: v('jud-cpf'), tipo_beneficio: v('jud-tipo'),
+        vara_tribunal: v('jud-vara'), juiz: v('jud-juiz'), fase_atual: v('jud-fase'),
+        data_proxima_audiencia: vd('jud-data-prazo'), tipo_prazo: v('jud-tipo-prazo'),
+        prazo_boleto: vd('jud-boleto'), status: v('jud-status'), observacoes: v('jud-obs') };
+    }
+    case 'sal': {
+      const nome = v('sal-nome');
+      if (!nome) { toast('Nome da cliente é obrigatório.', true); return null; }
+      return { numero_processo: v('sal-numero'), nome_cliente: nome, cpf: v('sal-cpf'),
+        dpp: vd('sal-dpp'), tipo_salario_mat: v('sal-tipo'),
+        valor_mensal_beneficio: vn('sal-valor'), numero_guia: v('sal-guia'),
+        competencia_guia: v('sal-competencia'), data_limite_pagamento: vd('sal-data-limite'),
+        status_guia: v('sal-status-guia'), data_pgto_guia: vd('sal-data-pgto'),
+        honorario_total: vn('sal-honor-total'), numero_parcela: vi('sal-parcela-num'),
+        valor_parcela: vn('sal-parcela-valor'), data_cobranca: vd('sal-data-cob'),
+        data_recebimento: vd('sal-data-rec'), status_honorario: v('sal-status-honor'),
+        observacoes: v('sal-obs') };
+    }
+    case 'aux': {
+      const nome = v('aux-nome');
+      if (!nome) { toast('Nome do médico é obrigatório.', true); return null; }
+      return { nome_medico: nome, cpf: v('aux-cpf'), crm: v('aux-crm'), rqe: v('aux-rqe'),
+        telefone: v('aux-telefone'), email: v('aux-email'), hospital: v('aux-hospital'),
+        numero_processo: v('aux-processo'), tipo_acao: v('aux-tipo-acao'),
+        fase_processo: v('aux-fase'), proximo_prazo: vd('aux-prazo'),
+        tipo_prazo: v('aux-tipo-prazo'), status: v('aux-status'), observacoes: v('aux-obs') };
+    }
+    case 'praz': {
+      const nome = v('praz-cliente');
+      if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      return { numero_processo: v('praz-numero'), cliente_medico: nome, cpf: v('praz-cpf'),
+        tipo_acao: v('praz-tipo-acao'), vara_tribunal: v('praz-vara'), juiz: v('praz-juiz'),
+        fase_atual: v('praz-fase'), proximo_prazo: vd('praz-prazo'),
+        tipo_prazo: v('praz-tipo-prazo'), peca_sugerida: v('praz-peca'),
+        prioridade: v('praz-prioridade'), status: v('praz-status'), observacoes: v('praz-obs') };
+    }
+    case 'cob': {
+      const nome = v('cob-nome');
+      if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      return { numero_processo: v('cob-numero'), nome_cliente: nome, cpf: v('cob-cpf'),
+        tipo_beneficio: v('cob-tipo'), valor_mensal_beneficio: vn('cob-valor-mensal'),
+        qtd_parcelas: vi('cob-qtd-parc'), honorarios_totais: vn('cob-honor-total'),
+        numero_parcela: vi('cob-parcela-num'), valor_parcela: vn('cob-parcela-valor'),
+        data_cobranca: vd('cob-data-cob'), data_limite_pgto: vd('cob-data-limite'),
+        data_recebimento: vd('cob-data-rec'), valor_recebido: vn('cob-valor-rec'),
+        status: v('cob-status'), observacoes: v('cob-obs') };
+    }
+  }
+}
+
+// ── EDITAR ─────────────────────────────────────────────────
+function editRecord(type, id) {
+  const dataMap = { adm: admData, jud: judData, sal: salData, aux: auxData, praz: prazData, cob: cobData };
+  const rec = dataMap[type].find(r => r.id === id);
+  if (!rec) return;
+  fillForm(type, rec);
+  document.getElementById(`modal-${type}-title`).textContent = 'Editar Registro';
+  document.getElementById(`modal-${type}`).classList.add('open');
+}
+
+function set(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.value = val ?? '';
+}
+
+function fillForm(type, r) {
+  set(type + '-id', r.id);
+  switch(type) {
+    case 'adm':
+      set('adm-numero', r.numero_processo); set('adm-proc-jud', r.numero_proc_judicial);
+      set('adm-nome', r.nome_cliente); set('adm-cpf', r.cpf);
+      set('adm-tipo', r.tipo_beneficio); set('adm-protocolo', r.data_protocolo?.slice(0,10));
+      set('adm-fase', r.fase_atual); set('adm-prazo', r.proximo_prazo?.slice(0,10));
+      set('adm-tipo-prazo', r.tipo_prazo); set('adm-boleto', r.prazo_boleto?.slice(0,10));
+      set('adm-status', r.status); set('adm-docs-rec', r.docs_recebidos);
+      set('adm-obs', r.observacoes); break;
+    case 'jud':
+      set('jud-numero', r.numero_processo); set('jud-proc-adm', r.numero_proc_adm);
+      set('jud-nome', r.nome_cliente); set('jud-cpf', r.cpf);
+      set('jud-tipo', r.tipo_beneficio); set('jud-vara', r.vara_tribunal);
+      set('jud-juiz', r.juiz); set('jud-fase', r.fase_atual);
+      set('jud-data-prazo', r.data_proxima_audiencia?.slice(0,10));
+      set('jud-tipo-prazo', r.tipo_prazo); set('jud-boleto', r.prazo_boleto?.slice(0,10));
+      set('jud-status', r.status); set('jud-obs', r.observacoes); break;
+    case 'sal':
+      set('sal-numero', r.numero_processo); set('sal-nome', r.nome_cliente);
+      set('sal-cpf', r.cpf); set('sal-dpp', r.dpp?.slice(0,10));
+      set('sal-tipo', r.tipo_salario_mat); set('sal-valor', r.valor_mensal_beneficio);
+      set('sal-guia', r.numero_guia); set('sal-competencia', r.competencia_guia);
+      set('sal-data-limite', r.data_limite_pagamento?.slice(0,10));
+      set('sal-status-guia', r.status_guia); set('sal-data-pgto', r.data_pgto_guia?.slice(0,10));
+      set('sal-honor-total', r.honorario_total); set('sal-parcela-num', r.numero_parcela);
+      set('sal-parcela-valor', r.valor_parcela); set('sal-data-cob', r.data_cobranca?.slice(0,10));
+      set('sal-data-rec', r.data_recebimento?.slice(0,10));
+      set('sal-status-honor', r.status_honorario); set('sal-obs', r.observacoes); break;
+    case 'aux':
+      set('aux-nome', r.nome_medico); set('aux-cpf', r.cpf);
+      set('aux-crm', r.crm); set('aux-rqe', r.rqe);
+      set('aux-telefone', r.telefone); set('aux-email', r.email);
+      set('aux-hospital', r.hospital); set('aux-processo', r.numero_processo);
+      set('aux-tipo-acao', r.tipo_acao); set('aux-fase', r.fase_processo);
+      set('aux-prazo', r.proximo_prazo?.slice(0,10));
+      set('aux-tipo-prazo', r.tipo_prazo); set('aux-status', r.status);
+      set('aux-obs', r.observacoes); break;
+    case 'praz':
+      set('praz-numero', r.numero_processo); set('praz-cliente', r.cliente_medico);
+      set('praz-cpf', r.cpf); set('praz-tipo-acao', r.tipo_acao);
+      set('praz-vara', r.vara_tribunal); set('praz-juiz', r.juiz);
+      set('praz-fase', r.fase_atual); set('praz-prazo', r.proximo_prazo?.slice(0,10));
+      set('praz-tipo-prazo', r.tipo_prazo); set('praz-peca', r.peca_sugerida);
+      set('praz-prioridade', r.prioridade); set('praz-status', r.status);
+      set('praz-obs', r.observacoes); break;
+    case 'cob':
+      set('cob-numero', r.numero_processo); set('cob-nome', r.nome_cliente);
+      set('cob-cpf', r.cpf); set('cob-tipo', r.tipo_beneficio);
+      set('cob-valor-mensal', r.valor_mensal_beneficio); set('cob-qtd-parc', r.qtd_parcelas);
+      set('cob-honor-total', r.honorarios_totais); set('cob-parcela-num', r.numero_parcela);
+      set('cob-parcela-valor', r.valor_parcela); set('cob-data-cob', r.data_cobranca?.slice(0,10));
+      set('cob-data-limite', r.data_limite_pgto?.slice(0,10));
+      set('cob-data-rec', r.data_recebimento?.slice(0,10));
+      set('cob-valor-rec', r.valor_recebido); set('cob-status', r.status);
+      set('cob-obs', r.observacoes); break;
+  }
+}
+
+// ── DELETAR ────────────────────────────────────────────────
+async function deleteRecord(type, id) {
+  if (!confirm('Tem certeza que deseja excluir este registro? Esta ação não pode ser desfeita.')) return;
+  const { error } = await sb.from(tableFor(type)).delete().eq('id', id);
+  if (error) { toast('Erro ao excluir.', true); return; }
+  toast('Registro excluído.');
+  loaded[moduleFor(type)] = false;
+  loadModule(moduleFor(type));
+  loaded['dashboard'] = false;
+  loadModule('dashboard');
+}
+
+// Fechar modal clicando fora
