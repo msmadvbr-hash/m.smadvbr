@@ -1,26 +1,44 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    MÓDULOS DO PAINEL — M&SM Advocacia
    ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
+
+if (!window.APP || !window.CATALOGOS) {
+  document.body.innerHTML =
+    '<div style="padding:2rem;font-family:sans-serif;color:#c0392b">' +
+    '<h2>Erro ao iniciar o painel</h2>' +
+    '<p>Algum arquivo de script não carregou. Abra o console (F12) e veja o que falhou.</p>' +
+    '<p><a href="../index.html">← Voltar ao login</a></p></div>';
+  throw new Error('Bootstrap incompleto: window.APP ou window.CATALOGOS ausentes.');
+}
 
 const { sb, diffDias, fmtDate, fmtBRL, setDate,
         badgeHtml, statusBadge, escHtml, toast, filterTable,
         v, vd, vn, vi, set } = window.APP;
 const { TIPOS_ACAO, DOCS_POR_KIT } = window.CATALOGOS;
 
-/* ── AUTH GUARD ───────────────────────────────────────────────────────── */
-let currentUser = null;
-(async () => {
-  const { data } = await sb.auth.getSession();
-  if (!data.session) { window.location.href = '../index.html'; return; }
-  currentUser = data.session.user;
+/* ── INICIALIZAÇÃO (sessão já validada pelo auth guard inline) ────────── */
+let currentUser = window.__SESSION__?.user || null;
+if (currentUser) {
   document.getElementById('user-email').textContent = currentUser.email;
   setDate();
   loadModule('dashboard');
-})();
+} else {
+  // fallback: se por algum motivo o guard não populou, valida de novo
+  (async () => {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) { window.location.replace('../index.html'); return; }
+    currentUser = data.session.user;
+    document.getElementById('user-email').textContent = currentUser.email;
+    setDate();
+    loadModule('dashboard');
+  })();
+}
 
 async function logout() {
   await sb.auth.signOut();
-  window.location.href = '../index.html';
+  window.location.replace('../index.html');
 }
 window.logout = logout;
 
@@ -848,3 +866,5 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     if (e.target === overlay) overlay.classList.remove('open');
   });
 });
+
+})();

@@ -6,6 +6,8 @@
    - Calculadora embutida (preview de honorários ao vivo)
    - Calculador de prazos por peça
    ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
 
 const { sb, escHtml, fmtBRL, toast, set, vd, vn, v } = window.APP;
 const { AREAS, TIPOS_ACAO, FASES_POR_RITO, DOCS_POR_KIT, PECAS } = window.CATALOGOS;
@@ -206,3 +208,5 @@ window.UI = {
   renderCalcPreview, calcularEMostrarPrazo, ativarTab,
   _ultimoKit: null, _ultimoContainer: null,
 };
+
+})();

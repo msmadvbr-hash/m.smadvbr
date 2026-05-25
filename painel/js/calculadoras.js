@@ -8,6 +8,8 @@
    - honorarios : valor total dos honorários contratuais
    - memoria    : string descrevendo a memória de cálculo
    ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
 
 const PCT_VALOR_ACAO  = 0.30;  // 30% do total da bolsa → valor da ação (Aux-Moradia)
 const PCT_HONORARIOS  = 0.30;  // 30% de honorários sobre o valor da ação
@@ -138,3 +140,5 @@ window.CALC = {
   calcBPC, calcGenerico, mesesEntre, fmt,
   PCT_VALOR_ACAO, PCT_HONORARIOS,
 };
+
+})();

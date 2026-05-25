@@ -1,6 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    CONFIG + HELPERS GLOBAIS — M&SM Advocacia
    ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
 
 const SUPABASE_URL  = 'https://vabvayctriflbanhcfuy.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYnZheWN0cmlmbGJhbmhjZnV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjQzODcsImV4cCI6MjA5NTMwMDM4N30.l7j77sVAP2ejulSrT-dgoKOTORyC67LG0fy0IumstM0';
@@ -97,3 +99,5 @@ window.APP = {
   escHtml, toast, filterTable,
   v, vd, vn, vi, set,
 };
+
+})();

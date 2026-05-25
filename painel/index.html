@@ -670,11 +670,29 @@
 </div>
 
 <!-- ════════════ SCRIPTS ════════════ -->
-<script src="js/catalogos.js"></script>
-<script src="js/calculadoras.js"></script>
-<script src="js/prazos.js"></script>
-<script src="js/config.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/modulos.js"></script>
+<!-- Auth guard inline: roda ANTES de tudo. Se algo nos outros JS quebrar,
+     pelo menos o redirect para login continua funcionando. -->
+<script>
+(async () => {
+  try {
+    const SUPABASE_URL  = 'https://vabvayctriflbanhcfuy.supabase.co';
+    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYnZheWN0cmlmbGJhbmhjZnV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjQzODcsImV4cCI6MjA5NTMwMDM4N30.l7j77sVAP2ejulSrT-dgoKOTORyC67LG0fy0IumstM0';
+    const { createClient } = window.supabase;
+    const sbGuard = createClient(SUPABASE_URL, SUPABASE_ANON);
+    const { data } = await sbGuard.auth.getSession();
+    if (!data.session) { window.location.replace('../index.html'); return; }
+    window.__SESSION__ = data.session;
+  } catch (e) {
+    console.error('Auth guard falhou:', e);
+    window.location.replace('../index.html');
+  }
+})();
+</script>
+<script src="js/catalogos.js" onerror="console.error('Falha ao carregar catalogos.js')"></script>
+<script src="js/calculadoras.js" onerror="console.error('Falha ao carregar calculadoras.js')"></script>
+<script src="js/prazos.js" onerror="console.error('Falha ao carregar prazos.js')"></script>
+<script src="js/config.js" onerror="console.error('Falha ao carregar config.js')"></script>
+<script src="js/ui.js" onerror="console.error('Falha ao carregar ui.js')"></script>
+<script src="js/modulos.js" onerror="console.error('Falha ao carregar modulos.js')"></script>
 </body>
 </html>

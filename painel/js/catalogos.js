@@ -5,6 +5,8 @@
    prazos legais. Espelha (de forma simplificada) o que aparece no PJe
    TJCE e TRF5 quando se cadastra uma ação.
    ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
 
 /* ── ÁREAS ──────────────────────────────────────────────────────────────── */
 const AREAS = [
@@ -314,3 +316,5 @@ function emRecessoForense(date) {
 window.CATALOGOS = {
   AREAS, TIPOS_ACAO, FASES_POR_RITO, DOCS_POR_KIT, PECAS, FERIADOS, emRecessoForense,
 };
+
+})();

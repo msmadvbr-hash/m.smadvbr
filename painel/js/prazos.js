@@ -10,6 +10,8 @@
      - exclusão do dia do início, inclusão do dia do vencimento (CPC art. 224)
      - prorrogação para o próximo dia útil se vencer em feriado/fim de semana
    ═══════════════════════════════════════════════════════════════════════════ */
+(function () {
+'use strict';
 
 function isFeriado(date) {
   const iso = date.toISOString().slice(0,10);
@@ -87,3 +89,5 @@ function fmtDateBR(iso) {
 }
 
 window.PRAZOS = { calcularPrazo, diasRestantes, isDiaUtil, proximoDiaUtil };
+
+})();
