@@ -1911,3 +1911,12 @@ async function deleteRecord(type, id) {
 }
 
 // Fechar modal clicando fora
+// Fechar modal clicando fora
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
