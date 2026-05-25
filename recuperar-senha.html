@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recuperar Senha · M&SM Advocacia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --creme: #F5EFE4; --bege: #E8D9C0; --bege-medio: #D4BC96;
+    --caramelo: #B8914A; --dourado: #C9993A; --dourado-escuro: #9A7230;
+    --marrom: #5C3D1A; --texto: #3A2810; --texto-suave: #6B4F2A; --branco: #FDFAF5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--marrom);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  body::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9993A' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .card {
+    background: var(--creme);
+    width: 100%; max-width: 420px;
+    padding: 3rem 2.8rem;
+    position: relative; z-index: 2;
+    box-shadow: 0 32px 80px rgba(0,0,0,.35);
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(to right, var(--caramelo), var(--dourado), var(--caramelo));
+  }
+  .logo { text-align: center; margin-bottom: 2rem; }
+  .logo-v {
+    width: 52px; height: 52px; border: 1.5px solid var(--caramelo);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600;
+    color: var(--caramelo); margin: 0 auto .8rem; letter-spacing: .05em;
+  }
+  .logo-name {
+    font-family: 'Cinzel', serif; font-size: .7rem; letter-spacing: .2em;
+    color: var(--texto); text-transform: uppercase; display: block; margin-bottom: .25rem;
+  }
+  .logo-sub {
+    font-family: 'Cormorant Garamond', serif; font-size: .88rem;
+    font-style: italic; color: var(--texto-suave);
+  }
+  .ornament { display: flex; align-items: center; gap: 12px; margin-bottom: 1.8rem; }
+  .ornament::before, .ornament::after { content: ''; flex: 1; height: 1px; background: rgba(184,145,74,.3); }
+  .diamond { width: 6px; height: 6px; background: var(--caramelo); transform: rotate(45deg); flex-shrink: 0; }
+  .form-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 400;
+    color: var(--texto); text-align: center; margin-bottom: .6rem;
+  }
+  .form-desc {
+    font-size: .85rem; color: var(--texto-suave); text-align: center;
+    line-height: 1.6; margin-bottom: 1.6rem; font-weight: 300;
+  }
+  .form-group { margin-bottom: 1.2rem; }
+  label {
+    display: block; font-family: 'Cinzel', serif; font-size: .6rem;
+    letter-spacing: .2em; color: var(--caramelo); text-transform: uppercase; margin-bottom: .5rem;
+  }
+  input[type="email"] {
+    width: 100%; border: 1px solid rgba(184,145,74,.35); background: var(--branco);
+    padding: 12px 14px; font-family: 'Lato', sans-serif; font-size: .95rem;
+    color: var(--texto); outline: none; transition: border-color .2s;
+  }
+  input[type="email"]:focus { border-color: var(--caramelo); }
+  .btn {
+    width: 100%; background: var(--caramelo); color: var(--branco);
+    border: none; cursor: pointer; padding: 13px;
+    font-family: 'Cinzel', serif; font-size: .72rem; letter-spacing: .2em;
+    text-transform: uppercase; transition: background .25s; margin-top: .4rem;
+  }
+  .btn:hover { background: var(--dourado-escuro); }
+  .btn:disabled { background: var(--bege-medio); cursor: not-allowed; }
+  .msg {
+    padding: 12px 14px; font-size: .85rem; margin-top: 1rem;
+    display: none; text-align: center; line-height: 1.5;
+  }
+  .msg.erro   { background: rgba(220,50,50,.1); border: 1px solid rgba(220,50,50,.3); color: #c0392b; }
+  .msg.ok     { background: rgba(39,174,96,.1);  border: 1px solid rgba(39,174,96,.3);  color: #1e7a40; }
+  .back-link {
+    display: block; text-align: center; margin-top: 1.8rem;
+    font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .15em;
+    color: var(--texto-suave); text-decoration: none; text-transform: uppercase;
+    transition: color .2s;
+  }
+  .back-link:hover { color: var(--caramelo); }
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4);
+    border-top-color: white; border-radius: 50%;
+    animation: spin .6s linear infinite; vertical-align: middle;
+    margin-right: 6px; display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-v">M&amp;SM</div>
+    <span class="logo-name">Monteiro &amp; Solos do Mar</span>
+    <span class="logo-sub">Recuperação de Acesso</span>
+  </div>
+
+  <div class="ornament"><div class="diamond"></div></div>
+
+  <p class="form-title">Esqueceu a senha?</p>
+  <p class="form-desc">Digite seu e-mail cadastrado e enviaremos um link para você criar uma nova senha.</p>
+
+  <form id="form-recuperar">
+    <div class="form-group">
+      <label for="email">E-mail cadastrado</label>
+      <input type="email" id="email" placeholder="seu@email.com" required autocomplete="email">
+    </div>
+    <button type="submit" class="btn" id="btn-enviar">
+      <span class="spinner" id="spinner"></span>
+      Enviar link de recuperação
+    </button>
+    <div class="msg" id="msg"></div>
+  </form>
+
+  <a href="index.html" class="back-link">← Voltar ao login</a>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://vabvayctriflbanhcfuy.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYnZheWN0cmlmbGJhbmhjZnV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjQzODcsImV4cCI6MjA5NTMwMDM4N30.l7j77sVAP2ejulSrT-dgoKOTORyC67LG0fy0IumstM0';
+
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const btn     = document.getElementById('btn-enviar');
+  const spinner = document.getElementById('spinner');
+  const msgDiv  = document.getElementById('msg');
+
+  function showMsg(texto, tipo) {
+    msgDiv.textContent = texto;
+    msgDiv.className = 'msg ' + tipo;
+    msgDiv.style.display = 'block';
+  }
+
+  document.getElementById('form-recuperar').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('email').value.trim();
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+    msgDiv.style.display = 'none';
+
+    // A URL para onde o Supabase vai redirecionar após o clique no e-mail
+    const redirectTo = window.location.origin + window.location.pathname.replace('recuperar-senha.html', '') + 'nova-senha.html';
+
+    const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo });
+
+    spinner.style.display = 'none';
+
+    if (error) {
+      showMsg('Erro ao enviar: ' + error.message, 'erro');
+      btn.disabled = false;
+    } else {
+      showMsg('✅ Link enviado! Verifique sua caixa de entrada (e a pasta de spam). O link expira em 1 hora.', 'ok');
+      // Não reativa o botão — evita reenvios acidentais
+      btn.textContent = 'Link enviado ✓';
+    }
+  });
+</script>
+</body>
+</html>

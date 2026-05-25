@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nova Senha · M&SM Advocacia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --creme: #F5EFE4; --bege: #E8D9C0; --bege-medio: #D4BC96;
+    --caramelo: #B8914A; --dourado: #C9993A; --dourado-escuro: #9A7230;
+    --marrom: #5C3D1A; --texto: #3A2810; --texto-suave: #6B4F2A; --branco: #FDFAF5;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Lato', sans-serif;
+    background: var(--marrom);
+    min-height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  body::before {
+    content: ''; position: absolute; inset: 0;
+    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9993A' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+  }
+  .card {
+    background: var(--creme);
+    width: 100%; max-width: 420px;
+    padding: 3rem 2.8rem;
+    position: relative; z-index: 2;
+    box-shadow: 0 32px 80px rgba(0,0,0,.35);
+  }
+  .card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(to right, var(--caramelo), var(--dourado), var(--caramelo));
+  }
+  .logo { text-align: center; margin-bottom: 2rem; }
+  .logo-v {
+    width: 52px; height: 52px; border: 1.5px solid var(--caramelo);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600;
+    color: var(--caramelo); margin: 0 auto .8rem; letter-spacing: .05em;
+  }
+  .logo-name {
+    font-family: 'Cinzel', serif; font-size: .7rem; letter-spacing: .2em;
+    color: var(--texto); text-transform: uppercase; display: block; margin-bottom: .25rem;
+  }
+  .logo-sub {
+    font-family: 'Cormorant Garamond', serif; font-size: .88rem;
+    font-style: italic; color: var(--texto-suave);
+  }
+  .ornament { display: flex; align-items: center; gap: 12px; margin-bottom: 1.8rem; }
+  .ornament::before, .ornament::after { content: ''; flex: 1; height: 1px; background: rgba(184,145,74,.3); }
+  .diamond { width: 6px; height: 6px; background: var(--caramelo); transform: rotate(45deg); flex-shrink: 0; }
+  .form-title {
+    font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 400;
+    color: var(--texto); text-align: center; margin-bottom: .6rem;
+  }
+  .form-desc {
+    font-size: .85rem; color: var(--texto-suave); text-align: center;
+    line-height: 1.6; margin-bottom: 1.6rem; font-weight: 300;
+  }
+  .form-group { margin-bottom: 1.2rem; }
+  label {
+    display: block; font-family: 'Cinzel', serif; font-size: .6rem;
+    letter-spacing: .2em; color: var(--caramelo); text-transform: uppercase; margin-bottom: .5rem;
+  }
+  input[type="password"] {
+    width: 100%; border: 1px solid rgba(184,145,74,.35); background: var(--branco);
+    padding: 12px 14px; font-family: 'Lato', sans-serif; font-size: .95rem;
+    color: var(--texto); outline: none; transition: border-color .2s;
+  }
+  input[type="password"]:focus { border-color: var(--caramelo); }
+  .strength-bar {
+    height: 3px; background: #e0d0b0; margin-top: 6px; border-radius: 2px; overflow: hidden;
+  }
+  .strength-fill {
+    height: 100%; width: 0; transition: width .3s, background .3s; border-radius: 2px;
+  }
+  .strength-label {
+    font-size: .72rem; color: var(--texto-suave); margin-top: 4px; display: block;
+  }
+  .btn {
+    width: 100%; background: var(--caramelo); color: var(--branco);
+    border: none; cursor: pointer; padding: 13px;
+    font-family: 'Cinzel', serif; font-size: .72rem; letter-spacing: .2em;
+    text-transform: uppercase; transition: background .25s; margin-top: .4rem;
+  }
+  .btn:hover { background: var(--dourado-escuro); }
+  .btn:disabled { background: var(--bege-medio); cursor: not-allowed; }
+  .msg {
+    padding: 12px 14px; font-size: .85rem; margin-top: 1rem;
+    display: none; text-align: center; line-height: 1.5;
+  }
+  .msg.erro { background: rgba(220,50,50,.1); border: 1px solid rgba(220,50,50,.3); color: #c0392b; }
+  .msg.ok   { background: rgba(39,174,96,.1);  border: 1px solid rgba(39,174,96,.3);  color: #1e7a40; }
+  .msg.info { background: rgba(184,145,74,.1); border: 1px solid rgba(184,145,74,.3); color: #8a6020; }
+  .back-link {
+    display: block; text-align: center; margin-top: 1.8rem;
+    font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .15em;
+    color: var(--texto-suave); text-decoration: none; text-transform: uppercase;
+    transition: color .2s;
+  }
+  .back-link:hover { color: var(--caramelo); }
+  .spinner {
+    width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4);
+    border-top-color: white; border-radius: 50%;
+    animation: spin .6s linear infinite; vertical-align: middle;
+    margin-right: 6px; display: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading-state {
+    text-align: center; padding: 1rem 0;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem; font-style: italic; color: var(--texto-suave);
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-v">M&amp;SM</div>
+    <span class="logo-name">Monteiro &amp; Solos do Mar</span>
+    <span class="logo-sub">Redefinir Senha</span>
+  </div>
+
+  <div class="ornament"><div class="diamond"></div></div>
+
+  <!-- Estado enquanto verifica o token -->
+  <div id="loading-state">Verificando link de recuperação…</div>
+
+  <!-- Formulário (oculto até o token ser validado) -->
+  <div id="form-state" style="display:none">
+    <p class="form-title">Nova senha</p>
+    <p class="form-desc">Escolha uma senha segura para sua conta.</p>
+
+    <form id="form-nova-senha">
+      <div class="form-group">
+        <label for="senha">Nova senha</label>
+        <input type="password" id="senha" placeholder="Mínimo 8 caracteres" required minlength="8" autocomplete="new-password">
+        <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+        <span class="strength-label" id="strength-label"></span>
+      </div>
+      <div class="form-group">
+        <label for="confirmar">Confirmar nova senha</label>
+        <input type="password" id="confirmar" placeholder="Repita a senha" required minlength="8" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn" id="btn-salvar">
+        <span class="spinner" id="spinner"></span>
+        Salvar nova senha
+      </button>
+      <div class="msg" id="msg"></div>
+    </form>
+  </div>
+
+  <!-- Link inválido ou expirado -->
+  <div id="error-state" style="display:none">
+    <div class="msg erro" style="display:block">
+      ⚠️ Este link é inválido ou já expirou.<br>
+      <small>Links de recuperação são válidos por 1 hora e só podem ser usados uma vez.</small>
+    </div>
+  </div>
+
+  <a href="index.html" class="back-link">← Voltar ao login</a>
+</div>
+
+<script>
+  const SUPABASE_URL  = 'https://vabvayctriflbanhcfuy.supabase.co';
+  const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYnZheWN0cmlmbGJhbmhjZnV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjQzODcsImV4cCI6MjA5NTMwMDM4N30.l7j77sVAP2ejulSrT-dgoKOTORyC67LG0fy0IumstM0';
+
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON);
+
+  const loadingEl = document.getElementById('loading-state');
+  const formEl    = document.getElementById('form-state');
+  const errorEl   = document.getElementById('error-state');
+  const msgDiv    = document.getElementById('msg');
+  const btn       = document.getElementById('btn-salvar');
+  const spinner   = document.getElementById('spinner');
+
+  function showForm()  { loadingEl.style.display='none'; formEl.style.display='block'; errorEl.style.display='none'; }
+  function showError() { loadingEl.style.display='none'; formEl.style.display='none'; errorEl.style.display='block'; }
+  function showMsg(t, tipo) { msgDiv.textContent=t; msgDiv.className='msg '+tipo; msgDiv.style.display='block'; }
+
+  // O Supabase v2 detecta automaticamente o token no hash da URL
+  // e dispara o evento PASSWORD_RECOVERY quando o link é válido
+  sb.auth.onAuthStateChange(async (event, session) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      showForm();
+    } else if (event === 'SIGNED_IN' && session) {
+      // Pode acontecer se o usuário já estava logado — mostra form também
+      showForm();
+    }
+  });
+
+  // Timeout: se em 4s não veio nenhum evento, o link provavelmente é inválido
+  const timeout = setTimeout(() => {
+    if (formEl.style.display === 'none') showError();
+  }, 4000);
+
+  // Ao receber o evento, cancelamos o timeout
+  const _orig = sb.auth.onAuthStateChange.bind(sb.auth);
+  sb.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') clearTimeout(timeout);
+  });
+
+  // ── Indicador de força da senha ──────────────────────────
+  document.getElementById('senha').addEventListener('input', function() {
+    const v = this.value;
+    const fill  = document.getElementById('strength-fill');
+    const label = document.getElementById('strength-label');
+    let score = 0;
+    if (v.length >= 8)  score++;
+    if (v.length >= 12) score++;
+    if (/[A-Z]/.test(v)) score++;
+    if (/[0-9]/.test(v)) score++;
+    if (/[^A-Za-z0-9]/.test(v)) score++;
+    const levels = [
+      { pct: '0%',   color: 'transparent', txt: '' },
+      { pct: '25%',  color: '#c0392b',     txt: 'Fraca' },
+      { pct: '50%',  color: '#e67e22',     txt: 'Razoável' },
+      { pct: '75%',  color: '#f1c40f',     txt: 'Boa' },
+      { pct: '90%',  color: '#27ae60',     txt: 'Forte' },
+      { pct: '100%', color: '#1e7a40',     txt: 'Muito forte' },
+    ];
+    const l = levels[Math.min(score, 5)];
+    fill.style.width = l.pct;
+    fill.style.background = l.color;
+    label.textContent = l.txt;
+    label.style.color = l.color;
+  });
+
+  // ── Salvar nova senha ────────────────────────────────────
+  document.getElementById('form-nova-senha').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const senha     = document.getElementById('senha').value;
+    const confirmar = document.getElementById('confirmar').value;
+
+    if (senha !== confirmar) {
+      showMsg('As senhas não coincidem.', 'erro');
+      return;
+    }
+    if (senha.length < 8) {
+      showMsg('A senha deve ter pelo menos 8 caracteres.', 'erro');
+      return;
+    }
+
+    btn.disabled = true;
+    spinner.style.display = 'inline-block';
+    msgDiv.style.display = 'none';
+
+    const { error } = await sb.auth.updateUser({ password: senha });
+
+    spinner.style.display = 'none';
+
+    if (error) {
+      showMsg('Erro ao salvar: ' + error.message, 'erro');
+      btn.disabled = false;
+    } else {
+      showMsg('✅ Senha alterada com sucesso! Redirecionando para o login…', 'ok');
+      await sb.auth.signOut();
+      setTimeout(() => { window.location.href = 'index.html'; }, 2500);
+    }
+  });
+</script>
+</body>
+</html>
