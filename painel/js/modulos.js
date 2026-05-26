@@ -18,23 +18,7 @@ const { sb, diffDias, fmtDate, fmtBRL, setDate,
         v, vd, vn, vi, set } = window.APP;
 const { TIPOS_ACAO, DOCS_POR_KIT, TIPOS_SAL_MAT, COMARCAS_CE, VARAS_FORTALEZA, VARAS_TRF5_CE } = window.CATALOGOS;
 
-/* ── INICIALIZAÇÃO (sessão já validada pelo auth guard inline) ────────── */
-let currentUser = window.__SESSION__?.user || null;
-if (currentUser) {
-  document.getElementById('user-email').textContent = currentUser.email;
-  setDate();
-  loadModule('dashboard');
-} else {
-  // fallback: se por algum motivo o guard não populou, valida de novo
-  (async () => {
-    const { data } = await sb.auth.getSession();
-    if (!data.session) { window.location.replace('../index.html'); return; }
-    currentUser = data.session.user;
-    document.getElementById('user-email').textContent = currentUser.email;
-    setDate();
-    loadModule('dashboard');
-  })();
-}
+let currentUser = null;   // populado pela inicialização no fim do arquivo
 
 async function logout() {
   await sb.auth.signOut();
@@ -59,17 +43,19 @@ const titles = {
 
 function showModule(mod) {
   document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById('mod-' + mod).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.getAttribute('onclick')?.includes(`'${mod}'`)) n.classList.add('active');
+    n.classList.toggle('active', n.dataset.module === mod);
   });
+  const alvo = document.getElementById('mod-' + mod);
+  if (alvo) alvo.classList.add('active');
   const t = titles[mod] || mod;
   const parts = t.split('·');
-  document.getElementById('page-title').innerHTML =
-    parts.length > 1
+  const pageTitle = document.getElementById('page-title');
+  if (pageTitle) {
+    pageTitle.innerHTML = parts.length > 1
       ? escHtml(parts[0]) + '·<span>' + escHtml(parts[1]) + '</span>'
       : escHtml(t);
+  }
   loadModule(mod);
 }
 window.showModule = showModule;
@@ -1150,5 +1136,28 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
     if (e.target === overlay) overlay.classList.remove('open');
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════════════
+   INICIALIZAÇÃO — fica no FIM da IIFE para garantir que todas as funções
+   e constantes (especialmente `loaded` e `loadModule`) já existam quando
+   o dashboard for carregado. Evita ReferenceError de TDZ.
+   ═══════════════════════════════════════════════════════════════════════ */
+function inicializar(session) {
+  currentUser = session?.user || null;
+  const emailEl = document.getElementById('user-email');
+  if (emailEl && currentUser) emailEl.textContent = currentUser.email;
+  setDate();
+  loadModule('dashboard');
+}
+
+if (window.__SESSION__?.user) {
+  inicializar(window.__SESSION__);
+} else {
+  (async () => {
+    const { data } = await sb.auth.getSession();
+    if (!data.session) { window.location.replace('../index.html'); return; }
+    inicializar(data.session);
+  })();
+}
 
 })();
