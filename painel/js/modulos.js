@@ -16,7 +16,7 @@ if (!window.APP || !window.CATALOGOS) {
 const { sb, diffDias, fmtDate, fmtBRL, setDate,
         badgeHtml, statusBadge, escHtml, toast, filterTable,
         v, vd, vn, vi, set } = window.APP;
-const { TIPOS_ACAO, DOCS_POR_KIT } = window.CATALOGOS;
+const { TIPOS_ACAO, DOCS_POR_KIT, TIPOS_SAL_MAT, COMARCAS_CE, VARAS_FORTALEZA, VARAS_TRF5_CE } = window.CATALOGOS;
 
 /* ── INICIALIZAÇÃO (sessão já validada pelo auth guard inline) ────────── */
 let currentUser = window.__SESSION__?.user || null;
@@ -51,6 +51,10 @@ const titles = {
   'aux-mor':  'Médicos Residentes · Auxílio-Moradia',
   'prazos-aux':'Prazos Judiciais · Auxílio-Moradia',
   cobrancas:  'Cobranças / Honorários',
+  civel:      'Ações Cíveis',
+  familia:    'Família e Sucessões',
+  consumidor: 'Consumidor',
+  saude:      'Direito à Saúde',
 };
 
 function showModule(mod) {
@@ -82,24 +86,31 @@ function loadModule(mod) {
     case 'aux-mor':    loadAux(); break;
     case 'prazos-aux': loadPraz(); break;
     case 'cobrancas':  loadCob(); break;
+    case 'civel':      loadGen('CIVEL'); break;
+    case 'familia':    loadGen('FAMILIA'); break;
+    case 'consumidor': loadGen('CONSUMIDOR'); break;
+    case 'saude':      loadGen('SAUDE'); break;
   }
 }
 
 /* ── DASHBOARD ────────────────────────────────────────────────────────── */
 async function loadDashboard() {
-  const [adm, jud, aux, sal, praz] = await Promise.all([
+  const [adm, jud, aux, sal, praz, gen] = await Promise.all([
     sb.from('processos_administrativos').select('nome_cliente,proximo_prazo,status'),
     sb.from('processos_judiciais_inss').select('nome_cliente,data_proxima_audiencia,status'),
     sb.from('auxilio_moradia').select('nome_medico,proximo_prazo,status'),
     sb.from('salario_maternidade').select('nome_cliente,data_limite_pagamento,status_guia'),
     sb.from('prazos_judiciais_auxilio').select('cliente_medico,proximo_prazo,status'),
+    sb.from('acoes_genericas').select('nome_cliente,proximo_prazo,status,area'),
   ]);
+  const AREA_LABEL = { CIVEL:'Cível', FAMILIA:'Família', CONSUMIDOR:'Consumidor', SAUDE:'Saúde' };
   const allPrazos = [
     ...(adm.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.proximo_prazo, modulo:'Adm. INSS', status:r.status })),
     ...(jud.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.data_proxima_audiencia, modulo:'Jud. INSS', status:r.status })),
     ...(aux.data||[]).map(r=>({ nome:r.nome_medico, prazo:r.proximo_prazo, modulo:'Aux. Moradia', status:r.status })),
     ...(sal.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.data_limite_pagamento, modulo:'Sal. Mat.', status:r.status_guia })),
     ...(praz.data||[]).map(r=>({ nome:r.cliente_medico, prazo:r.proximo_prazo, modulo:'Prazos Aux.', status:r.status })),
+    ...(gen.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.proximo_prazo, modulo:AREA_LABEL[r.area]||r.area, status:r.status })),
   ].map(r => ({ ...r, dias: diffDias(r.prazo) }))
    .filter(r => r.prazo)
    .sort((a,b) => (a.dias??9999)-(b.dias??9999));
@@ -489,17 +500,46 @@ window.recalcAuxMoradia = recalcAuxMoradia;
 
 /* ── INIT MODAL: SALÁRIO-MATERNIDADE ──────────────────────────────────── */
 function initSalModal() {
-  const v = document.getElementById('sal-valor');
-  v.oninput = () => {
-    const val = parseFloat(v.value || 0);
-    if (val <= 0) { document.getElementById('sal-calc-preview').innerHTML = ''; return; }
-    const r = window.CALC.calcSalarioMaternidade(val);
+  // Popula dropdown de tipos dinamicamente
+  const selTipo = document.getElementById('sal-tipo');
+  selTipo.innerHTML = '<option value="">— Selecione o tipo —</option>' +
+    TIPOS_SAL_MAT.map(t => `<option value="${t.codigo}">${escHtml(t.nome)}</option>`).join('');
+
+  const inputValor    = document.getElementById('sal-valor');
+  const inputParcelas = document.getElementById('sal-parcelas-qtd');
+  const rowParcelas   = document.getElementById('sal-parcelas-row');
+
+  function recalc() {
+    const t = TIPOS_SAL_MAT.find(x => x.codigo === selTipo.value);
+    const val = parseFloat(inputValor.value || 0);
+    const isProrrog = t?.parcelas_var;
+    const parcelas = isProrrog
+      ? parseInt(inputParcelas.value || 0, 10)
+      : (t?.parcelas || 4);
+
+    // Mostra ou esconde a linha de parcelas variáveis
+    rowParcelas.style.display = isProrrog ? '' : 'none';
+
+    // Atualiza o kit de documentos quando o tipo muda
+    if (t) {
+      const id = document.getElementById('sal-id').value || 'novo';
+      window.UI._ultimoKit = t.docs; window.UI._ultimoContainer = 'sal-docs-list';
+      carregarDocsELoad('sal', id, t.docs, 'sal-docs-list');
+    }
+
+    if (val <= 0 || !parcelas) { document.getElementById('sal-calc-preview').innerHTML = ''; return; }
+    const r = window.CALC.calcSalarioMaternidade(val, parcelas);
     document.getElementById('sal-calc-preview').innerHTML =
       r.memoria.replace(/\n/g,'<br>') +
       `<span class="destaque">Honorários: ${window.CALC.fmt(r.honorarios)}</span>`;
     set('sal-honor-total', r.honorarios.toFixed(2));
-  };
-  // docs
+  }
+
+  selTipo.onchange    = recalc;
+  inputValor.oninput  = recalc;
+  inputParcelas.oninput = recalc;
+
+  // docs (kit default genérico até o tipo ser escolhido)
   const id = document.getElementById('sal-id').value || 'novo';
   window.UI._ultimoKit = 'SAL_MAT'; window.UI._ultimoContainer = 'sal-docs-list';
   carregarDocsELoad('sal', id, 'SAL_MAT', 'sal-docs-list');
@@ -629,8 +669,14 @@ function buildPayload(type) {
     case 'sal': {
       const nome = v('sal-nome');
       if (!nome) { toast('Nome da cliente é obrigatório.', true); return null; }
+      const codTipo = v('sal-tipo');
+      const tipoSel = document.getElementById('sal-tipo')?.selectedOptions[0]?.text || null;
       return { numero_processo:v('sal-numero'), nome_cliente:nome, cpf:v('sal-cpf'),
-        dpp:vd('sal-dpp'), tipo_salario_mat:v('sal-tipo'),
+        dpp:vd('sal-dpp'),
+        tipo_salario_mat:tipoSel,                  // nome legível p/ visualização
+        tipo_salario_mat_codigo:codTipo,           // código estrutural
+        qtd_parcelas_efetivas:vi('sal-parcelas-qtd'),
+        prorrog_periodo:v('sal-prorrog-periodo'),
         valor_mensal_beneficio:vn('sal-valor'), numero_guia:v('sal-guia'),
         competencia_guia:v('sal-competencia'), data_limite_pagamento:vd('sal-data-limite'),
         status_guia:v('sal-status-guia'), data_pgto_guia:vd('sal-data-pgto'),
@@ -703,24 +749,23 @@ function editRecord(type, id) {
   document.getElementById(`modal-${type}`).classList.add('open');
   // espera o modal aparecer para inicializar campos especiais
   setTimeout(() => {
-    fillForm(type, rec);
-    // re-inicializa após preencher
-    if (type === 'aux') initAuxModalAfterFill(rec);
-    if (type === 'sal') { initSalModal(); recalcSal(rec.valor_mensal_beneficio); }
-    if (type === 'praz') initPrazModalAfterFill(rec);
-    if (type === 'adm') initAdmModal();
+    // Os modais com dropdown dinâmico precisam inicializar ANTES do fillForm
+    if (type === 'sal') initSalModal();
     if (type === 'cob') initCobModal();
+    if (type === 'adm') initAdmModal();
+
+    fillForm(type, rec);
+
+    // Dispara handlers após o preenchimento para refletir o estado
+    if (type === 'sal') {
+      document.getElementById('sal-tipo').dispatchEvent(new Event('change'));
+      document.getElementById('sal-valor').dispatchEvent(new Event('input'));
+    }
+    if (type === 'aux')  initAuxModalAfterFill(rec);
+    if (type === 'praz') initPrazModalAfterFill(rec);
   }, 0);
 }
 window.editRecord = editRecord;
-
-function recalcSal(v) {
-  if (!v) return;
-  const r = window.CALC.calcSalarioMaternidade(v);
-  document.getElementById('sal-calc-preview').innerHTML =
-    r.memoria.replace(/\n/g,'<br>') +
-    `<span class="destaque">Honorários: ${window.CALC.fmt(r.honorarios)}</span>`;
-}
 
 function initAuxModalAfterFill(rec) {
   const selArea = document.getElementById('aux-area');
@@ -800,7 +845,10 @@ function fillForm(type, r) {
     case 'sal':
       set('sal-numero', r.numero_processo); set('sal-nome', r.nome_cliente);
       set('sal-cpf', r.cpf); set('sal-dpp', r.dpp?.slice(0,10));
-      set('sal-tipo', r.tipo_salario_mat); set('sal-valor', r.valor_mensal_beneficio);
+      set('sal-tipo', r.tipo_salario_mat_codigo || '');
+      set('sal-valor', r.valor_mensal_beneficio);
+      set('sal-parcelas-qtd', r.qtd_parcelas_efetivas);
+      set('sal-prorrog-periodo', r.prorrog_periodo);
       set('sal-guia', r.numero_guia); set('sal-competencia', r.competencia_guia);
       set('sal-data-limite', r.data_limite_pagamento?.slice(0,10));
       set('sal-status-guia', r.status_guia); set('sal-data-pgto', r.data_pgto_guia?.slice(0,10));
@@ -859,6 +907,242 @@ window.deleteRecord = deleteRecord;
 
 /* ── FILTER ──────────────────────────────────────────────────────────── */
 window.filterTable = filterTable;
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MÓDULO GENÉRICO: Cível / Família / Consumidor / Saúde
+   ───────────────────────────────────────────────────────────────────────
+   Compartilha a mesma tabela Supabase (acoes_genericas) com campo "area"
+   que diferencia os 4 módulos.
+   ═══════════════════════════════════════════════════════════════════════ */
+const genCache = { CIVEL: [], FAMILIA: [], CONSUMIDOR: [], SAUDE: [] };
+
+const AREA_TO_MODULE = {
+  CIVEL: 'civel', FAMILIA: 'familia',
+  CONSUMIDOR: 'consumidor', SAUDE: 'saude',
+};
+const AREA_TO_TBODY = {
+  CIVEL: 'civel-body', FAMILIA: 'familia-body',
+  CONSUMIDOR: 'consumidor-body', SAUDE: 'saude-body',
+};
+const AREA_TO_TITULO = {
+  CIVEL: 'Nova Ação Cível',
+  FAMILIA: 'Nova Ação · Família e Sucessões',
+  CONSUMIDOR: 'Nova Ação · Consumidor',
+  SAUDE: 'Nova Ação · Direito à Saúde',
+};
+
+async function loadGen(area) {
+  const { data, error } = await sb.from('acoes_genericas').select('*')
+    .eq('area', area).order('proximo_prazo', { ascending: true, nullsFirst: false });
+  if (error) { toast('Erro ao carregar ' + area + '.', true); return; }
+  genCache[area] = data || [];
+  renderGen(area);
+}
+
+function renderGen(area) {
+  const tbody = document.getElementById(AREA_TO_TBODY[area]);
+  const lista = genCache[area];
+  if (!lista.length) {
+    tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Nenhuma ação cadastrada ainda.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = lista.map(r => {
+    const dias = diffDias(r.proximo_prazo);
+    return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)} ${escHtml(r.vara_tribunal)}">
+      <td>${badgeHtml(dias)}</td>
+      <td>${escHtml(r.numero_processo)||'—'}</td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td>${escHtml(r.parte_contraria)||'—'}</td>
+      <td>${escHtml(r.tipo_acao)||'—'}</td>
+      <td>${escHtml(r.comarca||'')}${r.vara_tribunal ? ' · '+escHtml(r.vara_tribunal):''}</td>
+      <td>${escHtml(r.fase_atual)||'—'}</td>
+      <td>${fmtBRL(r.honorarios_contratuais)}</td>
+      <td>${fmtDate(r.proximo_prazo)}</td>
+      <td>${dias !== null ? dias + ' dias' : '—'}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td class="td-actions">
+        <button class="btn btn-secondary btn-sm" onclick="editAcaoGen('${area}','${r.id}')">Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAcaoGen('${area}','${r.id}')">Del</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openAcaoGen(area) {
+  document.getElementById('form-gen').reset();
+  document.getElementById('gen-id').value = '';
+  document.getElementById('gen-area').value = area;
+  document.getElementById('modal-gen-title').textContent = AREA_TO_TITULO[area];
+  document.getElementById('gen-docs-list').innerHTML = '';
+  document.getElementById('gen-calc-preview').innerHTML =
+    '<em style="color:var(--texto-suave)">Digite o valor da causa para ver o cálculo.</em>';
+  document.getElementById('gen-prazo-preview').innerHTML = '';
+  document.getElementById('modal-gen').classList.add('open');
+  setTimeout(() => initGenModal(area), 0);
+}
+window.openAcaoGen = openAcaoGen;
+
+function initGenModal(area) {
+  // Tipos de ação da área
+  const selTipo = document.getElementById('gen-tipo-acao');
+  const tipos = TIPOS_ACAO[area] || [];
+  selTipo.innerHTML = '<option value="">— Selecione o tipo de ação —</option>' +
+    tipos.map(t => `<option value="${t.codigo}">${escHtml(t.nome)}</option>`).join('');
+
+  const selFase = document.getElementById('gen-fase');
+  selFase.innerHTML = '<option value="">— Selecione o tipo primeiro —</option>';
+
+  selTipo.onchange = () => {
+    const tipo = tipos.find(t => t.codigo === selTipo.value);
+    if (!tipo) { selFase.innerHTML = '<option value="">—</option>'; return; }
+    // Fases conforme rito
+    const fases = window.CATALOGOS.FASES_POR_RITO[tipo.rito] || [];
+    selFase.innerHTML = '<option value="">— Selecione a fase —</option>' +
+      fases.map(f => `<option value="${escHtml(f)}">${escHtml(f)}</option>`).join('');
+    // Docs sugeridos
+    const id = document.getElementById('gen-id').value || 'novo';
+    window.UI._ultimoKit = tipo.docs; window.UI._ultimoContainer = 'gen-docs-list';
+    carregarDocsELoad('gen', id, tipo.docs, 'gen-docs-list');
+  };
+
+  // Comarcas + varas (datalist)
+  document.getElementById('lista-comarcas-ce').innerHTML =
+    COMARCAS_CE.map(c => `<option value="${escHtml(c)}">`).join('');
+  document.getElementById('lista-varas').innerHTML =
+    [...VARAS_FORTALEZA, ...VARAS_TRF5_CE].map(v => `<option value="${escHtml(v)}">`).join('');
+
+  // Peças (prazo)
+  window.UI.popularPecas(document.getElementById('gen-peca'));
+  ['gen-data-intim','gen-peca','gen-fazenda'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.onchange = () => window.UI.calcularEMostrarPrazo({
+      dataIntimacaoId:'gen-data-intim', pecaId:'gen-peca',
+      fazendaId:'gen-fazenda', outputId:'gen-prazo-preview',
+      dataFatalId:'gen-prazo',
+    });
+  });
+
+  // Calculadora honorários
+  const recalc = () => {
+    const base = parseFloat(document.getElementById('gen-valor-causa').value || 0);
+    const pct  = parseFloat(document.getElementById('gen-pct-honor').value || 0) / 100;
+    if (!base || !pct) { document.getElementById('gen-calc-preview').innerHTML = ''; return; }
+    const honor = base * pct;
+    document.getElementById('gen-calc-preview').innerHTML =
+      `Valor da causa: ${window.CALC.fmt(base)} × ${(pct*100).toFixed(2)}%<br>` +
+      `<span class="destaque">Honorários sugeridos: ${window.CALC.fmt(honor)}</span>`;
+    if (!document.getElementById('gen-honor-contr').value) {
+      set('gen-honor-contr', honor.toFixed(2));
+    }
+  };
+  ['gen-valor-causa','gen-pct-honor'].forEach(id => {
+    document.getElementById(id).oninput = recalc;
+  });
+}
+
+async function saveAcaoGen() {
+  const id   = document.getElementById('gen-id').value;
+  const area = document.getElementById('gen-area').value;
+  const nome = v('gen-nome');
+  if (!nome) { toast('Nome do cliente é obrigatório.', true); return; }
+
+  const selTipo = document.getElementById('gen-tipo-acao');
+  const payload = {
+    area,
+    nome_cliente: nome,
+    cpf: v('gen-cpf'),
+    telefone: v('gen-telefone'),
+    email: v('gen-email'),
+    endereco_cliente: v('gen-endereco'),
+    parte_contraria: v('gen-parte-contraria'),
+    parte_contraria_doc: v('gen-pc-doc'),
+    parte_contraria_endereco: v('gen-pc-endereco'),
+    numero_processo: v('gen-numero'),
+    status: v('gen-status'),
+    observacoes: v('gen-obs'),
+    tipo_acao_codigo: v('gen-tipo-acao'),
+    tipo_acao: selTipo.selectedOptions[0]?.text || null,
+    fase_atual: v('gen-fase'),
+    data_distribuicao: vd('gen-data-dist'),
+    data_citacao: vd('gen-data-citac'),
+    comarca: v('gen-comarca'),
+    vara_tribunal: v('gen-vara'),
+    juiz: v('gen-juiz'),
+    fazenda_publica: document.getElementById('gen-fazenda')?.checked || false,
+    valor_causa: vn('gen-valor-causa'),
+    pct_honorarios: vn('gen-pct-honor'),
+    honorarios_contratuais: vn('gen-honor-contr'),
+    honorarios_sucumbenciais: vn('gen-honor-suc'),
+    data_intimacao: vd('gen-data-intim'),
+    peca_codigo: v('gen-peca'),
+    proximo_prazo: vd('gen-prazo'),
+    tipo_prazo: v('gen-tipo-prazo'),
+  };
+
+  let err;
+  if (id) {
+    ({ error: err } = await sb.from('acoes_genericas').update(payload).eq('id', id));
+  } else {
+    ({ error: err } = await sb.from('acoes_genericas').insert(payload));
+  }
+  if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
+  toast(id ? 'Registro atualizado!' : 'Registro criado!');
+  closeModal('gen');
+  loaded[AREA_TO_MODULE[area]] = false;
+  loadModule(AREA_TO_MODULE[area]);
+  if (loaded['dashboard']) { loaded['dashboard'] = false; loadModule('dashboard'); }
+}
+window.saveAcaoGen = saveAcaoGen;
+
+function editAcaoGen(area, id) {
+  const rec = (genCache[area] || []).find(r => r.id === id);
+  if (!rec) return;
+  document.getElementById('form-gen').reset();
+  document.getElementById('gen-id').value = id;
+  document.getElementById('gen-area').value = area;
+  document.getElementById('modal-gen-title').textContent = 'Editar Ação';
+  document.getElementById('modal-gen').classList.add('open');
+
+  set('gen-nome', rec.nome_cliente); set('gen-cpf', rec.cpf);
+  set('gen-telefone', rec.telefone); set('gen-email', rec.email);
+  set('gen-endereco', rec.endereco_cliente);
+  set('gen-parte-contraria', rec.parte_contraria);
+  set('gen-pc-doc', rec.parte_contraria_doc);
+  set('gen-pc-endereco', rec.parte_contraria_endereco);
+  set('gen-numero', rec.numero_processo);
+  set('gen-status', rec.status); set('gen-obs', rec.observacoes);
+  set('gen-comarca', rec.comarca); set('gen-vara', rec.vara_tribunal);
+  set('gen-juiz', rec.juiz);
+  if (rec.fazenda_publica) document.getElementById('gen-fazenda').checked = true;
+  set('gen-valor-causa', rec.valor_causa); set('gen-pct-honor', rec.pct_honorarios || 30);
+  set('gen-honor-contr', rec.honorarios_contratuais);
+  set('gen-honor-suc', rec.honorarios_sucumbenciais);
+  set('gen-data-intim', rec.data_intimacao?.slice(0,10));
+  set('gen-prazo', rec.proximo_prazo?.slice(0,10));
+  set('gen-tipo-prazo', rec.tipo_prazo);
+  set('gen-data-dist', rec.data_distribuicao?.slice(0,10));
+  set('gen-data-citac', rec.data_citacao?.slice(0,10));
+
+  setTimeout(() => {
+    initGenModal(area);
+    const selTipo = document.getElementById('gen-tipo-acao');
+    selTipo.value = rec.tipo_acao_codigo || '';
+    selTipo.onchange();  // dispara cascata para popular fase e docs
+    document.getElementById('gen-fase').value = rec.fase_atual || '';
+    if (rec.peca_codigo) document.getElementById('gen-peca').value = rec.peca_codigo;
+  }, 0);
+}
+window.editAcaoGen = editAcaoGen;
+
+async function deleteAcaoGen(area, id) {
+  if (!confirm('Excluir este registro? Esta ação não pode ser desfeita.')) return;
+  const { error } = await sb.from('acoes_genericas').delete().eq('id', id);
+  if (error) { toast('Erro ao excluir.', true); return; }
+  toast('Registro excluído.');
+  loaded[AREA_TO_MODULE[area]] = false;
+  loadModule(AREA_TO_MODULE[area]);
+}
+window.deleteAcaoGen = deleteAcaoGen;
 
 /* ── FECHAR MODAL CLICANDO FORA ──────────────────────────────────────── */
 document.querySelectorAll('.modal-overlay').forEach(overlay => {

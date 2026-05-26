@@ -47,19 +47,21 @@ function calcAuxMoradia(competencias) {
 }
 
 /* ── Salário-Maternidade ─────────────────────────────────────────────────
-   total = valor_mensal × 4 parcelas
+   total = valor_mensal × parcelas (padrão 4; em prorrogação, customizado)
    honor = 30% × total                                                  */
-function calcSalarioMaternidade(valorMensal) {
+function calcSalarioMaternidade(valorMensal, parcelas = 4) {
   const v = Number(valorMensal || 0);
-  const total = v * 4;
+  const p = Number(parcelas || 4);
+  const total = v * p;
   const honorarios = total * PCT_HONORARIOS;
   return {
     base: total,
     valorAcao: total,
     honorarios,
+    parcelas: p,
     memoria:
       `Valor mensal do benefício: ${fmt(v)}\n` +
-      `4 parcelas → total do benefício: ${fmt(total)}\n` +
+      `${p} parcela(s) → total do benefício: ${fmt(total)}\n` +
       `Honorários (30% sobre o total): ${fmt(honorarios)}`,
   };
 }

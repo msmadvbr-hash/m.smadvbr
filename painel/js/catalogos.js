@@ -15,6 +15,9 @@ const AREAS = [
   { codigo: 'AUX_TRF5',  nome: 'Aux-Moradia Médico · TRF5',         tribunal: 'TRF5' },
   { codigo: 'SAUDE',     nome: 'Direito à Saúde',                   tribunal: 'TJCE/TRF5' },
   { codigo: 'ADM_INSS',  nome: 'Administrativo · INSS',             tribunal: 'INSS' },
+  { codigo: 'CIVEL',     nome: 'Cível',                             tribunal: 'TJCE' },
+  { codigo: 'FAMILIA',   nome: 'Família e Sucessões',               tribunal: 'TJCE' },
+  { codigo: 'CONSUMIDOR',nome: 'Consumidor',                        tribunal: 'TJCE/JEC' },
 ];
 
 /* ── TIPOS DE AÇÃO POR ÁREA ─────────────────────────────────────────────────
@@ -44,15 +47,80 @@ const TIPOS_ACAO = {
     { codigo: 'MS_TRF5',   nome: 'Mandado de Segurança · TRF5',                  rito: 'MS',        docs: 'MS_AUX'  },
   ],
   SAUDE: [
-    { codigo: 'MEDIC',     nome: 'Fornecimento de Medicamento',                  rito: 'TUTELA',    docs: 'SAUDE'   },
-    { codigo: 'TRATAM',    nome: 'Tratamento Médico / Cirurgia',                 rito: 'TUTELA',    docs: 'SAUDE'   },
-    { codigo: 'UTI',       nome: 'Internação em UTI / Leito',                    rito: 'TUTELA',    docs: 'SAUDE'   },
-    { codigo: 'HOMECARE',  nome: 'Custeio de Home Care',                         rito: 'TUTELA',    docs: 'SAUDE'   },
-    { codigo: 'MS_SAUDE',  nome: 'Mandado de Segurança · Saúde',                 rito: 'MS',        docs: 'MS_SAUDE'},
+    { codigo: 'MEDIC',         nome: 'Fornecimento de Medicamento',                rito: 'TUTELA',    docs: 'SAUDE'      },
+    { codigo: 'TRATAM',        nome: 'Tratamento Médico / Cirurgia',               rito: 'TUTELA',    docs: 'SAUDE'      },
+    { codigo: 'UTI',           nome: 'Internação em UTI / Leito',                  rito: 'TUTELA',    docs: 'SAUDE'      },
+    { codigo: 'HOMECARE',      nome: 'Custeio de Home Care',                       rito: 'TUTELA',    docs: 'SAUDE'      },
+    { codigo: 'PROTESE',       nome: 'Fornecimento de Prótese / Órtese / OPME',    rito: 'TUTELA',    docs: 'SAUDE'      },
+    { codigo: 'EXAME',         nome: 'Realização de Exame de Alta Complexidade',   rito: 'TUTELA',    docs: 'SAUDE'      },
+    { codigo: 'PLANO_SAUDE',   nome: 'Plano de Saúde · Cobertura Negada',          rito: 'COMUM',     docs: 'PLANO_SAUDE'},
+    { codigo: 'PLANO_REAJUST', nome: 'Plano de Saúde · Reajuste Abusivo',          rito: 'COMUM',     docs: 'PLANO_SAUDE'},
+    { codigo: 'MS_SAUDE',      nome: 'Mandado de Segurança · Saúde',               rito: 'MS',        docs: 'MS_SAUDE'   },
   ],
   ADM_INSS: [
     { codigo: 'ADM_REQ',   nome: 'Requerimento Administrativo INSS',             rito: 'ADM',       docs: 'ADM_INSS'},
     { codigo: 'ADM_REC',   nome: 'Recurso CRPS / JR',                            rito: 'ADM',       docs: 'ADM_INSS'},
+  ],
+
+  /* ── CÍVEL (obrigações, responsabilidade civil, imobiliário) ─────────── */
+  CIVEL: [
+    { codigo: 'COBRANCA',       nome: 'Ação de Cobrança',                         rito: 'COMUM',     docs: 'CIVEL_COBRANCA' },
+    { codigo: 'MONITORIA',      nome: 'Ação Monitória',                           rito: 'MONITORIA', docs: 'CIVEL_MONITORIA'},
+    { codigo: 'EXEC_EXTRA',     nome: 'Execução de Título Extrajudicial',         rito: 'EXEC',      docs: 'CIVEL_EXEC'     },
+    { codigo: 'EXEC_JUDIC',     nome: 'Cumprimento de Sentença',                  rito: 'EXEC',      docs: 'CIVEL_EXEC'     },
+    { codigo: 'EMBARGOS_EXEC',  nome: 'Embargos à Execução',                      rito: 'COMUM',     docs: 'CIVEL_EXEC'     },
+    { codigo: 'BUSCA_APREENS',  nome: 'Busca e Apreensão (Dec-Lei 911/69)',       rito: 'TUTELA',    docs: 'CIVEL_BUSCA'    },
+    { codigo: 'REV_CONTR',      nome: 'Revisional de Contrato',                   rito: 'COMUM',     docs: 'CIVEL_REV_CONTR'},
+    { codigo: 'CONSIGN',        nome: 'Consignação em Pagamento',                 rito: 'COMUM',     docs: 'CIVEL_CONSIG'   },
+    { codigo: 'OBR_FAZER',      nome: 'Obrigação de Fazer / Não Fazer',           rito: 'COMUM',     docs: 'CIVEL_OBR_FAZER'},
+    { codigo: 'INDEN_MORAL',    nome: 'Indenização por Danos Morais',             rito: 'COMUM',     docs: 'CIVEL_INDEN'    },
+    { codigo: 'INDEN_MAT',      nome: 'Indenização por Danos Materiais',          rito: 'COMUM',     docs: 'CIVEL_INDEN'    },
+    { codigo: 'INDEN_ACID',     nome: 'Indenização · Acidente de Trânsito',       rito: 'COMUM',     docs: 'CIVEL_INDEN_ACID'},
+    { codigo: 'DPVAT',          nome: 'Cobrança de DPVAT',                        rito: 'COMUM',     docs: 'CIVEL_DPVAT'    },
+    { codigo: 'DESPEJO',        nome: 'Ação de Despejo',                          rito: 'COMUM',     docs: 'CIVEL_DESPEJO'  },
+    { codigo: 'LOCAT_COBR',     nome: 'Cobrança de Aluguéis e Encargos',          rito: 'COMUM',     docs: 'CIVEL_LOCAT'    },
+    { codigo: 'USUCAPIAO',      nome: 'Usucapião',                                rito: 'COMUM',     docs: 'CIVEL_USUCAPIAO'},
+    { codigo: 'REINTEGR',       nome: 'Reintegração / Manutenção de Posse',       rito: 'TUTELA',    docs: 'CIVEL_POSSE'    },
+    { codigo: 'ADJUDIC',        nome: 'Adjudicação Compulsória',                  rito: 'COMUM',     docs: 'CIVEL_ADJUDIC'  },
+    { codigo: 'ANULA_NEG',      nome: 'Anulação de Negócio Jurídico',             rito: 'COMUM',     docs: 'CIVEL_ANULA'    },
+    { codigo: 'CIVEL_OUTRO',    nome: 'Outro (especificar nas observações)',      rito: 'COMUM',     docs: 'CIVEL_GENERICO' },
+  ],
+
+  /* ── FAMÍLIA E SUCESSÕES ──────────────────────────────────────────────── */
+  FAMILIA: [
+    { codigo: 'DIVORCIO_CONS',  nome: 'Divórcio Consensual',                      rito: 'FAMILIA',   docs: 'FAM_DIVORCIO'   },
+    { codigo: 'DIVORCIO_LIT',   nome: 'Divórcio Litigioso',                       rito: 'FAMILIA',   docs: 'FAM_DIVORCIO'   },
+    { codigo: 'SEPARACAO',      nome: 'Separação Judicial',                       rito: 'FAMILIA',   docs: 'FAM_DIVORCIO'   },
+    { codigo: 'UNIAO_REC',      nome: 'Reconhecimento de União Estável',          rito: 'FAMILIA',   docs: 'FAM_UNIAO_EST'  },
+    { codigo: 'UNIAO_DISS',     nome: 'Dissolução de União Estável',              rito: 'FAMILIA',   docs: 'FAM_UNIAO_EST'  },
+    { codigo: 'ALIMENTOS',      nome: 'Ação de Alimentos',                        rito: 'FAMILIA',   docs: 'FAM_ALIMENTOS'  },
+    { codigo: 'REV_ALIM',       nome: 'Revisional de Alimentos',                  rito: 'FAMILIA',   docs: 'FAM_ALIMENTOS'  },
+    { codigo: 'EXONER_ALIM',    nome: 'Exoneração de Alimentos',                  rito: 'FAMILIA',   docs: 'FAM_ALIMENTOS'  },
+    { codigo: 'EXEC_ALIM',      nome: 'Execução de Alimentos',                    rito: 'EXEC',      docs: 'FAM_ALIMENTOS'  },
+    { codigo: 'OFER_ALIM',      nome: 'Oferta / Pedido de Alimentos Provisórios', rito: 'FAMILIA',   docs: 'FAM_ALIMENTOS'  },
+    { codigo: 'GUARDA',         nome: 'Guarda / Modificação de Guarda',           rito: 'FAMILIA',   docs: 'FAM_GUARDA'     },
+    { codigo: 'VISITAS',        nome: 'Regulamentação de Visitas',                rito: 'FAMILIA',   docs: 'FAM_GUARDA'     },
+    { codigo: 'INVEST_PAT',     nome: 'Investigação de Paternidade',              rito: 'FAMILIA',   docs: 'FAM_INVEST_PAT' },
+    { codigo: 'NEG_PAT',        nome: 'Negatória de Paternidade',                 rito: 'FAMILIA',   docs: 'FAM_INVEST_PAT' },
+    { codigo: 'CURATELA',       nome: 'Curatela / Tomada de Decisão Apoiada',     rito: 'FAMILIA',   docs: 'FAM_CURATELA'   },
+    { codigo: 'INTERDICAO',     nome: 'Interdição',                               rito: 'FAMILIA',   docs: 'FAM_CURATELA'   },
+    { codigo: 'ADOCAO',         nome: 'Adoção',                                   rito: 'FAMILIA',   docs: 'FAM_ADOCAO'     },
+    { codigo: 'INVENTARIO',     nome: 'Inventário Judicial',                      rito: 'INVENTARIO',docs: 'FAM_INVENTARIO' },
+    { codigo: 'ARROL_SUM',      nome: 'Arrolamento Sumário',                      rito: 'INVENTARIO',docs: 'FAM_INVENTARIO' },
+    { codigo: 'ALVARA_JUD',     nome: 'Alvará Judicial · Levantamento',           rito: 'COMUM',     docs: 'FAM_ALVARA'     },
+    { codigo: 'SOBREP_PARTILHA',nome: 'Sobrepartilha',                            rito: 'INVENTARIO',docs: 'FAM_INVENTARIO' },
+    { codigo: 'TESTAMENTO',     nome: 'Abertura/Cumprimento de Testamento',       rito: 'INVENTARIO',docs: 'FAM_TESTAMENTO' },
+  ],
+
+  /* ── CONSUMIDOR ────────────────────────────────────────────────────────── */
+  CONSUMIDOR: [
+    { codigo: 'NEG_INDEV',      nome: 'Inscrição Indevida em SPC/SERASA',         rito: 'COMUM',     docs: 'CONS_NEG_INDEV' },
+    { codigo: 'REPETICAO',      nome: 'Repetição de Indébito',                    rito: 'COMUM',     docs: 'CONS_REPET'     },
+    { codigo: 'VICIO_PROD',     nome: 'Vício do Produto / Serviço',               rito: 'COMUM',     docs: 'CONS_VICIO'     },
+    { codigo: 'BANCO_FRAUDE',   nome: 'Fraude Bancária / Empréstimo Indevido',    rito: 'COMUM',     docs: 'CONS_BANCO'     },
+    { codigo: 'CIA_AEREA',      nome: 'Companhia Aérea · Cancelamento/Extravio',  rito: 'COMUM',     docs: 'CONS_AEREA'     },
+    { codigo: 'TELECOM',        nome: 'Telecom · Cobrança/Serviço Indevido',      rito: 'COMUM',     docs: 'CONS_TELECOM'   },
+    { codigo: 'CONS_OUTRO',     nome: 'Outro (especificar)',                      rito: 'COMUM',     docs: 'CIVEL_GENERICO' },
   ],
 };
 
@@ -94,6 +162,45 @@ const FASES_POR_RITO = {
     'Perícia médica designada','Perícia realizada',
     'Deferido','Indeferido','Recurso interposto',
     'Aguardando análise CRPS','Decisão CRPS','Implantado','Arquivado',
+  ],
+  COMUM: [
+    'Distribuído','Conclusos ao despacho inicial','Despacho inicial / Emenda',
+    'Citação do réu','Audiência de conciliação (art. 334)','Contestação','Réplica',
+    'Especificação de provas','Decisão saneadora','Audiência de instrução',
+    'Memoriais','Conclusos para sentença','Sentença','Embargos de Declaração',
+    'Apelação','Contrarrazões','Conclusos TJCE','Acórdão',
+    'Recurso Especial/Extraordinário','Trânsito em julgado',
+    'Cumprimento de sentença','Impugnação ao cumprimento',
+    'Penhora','Avaliação','Leilão','Alvará/Levantamento','Arquivado',
+  ],
+  EXEC: [
+    'Distribuído','Despacho inicial','Citação para pagar (3 dias)',
+    'Penhora online (SISBAJUD)','Penhora de bens','Avaliação',
+    'Embargos do executado','Impugnação ao cumprimento de sentença',
+    'Suspensão por ausência de bens','Audiência de conciliação',
+    'Adjudicação / Alienação / Leilão','Quitação','Alvará','Arquivado',
+  ],
+  MONITORIA: [
+    'Distribuído','Despacho inicial','Citação para pagamento (15 dias)',
+    'Embargos monitórios','Conversão em título executivo',
+    'Cumprimento de sentença','Penhora','Avaliação','Alvará','Arquivado',
+  ],
+  FAMILIA: [
+    'Distribuído','Despacho inicial','Vista ao MP (se interesse de incapaz)',
+    'Citação','Audiência de conciliação','Contestação','Réplica',
+    'Estudo psicossocial','Audiência de instrução',
+    'Manifestação do MP','Sentença','Embargos de Declaração',
+    'Apelação','Contrarrazões','Acórdão','Trânsito em julgado',
+    'Cumprimento de sentença','Expedição de mandado','Arquivado',
+  ],
+  INVENTARIO: [
+    'Distribuído','Nomeação do inventariante','Termo de compromisso',
+    'Primeiras declarações','Citação dos interessados',
+    'Impugnação às primeiras declarações','Avaliação dos bens',
+    'Manifestação da Fazenda Estadual (ITCMD)','Cálculo do ITCMD',
+    'Pagamento do ITCMD','Últimas declarações','Esboço da partilha',
+    'Sentença de partilha / adjudicação','Trânsito em julgado',
+    'Expedição de formal / carta de adjudicação','Arquivado',
   ],
 };
 
@@ -256,7 +363,400 @@ const DOCS_POR_KIT = {
     'Comprovação de carência (se exigida)',
     'Laudos médicos (se benefício por incapacidade)',
   ],
+
+  /* ── SALÁRIO-MATERNIDADE — variações por categoria ────────────────────── */
+  SAL_MAT_CLT: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'CTPS digitalizada (todas as páginas)','Carteira de Trabalho Digital (PDF do Gov.br)',
+    'Certidão de nascimento do(a) RN ou atestado médico DPP',
+    'Declaração do empregador (afastamento maternidade)',
+    'Holerites dos últimos 12 meses',
+    'CNIS atualizado','Indeferimento administrativo INSS (DER)',
+    'Declaração de hipossuficiência',
+  ],
+  SAL_MAT_RURAL: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Certidão de nascimento do(a) RN','CNIS atualizado',
+    'Declaração do Sindicato dos Trabalhadores Rurais',
+    'CCIR (Certificado de Cadastro de Imóvel Rural)','ITR',
+    'Notas de produtor rural','Declaração de exercício de atividade rural',
+    'Comprovantes de venda de produção','Bloco de produtor',
+    'Indeferimento administrativo INSS (DER)','Declaração de hipossuficiência',
+  ],
+  SAL_MAT_MEI: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'CCMEI (Certificado da Condição de MEI)',
+    'DAS-MEI pagas dos últimos 12 meses (PGMEI)',
+    'Declaração Anual MEI (DASN-SIMEI)',
+    'Certidão de nascimento do(a) RN','CNIS atualizado',
+    'Indeferimento administrativo INSS (DER)','Declaração de hipossuficiência',
+  ],
+  SAL_MAT_DESEMP: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'CTPS digitalizada (com data da rescisão)','TRCT / homologação',
+    'CNIS atualizado','Certidão de nascimento do(a) RN',
+    'Comprovação do período de graça (art. 15 Lei 8.213/91)',
+    'Comprovantes de busca por emprego (se em prorrogação do período de graça)',
+    'Indeferimento administrativo INSS (DER)','Declaração de hipossuficiência',
+  ],
+  SAL_MAT_CI: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'GPS / Carnê de contribuição (12 últimas)','Comprovantes de pagamento',
+    'CNIS atualizado','Certidão de nascimento do(a) RN',
+    'Contrato/declaração da atividade autônoma',
+    'Indeferimento administrativo INSS (DER)','Declaração de hipossuficiência',
+  ],
+  SAL_MAT_FAC: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'GPS de contribuinte facultativa (12 últimas)',
+    'CNIS atualizado','Certidão de nascimento do(a) RN',
+    'Declaração de que não exerce atividade remunerada (se aplicável)',
+    'Indeferimento administrativo INSS (DER)','Declaração de hipossuficiência',
+  ],
+  SAL_MAT_2BEN: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'CTPS digitalizada (vínculo CLT)','Holerites dos últimos 12 meses',
+    'Declaração do empregador (salário-maternidade já pago pela empresa)',
+    'GPS de contribuinte individual (12 últimas)',
+    'CNIS atualizado (mostrando os dois vínculos)',
+    'Certidão de nascimento do(a) RN',
+    'Comprovação da atividade autônoma concomitante',
+    'Indeferimento administrativo INSS (DER)',
+    'Declaração de hipossuficiência',
+    'Memorial sobre o direito ao 2º benefício (jurisprudência STJ)',
+  ],
+  SAL_MAT_ADOCAO: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Termo de guarda judicial para fins de adoção',
+    'Sentença de adoção (se concluída)',
+    'CTPS/CNIS','Comprovação da qualidade de segurada',
+    'Indeferimento administrativo INSS (DER)','Declaração de hipossuficiência',
+  ],
+  SAL_MAT_PRORROG: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Carta de concessão do salário-maternidade original',
+    'Laudo médico circunstanciado com CID (do RN ou da mãe)',
+    'Atestados de internação (com datas)',
+    'Declaração hospitalar/AIH','Relatório médico de alta',
+    'Indeferimento do pedido administrativo de prorrogação',
+    'Memorial jurídico (Lei 13.301/2016, LC 146/2014, jurisprudência)',
+    'Declaração de hipossuficiência',
+  ],
+
+  /* ── CÍVEL — kits ──────────────────────────────────────────────────────── */
+  CIVEL_COBRANCA: [
+    'Procuração','Contrato de honorários','RG e CPF do cliente','Comprovante de endereço',
+    'Contrato/documento que originou a dívida','Notas fiscais / faturas',
+    'Comprovantes de tentativa de cobrança extrajudicial',
+    'Memorial de cálculo (principal + juros + correção)',
+    'Procuração e qualificação do devedor (se PJ: cartão CNPJ + contrato social)',
+  ],
+  CIVEL_MONITORIA: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Prova escrita sem eficácia de título executivo (cheque prescrito, contrato, e-mail, etc.)',
+    'Memorial de cálculo atualizado',
+    'Comprovantes da relação obrigacional',
+  ],
+  CIVEL_EXEC: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Título executivo (extrajudicial: contrato, nota promissória, cheque, CCB; judicial: sentença com trânsito)',
+    'Memorial de cálculo atualizado (principal + juros + multa + honorários)',
+    'Qualificação completa do executado (CPF/CNPJ + endereço)',
+    'Indicação de bens à penhora (se conhecidos)',
+  ],
+  CIVEL_BUSCA: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Contrato de alienação fiduciária / financiamento',
+    'Notificação extrajudicial com AR comprovando a constituição em mora',
+    'Histórico de inadimplência','Documentos do bem (CRLV, nota fiscal)',
+    'Memorial de cálculo','Procuração',
+  ],
+  CIVEL_REV_CONTR: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Contrato bancário/financeiro completo (com todas as cláusulas)',
+    'Extratos bancários do período','Boletos pagos',
+    'Cálculo das taxas pretendidas vs. praticadas',
+    'Demonstrativo de capitalização / encargos abusivos',
+  ],
+  CIVEL_CONSIG: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Comprovante da recusa do credor em receber',
+    'Comprovação do valor a ser consignado',
+    'Notificação extrajudicial','Comprovante de depósito inicial',
+  ],
+  CIVEL_OBR_FAZER: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Contrato ou documento que estabelece a obrigação',
+    'Comprovantes da recusa em cumprir',
+    'Notificação extrajudicial',
+    'Documentos do prejuízo causado pelo descumprimento',
+  ],
+  CIVEL_INDEN: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Descrição minuciosa dos fatos (com data, local, testemunhas)',
+    'Boletim de Ocorrência (se cabível)',
+    'Documentos comprobatórios do dano (orçamentos, notas, fotos)',
+    'Receituários e laudos médicos (se dano à saúde)',
+    'Mensagens, e-mails, prints comprobatórios',
+    'Rol de testemunhas',
+  ],
+  CIVEL_INDEN_ACID: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'CNH da vítima','CRLV do veículo','Documentos do veículo',
+    'Boletim de Acidente de Trânsito (BAT/PM)',
+    'Laudo do IPL/IC (se houver)',
+    'Orçamentos de conserto (mínimo 3)','Notas fiscais de reparo',
+    'Laudos e atestados médicos','Receituários e exames',
+    'Fotos do veículo e do local','Mensagens entre as partes',
+    'Apólice de seguro (se houver)','Rol de testemunhas',
+  ],
+  CIVEL_DPVAT: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'BAT/PM','Laudo do IML','Atestados e laudos médicos',
+    'Receituários','Indeferimento administrativo da Seguradora Líder',
+    'CNH (se aplicável)','Comprovante de pagamento DPVAT (se possível)',
+  ],
+  CIVEL_DESPEJO: [
+    'Procuração','Contrato de honorários','RG e CPF do locador','Comprovante de endereço',
+    'Contrato de locação','Notificação extrajudicial de desocupação',
+    'Comprovantes de inadimplência (boletos vencidos)',
+    'Memorial de cálculo dos aluguéis em atraso',
+    'Cartão CNPJ (se locador PJ)',
+  ],
+  CIVEL_LOCAT: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Contrato de locação','Recibos pagos / boletos vencidos',
+    'Memorial de cálculo (aluguéis + encargos + multa)',
+    'Notificação extrajudicial',
+  ],
+  CIVEL_USUCAPIAO: [
+    'Procuração','Contrato de honorários','RG e CPF de todos os possuidores',
+    'Comprovante de endereço atual','Certidão de matrícula do imóvel (Cartório de Registro)',
+    'Planta e memorial descritivo (assinados por profissional habilitado)',
+    'ART/RRT do profissional','Certidão negativa do Município (IPTU)',
+    'Comprovantes de posse mansa e pacífica (contas em nome, IPTU, fotos antigas)',
+    'Declaração de confrontantes','Qualificação dos confrontantes',
+    'Tempo de posse comprovado','Rol de testemunhas',
+  ],
+  CIVEL_POSSE: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Documentos que comprovem a posse anterior',
+    'Comprovantes do esbulho/turbação (BO, fotos, mensagens, testemunhas)',
+    'Notificação extrajudicial ao invasor',
+    'Croqui/planta do imóvel','Rol de testemunhas',
+  ],
+  CIVEL_ADJUDIC: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Contrato de promessa de compra e venda',
+    'Comprovante de quitação integral do preço',
+    'Notificação extrajudicial ao promitente vendedor',
+    'Certidão de matrícula do imóvel atualizada',
+  ],
+  CIVEL_ANULA: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Documento (contrato/escritura) cuja anulação se pretende',
+    'Provas do vício de consentimento (erro, dolo, coação)',
+    'Laudos médicos (se incapacidade)','Mensagens, e-mails, testemunhas',
+  ],
+  CIVEL_GENERICO: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Documentos comprobatórios do direito alegado',
+    'Memorial fático e jurídico','Rol de testemunhas',
+    'Declaração de hipossuficiência (se gratuidade)',
+  ],
+
+  /* ── FAMÍLIA — kits ───────────────────────────────────────────────────── */
+  FAM_DIVORCIO: [
+    'Procuração de ambos os cônjuges (se consensual)',
+    'Contrato de honorários','RG e CPF dos cônjuges','Comprovante de endereço',
+    'Certidão de casamento atualizada (≤ 90 dias)',
+    'Pacto antenupcial (se houver)','Certidão de nascimento dos filhos',
+    'Documentos dos bens a partilhar (matrículas, CRLV, extratos)',
+    'Comprovantes de renda dos cônjuges (para alimentos)',
+    'Acordo escrito sobre guarda/alimentos/visitas/partilha (se consensual)',
+  ],
+  FAM_UNIAO_EST: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Certidão de nascimento dos filhos comuns','Fotos do casal',
+    'Comprovantes de coabitação (contas em nome dos dois, endereço comum)',
+    'Declarações de testemunhas','Plano de saúde / dependência fiscal IR',
+    'Documentos dos bens adquiridos durante a união',
+  ],
+  FAM_ALIMENTOS: [
+    'Procuração','Contrato de honorários','RG e CPF do(a) requerente/representante',
+    'Certidão de nascimento da criança','Comprovante de endereço',
+    'CTPS/holerites/IR do alimentante (se conhecidos)','Comprovantes de gastos da criança',
+    'Despesas escolares, médicas, alimentação, vestuário',
+    'Provas da paternidade/maternidade (se necessário)',
+  ],
+  FAM_GUARDA: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Certidão de nascimento dos filhos',
+    'Documentos que comprovem ambiente familiar adequado',
+    'Comprovantes de renda do guardião','Comprovantes escolares',
+    'Laudos psicológicos (se houver)','Testemunhas',
+    'Estudo social anterior (se houver)',
+  ],
+  FAM_INVEST_PAT: [
+    'Procuração','Contrato de honorários','RG e CPF da mãe/representante',
+    'Certidão de nascimento da criança','Comprovante de endereço',
+    'Fotos do suposto pai com a criança','Mensagens, e-mails, redes sociais',
+    'Comprovantes de pagamentos feitos pelo suposto pai',
+    'Declarações de testemunhas','Endereço atual do suposto pai',
+  ],
+  FAM_CURATELA: [
+    'Procuração','Contrato de honorários','RG e CPF do interditando',
+    'RG e CPF do requerente curador','Comprovante de endereço',
+    'Certidão de nascimento/casamento do interditando',
+    'Laudo médico detalhado (com CID) atestando a incapacidade',
+    'Receituários e exames','Histórico clínico',
+    'Comprovação de parentesco do requerente',
+  ],
+  FAM_ADOCAO: [
+    'Procuração','Contrato de honorários','RG e CPF dos adotantes',
+    'Certidão de nascimento dos adotantes','Certidão de casamento (se aplicável)',
+    'Comprovante de endereço','Comprovantes de renda',
+    'Certidões negativas criminais (federal e estadual)',
+    'Atestado de sanidade física e mental','Habilitação no CNA',
+    'Termo de consentimento dos pais biológicos (se aplicável)',
+    'Documentos do adotando',
+  ],
+  FAM_INVENTARIO: [
+    'Procuração do inventariante','Contrato de honorários',
+    'Certidão de óbito','RG e CPF do falecido e dos herdeiros',
+    'Certidão de casamento (se casado)','Pacto antenupcial',
+    'Certidões de nascimento dos filhos','Testamento (se houver)',
+    'Documentos de todos os bens: matrículas atualizadas dos imóveis,',
+    '  CRLV de veículos, extratos bancários, escrituras',
+    'CND da Receita Federal do espólio','CND municipal e estadual',
+    'Última declaração de IR do falecido','Avaliação dos bens',
+  ],
+  FAM_ALVARA: [
+    'Procuração','Contrato de honorários','RG e CPF dos requerentes',
+    'Certidão de óbito','Comprovante do bem a levantar (extrato, contrato)',
+    'Declaração de inexistência de outros bens (se aplicável)',
+    'Documentos de herdeiros (certidões)',
+  ],
+  FAM_TESTAMENTO: [
+    'Procuração','Contrato de honorários','Certidão de óbito',
+    'Testamento original ou cópia autenticada','RG e CPF dos herdeiros e legatários',
+    'Documentos dos bens objeto do testamento',
+  ],
+
+  /* ── CONSUMIDOR — kits ────────────────────────────────────────────────── */
+  CONS_NEG_INDEV: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Consulta SPC/SERASA com a inscrição indevida',
+    'Comprovantes da inexistência da dívida (boletos pagos, contrato encerrado)',
+    'Histórico de tentativa de solução extrajudicial (e-mails, protocolos)',
+    'Comprovação do dano (negativa de crédito, etc.)',
+  ],
+  CONS_REPET: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Comprovantes dos pagamentos indevidos','Memorial de cálculo (dobro art. 42 CDC)',
+    'Histórico da relação consumerista',
+  ],
+  CONS_VICIO: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Nota fiscal do produto/serviço','Garantia (se houver)',
+    'Comunicações com o fornecedor (e-mails, atendimentos, protocolos)',
+    'Laudos técnicos (se aplicável)','Fotos do vício',
+    'Comprovantes de prejuízo',
+  ],
+  CONS_BANCO: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Extratos bancários demonstrando a fraude/empréstimo indevido',
+    'Comunicações ao banco (protocolos de contestação)',
+    'Boletim de Ocorrência (em caso de fraude)',
+    'Documentos pessoais (mostrar que não fez a operação)',
+  ],
+  CONS_AEREA: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Bilhete/voucher','Confirmação de reserva','Cartão de embarque',
+    'E-mail/SMS de cancelamento ou atraso',
+    'Comprovantes de despesas extras (hotel, refeição, transporte)',
+    'Comunicações com a companhia','Reclamação no Anac (se houver)',
+  ],
+  CONS_TELECOM: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Contrato com a operadora','Faturas com cobranças indevidas',
+    'Protocolos de reclamação','Reclamação na Anatel (se houver)',
+    'Mensagens e gravações (se cabível)',
+  ],
+
+  /* ── SAÚDE — kit complementar para Plano de Saúde ─────────────────────── */
+  PLANO_SAUDE: [
+    'Procuração','Contrato de honorários','RG e CPF','Comprovante de endereço',
+    'Carteirinha do plano','Contrato do plano de saúde',
+    'Negativa expressa por escrito (e-mail, protocolo)',
+    'Solicitação médica detalhada (com CID, justificativa, urgência)',
+    'Laudos, exames e prontuário','Receituários',
+    'Comprovantes do prejuízo (orçamentos particulares)',
+    'Comprovação dos pagamentos do plano (mensalidades em dia)',
+  ],
 };
+
+/* ── SALÁRIO-MATERNIDADE — TIPOS DETALHADOS ─────────────────────────────
+   parcelas: número de parcelas mensais do benefício para fins de cálculo.
+   parcelas_var: true → o usuário precisa informar o nº de parcelas
+                       (caso de prorrogação por internação).
+   docs: kit de documentos sugeridos.                                       */
+const TIPOS_SAL_MAT = [
+  { codigo: 'CLT',         nome: 'Empregada CLT (Urbana)',                  parcelas: 4,   parcelas_var: false, docs: 'SAL_MAT_CLT'     },
+  { codigo: 'RURAL',       nome: 'Segurada Especial (Rural)',               parcelas: 4,   parcelas_var: false, docs: 'SAL_MAT_RURAL'   },
+  { codigo: 'MEI',         nome: 'MEI (Microempreendedora Individual)',     parcelas: 4,   parcelas_var: false, docs: 'SAL_MAT_MEI'     },
+  { codigo: 'DESEMP',      nome: 'Desempregada (Período de Graça)',         parcelas: 4,   parcelas_var: false, docs: 'SAL_MAT_DESEMP'  },
+  { codigo: 'CI',          nome: 'Contribuinte Individual / Autônoma',      parcelas: 4,   parcelas_var: false, docs: 'SAL_MAT_CI'      },
+  { codigo: 'FAC',         nome: 'Facultativa',                             parcelas: 4,   parcelas_var: false, docs: 'SAL_MAT_FAC'     },
+  { codigo: '2BEN',        nome: '2º Salário-Maternidade (CI concomitante CLT)', parcelas: 4, parcelas_var: false, docs: 'SAL_MAT_2BEN' },
+  { codigo: 'ADOCAO',      nome: 'Adoção / Guarda Judicial',                parcelas: 4,   parcelas_var: false, docs: 'SAL_MAT_ADOCAO'  },
+  { codigo: 'PRORROG_RN',  nome: 'Prorrogação · Internação do RN',          parcelas: null,parcelas_var: true,  docs: 'SAL_MAT_PRORROG' },
+  { codigo: 'PRORROG_MAE', nome: 'Prorrogação · Internação da Mãe',         parcelas: null,parcelas_var: true,  docs: 'SAL_MAT_PRORROG' },
+];
+
+/* ── COMARCAS / VARAS COMUNS NO CEARÁ (para autocomplete) ──────────────── */
+const COMARCAS_CE = [
+  'Comarca de Fortaleza','Comarca de Caucaia','Comarca de Maracanaú',
+  'Comarca de Maranguape','Comarca de Aquiraz','Comarca de Eusébio',
+  'Comarca de Pacatuba','Comarca de Pacajus','Comarca de Sobral',
+  'Comarca de Juazeiro do Norte','Comarca de Crato','Comarca de Iguatu',
+  'Comarca de Quixadá','Comarca de Itapipoca','Comarca de Russas',
+  'Comarca de Limoeiro do Norte','Comarca de Crateús','Comarca de Tianguá',
+];
+
+const VARAS_FORTALEZA = [
+  '1ª Vara de Família','2ª Vara de Família','3ª Vara de Família','4ª Vara de Família',
+  '5ª Vara de Família','6ª Vara de Família','7ª Vara de Família',
+  '1ª Vara de Sucessões','2ª Vara de Sucessões',
+  '1ª Vara Cível','2ª Vara Cível','3ª Vara Cível','4ª Vara Cível',
+  '5ª Vara Cível','6ª Vara Cível','7ª Vara Cível','8ª Vara Cível',
+  '9ª Vara Cível','10ª Vara Cível','11ª Vara Cível','12ª Vara Cível',
+  '13ª Vara Cível','14ª Vara Cível','15ª Vara Cível','16ª Vara Cível',
+  '1ª Vara da Fazenda Pública','2ª Vara da Fazenda Pública',
+  '3ª Vara da Fazenda Pública','4ª Vara da Fazenda Pública','5ª Vara da Fazenda Pública',
+  'Vara Única de Recuperação Judicial',
+  '1ª Vara do Juizado Especial Cível','2ª Vara do Juizado Especial Cível',
+  '1ª Vara do Juizado Especial da Fazenda Pública',
+  '2ª Vara do Juizado Especial da Fazenda Pública',
+];
+
+const VARAS_TRF5_CE = [
+  '1ª Vara Federal de Fortaleza','2ª Vara Federal de Fortaleza',
+  '3ª Vara Federal de Fortaleza','4ª Vara Federal de Fortaleza',
+  '5ª Vara Federal de Fortaleza','6ª Vara Federal de Fortaleza',
+  '7ª Vara Federal de Fortaleza','8ª Vara Federal de Fortaleza',
+  '9ª Vara Federal de Fortaleza','10ª Vara Federal de Fortaleza',
+  '11ª Vara Federal de Fortaleza','12ª Vara Federal de Fortaleza',
+  '13ª Vara Federal de Fortaleza','14ª Vara Federal de Fortaleza',
+  '15ª Vara Federal de Fortaleza','16ª Vara Federal de Fortaleza',
+  '17ª Vara Federal de Fortaleza','18ª Vara Federal de Fortaleza',
+  '19ª Vara Federal de Fortaleza','20ª Vara Federal de Fortaleza',
+  '21ª Vara Federal de Fortaleza (JEF)','22ª Vara Federal de Fortaleza (JEF)',
+  '23ª Vara Federal de Fortaleza (JEF)','24ª Vara Federal de Fortaleza (JEF)',
+  '25ª Vara Federal de Fortaleza (JEF)','26ª Vara Federal de Fortaleza (JEF)',
+  '27ª Vara Federal de Fortaleza (JEF)','28ª Vara Federal de Fortaleza (JEF)',
+  '29ª Vara Federal (Sobral)','30ª Vara Federal (Juazeiro do Norte)',
+];
 
 /* ── PEÇAS PROCESSUAIS E SEUS PRAZOS LEGAIS ─────────────────────────────
    contagem: 'uteis' (CPC, dias úteis) ou 'corridos' (mandado segurança etc.)
@@ -285,6 +785,16 @@ const PECAS = [
   { codigo: 'MANIF_GERAL',     nome: 'Manifestação geral (despacho)',            dias: 5,  contagem: 'uteis',  dobro_fazenda: true  },
   { codigo: 'REC_ADM_INSS',    nome: 'Recurso administrativo INSS (CRPS/JR)',    dias: 30, contagem: 'corridos', dobro_fazenda: false },
   { codigo: 'CUMPR_EXIG',      nome: 'Cumprimento de exigência (INSS)',          dias: 30, contagem: 'corridos', dobro_fazenda: false },
+  /* ── Cível e Família ─────────────────────────────────────────────────── */
+  { codigo: 'EMB_MONITOR',     nome: 'Embargos Monitórios',                      dias: 15, contagem: 'uteis',  dobro_fazenda: true  },
+  { codigo: 'EMB_EXEC',        nome: 'Embargos à Execução',                      dias: 15, contagem: 'uteis',  dobro_fazenda: true  },
+  { codigo: 'CONT_BUSCA',      nome: 'Contestação · Busca e Apreensão',          dias: 15, contagem: 'uteis',  dobro_fazenda: false },
+  { codigo: 'PURG_MORA',       nome: 'Purgação da Mora (Busca e Apreensão)',     dias: 5,  contagem: 'uteis',  dobro_fazenda: false },
+  { codigo: 'PRIM_DECL',       nome: 'Primeiras Declarações (Inventário)',       dias: 20, contagem: 'corridos', dobro_fazenda: false },
+  { codigo: 'ULT_DECL',        nome: 'Últimas Declarações (Inventário)',         dias: 15, contagem: 'corridos', dobro_fazenda: false },
+  { codigo: 'IMPUG_PRIM_DEC',  nome: 'Impugnação às Primeiras Declarações',      dias: 15, contagem: 'uteis',  dobro_fazenda: false },
+  { codigo: 'JEC_DEFESA',      nome: 'Defesa no JEC (até audiência)',            dias: 0,  contagem: 'uteis',  dobro_fazenda: false },
+  { codigo: 'JEC_REC',         nome: 'Recurso Inominado (JEC art. 41)',          dias: 10, contagem: 'uteis',  dobro_fazenda: false },
 ];
 
 /* ── FERIADOS NACIONAIS + ESTADUAIS CE + FORTALEZA ─────────────────────────
@@ -315,6 +825,7 @@ function emRecessoForense(date) {
 /* ── EXPORTAÇÃO GLOBAL ─────────────────────────────────────────────────── */
 window.CATALOGOS = {
   AREAS, TIPOS_ACAO, FASES_POR_RITO, DOCS_POR_KIT, PECAS, FERIADOS, emRecessoForense,
+  TIPOS_SAL_MAT, COMARCAS_CE, VARAS_FORTALEZA, VARAS_TRF5_CE,
 };
 
 })();

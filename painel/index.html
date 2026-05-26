@@ -32,6 +32,14 @@
     <a class="nav-item" onclick="showModule('aux-mor')"><span class="icon">🏥</span> Médicos Residentes</a>
     <a class="nav-item" onclick="showModule('prazos-aux')"><span class="icon">📅</span> Prazos Judiciais</a>
 
+    <div class="sidebar-section">Cível</div>
+    <a class="nav-item" onclick="showModule('civel')"><span class="icon">⚖️</span> Ações Cíveis</a>
+    <a class="nav-item" onclick="showModule('familia')"><span class="icon">👨‍👩‍👧</span> Família e Sucessões</a>
+    <a class="nav-item" onclick="showModule('consumidor')"><span class="icon">🛒</span> Consumidor</a>
+
+    <div class="sidebar-section">Saúde</div>
+    <a class="nav-item" onclick="showModule('saude')"><span class="icon">🏥</span> Direito à Saúde</a>
+
     <div class="sidebar-section">Financeiro</div>
     <a class="nav-item" onclick="showModule('cobrancas')"><span class="icon">💰</span> Cobranças / Honorários</a>
   </nav>
@@ -161,6 +169,82 @@
           <table>
             <thead><tr><th>⚡</th><th>Nº Proc.</th><th>Cliente/Médico</th><th>Tipo Ação</th><th>Vara</th><th>Fase</th><th>Prazo</th><th>Peça</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead>
             <tbody id="praz-body"><tr><td colspan="11" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AÇÕES CÍVEIS -->
+    <div class="module" id="mod-civel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Ações Cíveis</div>
+          <button class="btn btn-primary" onclick="openAcaoGen('CIVEL')">+ Nova Ação Cível</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar por nome, CPF, processo, vara…" oninput="filterTable('civel-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>Parte Contrária</th><th>Tipo Ação</th><th>Vara/Comarca</th><th>Fase</th><th>Honorários</th><th>Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="civel-body"><tr><td colspan="12" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- FAMÍLIA E SUCESSÕES -->
+    <div class="module" id="mod-familia">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Família e Sucessões</div>
+          <button class="btn btn-primary" onclick="openAcaoGen('FAMILIA')">+ Nova Ação · Família</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar…" oninput="filterTable('familia-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>Parte Contrária</th><th>Tipo Ação</th><th>Vara/Comarca</th><th>Fase</th><th>Honorários</th><th>Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="familia-body"><tr><td colspan="12" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSUMIDOR -->
+    <div class="module" id="mod-consumidor">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Consumidor</div>
+          <button class="btn btn-primary" onclick="openAcaoGen('CONSUMIDOR')">+ Nova Ação · Consumidor</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar…" oninput="filterTable('consumidor-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>Parte Contrária</th><th>Tipo Ação</th><th>Vara/Comarca</th><th>Fase</th><th>Honorários</th><th>Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="consumidor-body"><tr><td colspan="12" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIREITO À SAÚDE -->
+    <div class="module" id="mod-saude">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Direito à Saúde</div>
+          <button class="btn btn-primary" onclick="openAcaoGen('SAUDE')">+ Nova Ação · Saúde</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar…" oninput="filterTable('saude-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>Parte Contrária</th><th>Tipo Ação</th><th>Vara/Comarca</th><th>Fase</th><th>Honorários</th><th>Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="saude-body"><tr><td colspan="12" class="loading">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -353,15 +437,13 @@
           </div>
           <div class="form-row">
             <div class="form-group"><label>Tipo de Salário-Maternidade</label>
-              <select id="sal-tipo">
-                <option value="">— Selecione —</option>
-                <option>Salário-Maternidade (Urbano)</option>
-                <option>Salário-Maternidade (Rural)</option>
-                <option>Salário-Maternidade (MEI)</option>
-                <option>Salário-Maternidade (Desempregada)</option>
-              </select>
+              <select id="sal-tipo"><option value="">— Selecione —</option></select>
             </div>
             <div class="form-group"><label>Valor Mensal Benefício (R$)</label><input type="number" id="sal-valor" step="0.01" min="0"></div>
+          </div>
+          <div class="form-row" id="sal-parcelas-row" style="display:none">
+            <div class="form-group"><label>Nº de Parcelas (prorrogação)</label><input type="number" id="sal-parcelas-qtd" min="1" step="1" placeholder="Ex: 2 (60 dias adicionais)"></div>
+            <div class="form-group"><label>Período da Prorrogação</label><input type="text" id="sal-prorrog-periodo" placeholder="Ex: 15/03 a 15/05"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Nº Guia</label><input type="text" id="sal-guia"></div>
@@ -604,6 +686,149 @@
   </div>
 </div>
 
+<!-- Modal Universal: Ação Genérica (Cível / Família / Consumidor / Saúde) -->
+<div class="modal-overlay" id="modal-gen">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-gen-title">Nova Ação</div>
+      <button class="modal-close" onclick="closeModal('gen')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs" id="tabs-gen">
+        <button type="button" class="tab active" onclick="UI.ativarTab('tabs-gen','pane-gen',0)">Cliente</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-gen','pane-gen',1)">Ação e Fase</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-gen','pane-gen',2)">Vara / Comarca</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-gen','pane-gen',3)">Honorários</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-gen','pane-gen',4)">Prazo</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-gen','pane-gen',5)">Documentos</button>
+      </div>
+
+      <!-- TAB: Cliente -->
+      <div class="tab-pane pane-gen active">
+        <form id="form-gen">
+          <input type="hidden" id="gen-id">
+          <input type="hidden" id="gen-area">
+          <div class="form-row">
+            <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="gen-nome" required></div>
+            <div class="form-group"><label>CPF / CNPJ</label><input type="text" id="gen-cpf"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Telefone</label><input type="text" id="gen-telefone" placeholder="(85) 9 0000-0000"></div>
+            <div class="form-group"><label>E-mail</label><input type="email" id="gen-email"></div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group"><label>Endereço do cliente</label><input type="text" id="gen-endereco"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Parte Contrária</label><input type="text" id="gen-parte-contraria" placeholder="Réu / Requerido / Executado"></div>
+            <div class="form-group"><label>CPF/CNPJ da Parte Contrária</label><input type="text" id="gen-pc-doc"></div>
+          </div>
+          <div class="form-row full">
+            <div class="form-group"><label>Endereço da Parte Contrária</label><input type="text" id="gen-pc-endereco"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Nº do Processo</label><input type="text" id="gen-numero"></div>
+            <div class="form-group"><label>Status</label>
+              <select id="gen-status">
+                <option>Em andamento</option>
+                <option>Aguardando documentos</option>
+                <option>Aguardando audiência</option>
+                <option>Aguardando sentença</option>
+                <option>🟢 Procedente / Acordo</option>
+                <option>Improcedente</option>
+                <option>Arquivado</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row full"><div class="form-group"><label>Observações</label><textarea id="gen-obs"></textarea></div></div>
+        </form>
+      </div>
+
+      <!-- TAB: Ação e Fase -->
+      <div class="tab-pane pane-gen">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tipo de Ação</label>
+            <select id="gen-tipo-acao"></select>
+          </div>
+          <div class="form-group">
+            <label>Fase Processual</label>
+            <select id="gen-fase"></select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Data de Distribuição</label><input type="date" id="gen-data-dist"></div>
+          <div class="form-group"><label>Data de Citação (se houver)</label><input type="date" id="gen-data-citac"></div>
+        </div>
+        <p style="font-size:.8rem; color:var(--texto-suave); margin-top:.6rem">
+          Os tipos de ação e fases são filtrados conforme a área (espelha PJe TJCE / TRF5).
+        </p>
+      </div>
+
+      <!-- TAB: Vara / Comarca -->
+      <div class="tab-pane pane-gen">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Comarca</label>
+            <input type="text" id="gen-comarca" list="lista-comarcas-ce" placeholder="Comarca de…">
+            <datalist id="lista-comarcas-ce"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Vara / Tribunal</label>
+            <input type="text" id="gen-vara" list="lista-varas" placeholder="Ex: 3ª Vara Cível">
+            <datalist id="lista-varas"></datalist>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Juiz(a)</label><input type="text" id="gen-juiz"></div>
+          <div class="form-group" style="flex-direction:row; align-items:center; gap:.6rem;">
+            <input type="checkbox" id="gen-fazenda" style="width:auto;">
+            <label for="gen-fazenda" style="margin:0; cursor:pointer">Fazenda Pública / União (dobro CPC 183)</label>
+          </div>
+        </div>
+        <p style="font-size:.8rem; color:var(--texto-suave); margin-top:.6rem">
+          Comarcas do CE e varas comuns aparecem como sugestões — basta digitar.
+        </p>
+      </div>
+
+      <!-- TAB: Honorários -->
+      <div class="tab-pane pane-gen">
+        <div class="form-row">
+          <div class="form-group"><label>Valor da Causa (R$)</label><input type="number" id="gen-valor-causa" step="0.01" min="0"></div>
+          <div class="form-group"><label>% Honorários</label><input type="number" id="gen-pct-honor" step="0.01" min="0" value="30"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Honorários Contratuais (R$)</label><input type="number" id="gen-honor-contr" step="0.01" min="0"></div>
+          <div class="form-group"><label>Honorários Sucumbenciais Esperados (R$)</label><input type="number" id="gen-honor-suc" step="0.01" min="0"></div>
+        </div>
+        <div class="calc-preview" id="gen-calc-preview"><em style="color:var(--texto-suave)">Digite o valor da causa para ver o cálculo.</em></div>
+      </div>
+
+      <!-- TAB: Prazo -->
+      <div class="tab-pane pane-gen">
+        <div class="form-row">
+          <div class="form-group"><label>Data da Intimação</label><input type="date" id="gen-data-intim"></div>
+          <div class="form-group"><label>Peça a Protocolar</label><select id="gen-peca"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Próximo Prazo (data fatal)</label><input type="date" id="gen-prazo"></div>
+          <div class="form-group"><label>Tipo de Prazo (livre)</label><input type="text" id="gen-tipo-prazo"></div>
+        </div>
+        <div id="gen-prazo-preview" style="margin-top:.8rem"></div>
+      </div>
+
+      <!-- TAB: Documentos -->
+      <div class="tab-pane pane-gen">
+        <div id="gen-docs-list"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('gen')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveAcaoGen()">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal Cobranças -->
 <div class="modal-overlay" id="modal-cob">
   <div class="modal">
@@ -670,18 +895,20 @@
 </div>
 
 <!-- ════════════ SCRIPTS ════════════ -->
-<!-- Auth guard inline: roda ANTES de tudo. Se algo nos outros JS quebrar,
-     pelo menos o redirect para login continua funcionando. -->
+<!-- Auth guard inline: lê a sessão direto do localStorage (sem criar
+     um segundo GoTrueClient). Se não há sessão válida, vai pro login. -->
 <script>
-(async () => {
+(function () {
   try {
-    const SUPABASE_URL  = 'https://vabvayctriflbanhcfuy.supabase.co';
-    const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhYnZheWN0cmlmbGJhbmhjZnV5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3MjQzODcsImV4cCI6MjA5NTMwMDM4N30.l7j77sVAP2ejulSrT-dgoKOTORyC67LG0fy0IumstM0';
-    const { createClient } = window.supabase;
-    const sbGuard = createClient(SUPABASE_URL, SUPABASE_ANON);
-    const { data } = await sbGuard.auth.getSession();
-    if (!data.session) { window.location.replace('../index.html'); return; }
-    window.__SESSION__ = data.session;
+    const key = 'sb-vabvayctriflbanhcfuy-auth-token';
+    const raw = localStorage.getItem(key);
+    if (!raw) { window.location.replace('../index.html'); return; }
+    const sess = JSON.parse(raw);
+    const expira = (sess?.expires_at || 0) * 1000;
+    if (!sess?.access_token || (expira && expira < Date.now())) {
+      window.location.replace('../index.html'); return;
+    }
+    window.__SESSION__ = sess;
   } catch (e) {
     console.error('Auth guard falhou:', e);
     window.location.replace('../index.html');
