@@ -1015,6 +1015,34 @@
     window.matchMedia('(min-width: 769px)').addEventListener('change', function (e) {
       if (e.matches) fecharSidebar();
     });
+
+    // ════════════ MOBILE: adiciona data-label às TDs ════════════
+    // Necessário para o CSS transformar tabelas em cards verticais
+    // Roda toda vez que uma tbody recebe novos filhos (após render)
+    function aplicarDataLabels(tbody) {
+      const table = tbody.closest('table');
+      if (!table) return;
+      const ths = table.querySelectorAll('thead th');
+      const headers = Array.from(ths).map(th => th.textContent.trim());
+      tbody.querySelectorAll('tr').forEach(tr => {
+        const tds = tr.querySelectorAll('td');
+        tds.forEach((td, i) => {
+          if (!td.hasAttribute('data-label')) {
+            td.setAttribute('data-label', headers[i] || '');
+          }
+          // Marca células vazias para o CSS esconder no mobile
+          const txt = td.textContent.trim();
+          if (txt === '—' || txt === '-' || txt === '') td.classList.add('empty-cell');
+          else td.classList.remove('empty-cell');
+        });
+      });
+    }
+    // Observa todas as tbody do painel
+    document.querySelectorAll('tbody').forEach(tbody => {
+      aplicarDataLabels(tbody);
+      new MutationObserver(() => aplicarDataLabels(tbody))
+        .observe(tbody, { childList: true });
+    });
   }
 
   if (document.readyState === 'loading') {
