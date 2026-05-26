@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Fundo sólido (Apple recorta os cantos automaticamente) -->
+  <rect width="512" height="512" fill="#3A2008"/>
+
+  <!-- Borda decorativa interna -->
+  <rect x="48" y="48" width="416" height="416" fill="none" stroke="#B8914A" stroke-width="3" opacity="0.5"/>
+  <rect x="60" y="60" width="392" height="392" fill="none" stroke="#C9993A" stroke-width="1" opacity="0.4"/>
+
+  <!-- Ornamentos nos cantos -->
+  <g fill="#C9993A" opacity="0.7">
+    <rect x="50" y="50" width="14" height="2"/>
+    <rect x="50" y="50" width="2" height="14"/>
+    <rect x="448" y="50" width="14" height="2"/>
+    <rect x="460" y="50" width="2" height="14"/>
+    <rect x="50" y="460" width="14" height="2"/>
+    <rect x="50" y="448" width="2" height="14"/>
+    <rect x="448" y="460" width="14" height="2"/>
+    <rect x="460" y="448" width="2" height="14"/>
+  </g>
+
+  <!-- Diamante ornamental superior -->
+  <g transform="translate(256,116)">
+    <rect x="-30" y="-1" width="22" height="2" fill="#B8914A" opacity="0.5"/>
+    <rect x="8"   y="-1" width="22" height="2" fill="#B8914A" opacity="0.5"/>
+    <rect x="-4" y="-4" width="8" height="8" fill="#C9993A" transform="rotate(45)"/>
+  </g>
+
+  <!-- Monograma M&SM em estilo Cinzel/Serifa elegante -->
+  <g fill="#E8C060">
+    <!-- M esquerdo -->
+    <path d="M 120 200 L 120 360 L 142 360 L 142 246 L 170 312 L 178 312 L 206 246 L 206 360 L 228 360 L 228 200 L 200 200 L 174 270 L 148 200 Z" stroke="#C9993A" stroke-width="2"/>
+    <!-- & central -->
+    <text x="256" y="295" font-family="Cormorant Garamond, Georgia, serif" font-size="78" font-style="italic" font-weight="500" text-anchor="middle" fill="#E8C060">&amp;</text>
+    <!-- SM direito -->
+    <path d="M 312 230
+             Q 312 210 332 210
+             L 360 210
+             Q 380 210 380 232
+             L 380 240 L 362 240 L 362 232
+             Q 362 226 356 226 L 336 226
+             Q 330 226 330 232 Q 330 240 340 244 L 366 254
+             Q 384 262 384 282 L 384 300
+             Q 384 320 364 320 L 330 320
+             Q 312 320 312 300 L 312 290 L 330 290 L 330 296
+             Q 330 304 338 304 L 358 304
+             Q 366 304 366 296 L 366 286
+             Q 366 280 358 276 L 332 266
+             Q 312 258 312 240 Z" stroke="#C9993A" stroke-width="1"/>
+    <path d="M 400 320 L 400 230 L 418 230 L 436 280 L 454 230 L 472 230 L 472 320 L 456 320 L 456 254 L 442 294 L 430 294 L 416 254 L 416 320 Z" stroke="#C9993A" stroke-width="1"/>
+  </g>
+
+  <!-- Linha ornamental inferior -->
+  <g transform="translate(256,400)">
+    <rect x="-90" y="-1" width="60" height="2" fill="#B8914A" opacity="0.4"/>
+    <rect x="30"  y="-1" width="60" height="2" fill="#B8914A" opacity="0.4"/>
+    <rect x="-15" y="-3" width="6" height="6" fill="#C9993A" opacity="0.6"/>
+    <rect x="-3"  y="-3" width="6" height="6" fill="#C9993A"/>
+    <rect x="9"   y="-3" width="6" height="6" fill="#C9993A" opacity="0.6"/>
+  </g>
+
+  <!-- Texto inferior -->
+  <text x="256" y="440" font-family="Cinzel, Georgia, serif" font-size="22" font-weight="500" letter-spacing="6" text-anchor="middle" fill="#D4BC96">ADVOCACIA</text>
+</svg>

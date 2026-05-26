@@ -414,16 +414,164 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .prazo-helper strong { color: var(--caramelo); }
 
-/* ── RESPONSIVE ── */
+/* ── HAMBURGER ─────────────────────────────────────────────────────────── */
+.hamburger {
+  display: none;
+  width: 40px; height: 40px;
+  background: none; border: 1px solid rgba(184,145,74,.35);
+  cursor: pointer;
+  flex-direction: column; justify-content: center; align-items: center;
+  gap: 5px;
+  padding: 0;
+  margin-right: 12px;
+  flex-shrink: 0;
+}
+.hamburger span {
+  width: 20px; height: 2px;
+  background: var(--caramelo);
+  transition: transform .25s, opacity .25s;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* ── BACKDROP DA SIDEBAR (mobile) ──────────────────────────────────────── */
+#sidebar-backdrop {
+  position: fixed; inset: 0;
+  background: rgba(40,20,5,.55);
+  z-index: 90;
+  opacity: 0; pointer-events: none;
+  transition: opacity .25s;
+}
+#sidebar-backdrop.show { opacity: 1; pointer-events: auto; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   RESPONSIVO — 3 breakpoints
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* TABLET LANDSCAPE (até 1024px): sidebar mais estreita */
+@media (max-width: 1024px) {
+  :root { --sidebar-w: 210px; }
+  .content { padding: 1.5rem; }
+  .topbar { padding: .9rem 1.5rem; }
+}
+
+/* TABLET / MOBILE (até 768px): sidebar vira offcanvas + hamburger aparece */
 @media (max-width: 768px) {
-  .sidebar { width: 200px; }
-  .main { margin-left: 200px; }
-  .form-row { grid-template-columns: 1fr; }
-  .form-row.three { grid-template-columns: 1fr; }
-  .comp-row { grid-template-columns: 1fr 1fr; }
-}
-@media (max-width: 600px) {
-  .sidebar { transform: translateX(-100%); transition: transform .3s; }
+  .hamburger { display: flex; }
+
+  .sidebar {
+    width: 260px;
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+    z-index: 200;
+    box-shadow: 4px 0 24px rgba(0,0,0,.4);
+  }
   .sidebar.open { transform: translateX(0); }
+
   .main { margin-left: 0; }
+
+  .topbar {
+    padding: .7rem 1rem;
+    gap: .5rem;
+  }
+  .page-title { font-size: 1.15rem; flex: 1; min-width: 0;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .topbar-date { display: none; }
+
+  .content { padding: 1rem; }
+
+  /* Stats em 2 colunas */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: .7rem;
+    margin-bottom: 1.2rem;
+  }
+  .stat-card { padding: 1rem .8rem; }
+  .stat-num { font-size: 1.9rem; }
+
+  .card-header {
+    flex-wrap: wrap; gap: .6rem;
+    padding: .8rem 1rem;
+  }
+  .card-title { font-size: 1.05rem; }
+  .card-title small { display: block; margin-left: 0; margin-top: .2rem; }
+
+  /* Formulários em 1 coluna */
+  .form-row, .form-row.three { grid-template-columns: 1fr; gap: .8rem; }
+  .comp-row { grid-template-columns: 1fr 1fr; gap: .5rem; }
+  .comp-row > button { grid-column: 1 / -1; }
+
+  /* Modal ocupa tela toda */
+  .modal-overlay { padding: 0; align-items: stretch; }
+  .modal {
+    max-width: 100%; width: 100%;
+    max-height: 100vh; min-height: 100vh;
+    border-radius: 0;
+  }
+  .modal-header { padding: 1rem 1.1rem; }
+  .modal-body   { padding: 1rem 1.1rem; }
+  .modal-footer { padding: .8rem 1.1rem; }
+
+  /* Tabs com scroll horizontal */
+  .tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tab { white-space: nowrap; flex-shrink: 0; }
+
+  /* Tabela: limite altura + scroll */
+  .table-wrap {
+    -webkit-overflow-scrolling: touch;
+    max-height: 65vh;
+  }
+  thead th, tbody td { padding: .5rem .6rem; font-size: .78rem; }
+
+  /* Botão "+ Novo" ocupa largura total quando quebra a linha */
+  .card-header .btn { width: 100%; padding: 10px 16px; }
+
+  /* Docs list em mobile */
+  .docs-list li {
+    grid-template-columns: 1fr;
+    gap: .35rem; padding: .7rem .6rem;
+  }
+  .docs-list .doc-status { justify-self: start; }
+
+  /* Toast acima do iOS safe area */
+  #toast {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    right: 12px; left: 12px; max-width: none;
+  }
 }
+
+/* CELULAR (até 480px): ajustes finos */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: 1fr 1fr; gap: .5rem; }
+  .stat-num   { font-size: 1.6rem; }
+  .stat-label { font-size: .5rem; }
+  .page-title { font-size: 1rem; }
+  .modal-title { font-size: 1rem; }
+  thead th, tbody td { padding: .45rem .5rem; font-size: .74rem; }
+  .badge { padding: 2px 7px; font-size: .65rem; }
+  .form-row.three { grid-template-columns: 1fr; }
+  .comp-row { grid-template-columns: 1fr; }
+  .calc-preview { font-size: .9rem; padding: .7rem .8rem; }
+}
+
+/* iOS Safe Area (notch / barra inferior) */
+@supports (padding: max(0px)) {
+  .sidebar {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .topbar {
+    padding-top: max(.7rem, env(safe-area-inset-top));
+  }
+  .content {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
+
+/* Quando sidebar offcanvas estiver aberta, trava scroll do body */
+body.sidebar-open { overflow: hidden; }
