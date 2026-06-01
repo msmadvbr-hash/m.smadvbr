@@ -29,11 +29,17 @@ window.logout = logout;
 /* ── NAVEGAÇÃO ────────────────────────────────────────────────────────── */
 const titles = {
   dashboard:  'Dashboard · Prazos Próximos',
+  clientes:   'Cadastro de Clientes',
   'proc-adm': 'Processos Administrativos · INSS',
   'proc-jud': 'Processos Judiciais · INSS',
   'sal-mat':  'Salário-Maternidade',
+  'aux-doenca':'Auxílio-Doença · INSS',
+  'bpc':      'BPC / LOAS · INSS',
+  'recursos': 'Recursos · Administrativos e Judiciais',
   'aux-mor':  'Médicos Residentes · Auxílio-Moradia',
   'prazos-aux':'Prazos Judiciais · Auxílio-Moradia',
+  'prazos-civel':'Prazos Judiciais · Cível',
+  'prazos-saude':'Prazos Judiciais · Saúde',
   cobrancas:  'Cobranças / Honorários',
   civel:      'Ações Cíveis',
   familia:    'Família e Sucessões',
@@ -65,7 +71,7 @@ function loadModule(mod) {
   if (loaded[mod]) return;
   loaded[mod] = true;
   switch(mod) {
-    case 'dashboard':  loadDashboard(); break;
+    case 'dashboard':  /* tratado por extras.js → loadDashboardCategorizado */ break;
     case 'proc-adm':   loadAdm(); break;
     case 'proc-jud':   loadJud(); break;
     case 'sal-mat':    loadSal(); break;
@@ -76,82 +82,38 @@ function loadModule(mod) {
     case 'familia':    loadGen('FAMILIA'); break;
     case 'consumidor': loadGen('CONSUMIDOR'); break;
     case 'saude':      loadGen('SAUDE'); break;
+    // novos módulos (clientes, aux-doenca, bpc, recursos, prazos-civel, prazos-saude)
+    // são tratados pelo hook em extras.js → window.showModule
   }
 }
+window.__loaded__ = loaded;
+window.__loadModule__ = loadModule;
 
-/* ── DASHBOARD ────────────────────────────────────────────────────────── */
-async function loadDashboard() {
-  const [adm, jud, aux, sal, praz, gen] = await Promise.all([
-    sb.from('processos_administrativos').select('nome_cliente,proximo_prazo,status'),
-    sb.from('processos_judiciais_inss').select('nome_cliente,data_proxima_audiencia,status'),
-    sb.from('auxilio_moradia').select('nome_medico,proximo_prazo,status'),
-    sb.from('salario_maternidade').select('nome_cliente,data_limite_pagamento,status_guia'),
-    sb.from('prazos_judiciais_auxilio').select('cliente_medico,proximo_prazo,status'),
-    sb.from('acoes_genericas').select('nome_cliente,proximo_prazo,status,area'),
-  ]);
-  const AREA_LABEL = { CIVEL:'Cível', FAMILIA:'Família', CONSUMIDOR:'Consumidor', SAUDE:'Saúde' };
-  const allPrazos = [
-    ...(adm.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.proximo_prazo, modulo:'Adm. INSS', status:r.status })),
-    ...(jud.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.data_proxima_audiencia, modulo:'Jud. INSS', status:r.status })),
-    ...(aux.data||[]).map(r=>({ nome:r.nome_medico, prazo:r.proximo_prazo, modulo:'Aux. Moradia', status:r.status })),
-    ...(sal.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.data_limite_pagamento, modulo:'Sal. Mat.', status:r.status_guia })),
-    ...(praz.data||[]).map(r=>({ nome:r.cliente_medico, prazo:r.proximo_prazo, modulo:'Prazos Aux.', status:r.status })),
-    ...(gen.data||[]).map(r=>({ nome:r.nome_cliente, prazo:r.proximo_prazo, modulo:AREA_LABEL[r.area]||r.area, status:r.status })),
-  ].map(r => ({ ...r, dias: diffDias(r.prazo) }))
-   .filter(r => r.prazo)
-   .sort((a,b) => (a.dias??9999)-(b.dias??9999));
-
-  let venc=0, urg=0, ate=0, ok=0;
-  allPrazos.forEach(r => {
-    if (r.dias < 0) venc++;
-    else if (r.dias <= 3) urg++;
-    else if (r.dias <= 7) ate++;
-    else ok++;
-  });
-
-  document.getElementById('dash-vencidos').textContent = venc;
-  document.getElementById('dash-urgentes').textContent = urg;
-  document.getElementById('dash-atencao').textContent  = ate;
-  document.getElementById('dash-ok').textContent       = ok;
-  document.getElementById('dash-total').textContent    = allPrazos.length;
-
-  const prox30 = allPrazos.filter(r => r.dias !== null && r.dias <= 30);
-  const tbody = document.getElementById('dash-table-body');
-  if (!prox30.length) {
-    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum prazo nos próximos 30 dias ✓</td></tr>';
-    return;
-  }
-  tbody.innerHTML = prox30.map(r => `
-    <tr>
-      <td>${badgeHtml(r.dias)}</td>
-      <td>${escHtml(r.nome)}</td>
-      <td><span class="badge badge-azul">${escHtml(r.modulo)}</span></td>
-      <td>${fmtDate(r.prazo)}</td>
-      <td>${r.dias < 0 ? '<strong style="color:var(--vermelho)">'+r.dias+' dias</strong>' : r.dias + ' dias'}</td>
-      <td>${statusBadge(r.status)}</td>
-    </tr>`).join('');
-}
+/* ── DASHBOARD — implementado em extras.js (loadDashboardCategorizado) ── */
 
 /* ── PROCESSOS ADMINISTRATIVOS ────────────────────────────────────────── */
 let admData = [];
 async function loadAdm() {
-  const { data, error } = await sb.from('processos_administrativos').select('*').order('proximo_prazo', { ascending: true, nullsFirst: false });
+  const { data, error } = await sb.from('processos_administrativos').select('*').order('prazo_analise_inss', { ascending: true, nullsFirst: false });
   if (error) { toast('Erro ao carregar processos administrativos.', true); return; }
   admData = data || []; renderAdm();
 }
 function renderAdm() {
   const tbody = document.getElementById('adm-body');
-  if (!admData.length) { tbody.innerHTML = '<tr><td colspan="10" class="empty-state">Nenhum processo cadastrado ainda.</td></tr>'; return; }
+  if (!admData.length) { tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Nenhum processo cadastrado ainda.</td></tr>'; return; }
   tbody.innerHTML = admData.map(r => {
-    const dias = diffDias(r.proximo_prazo);
+    const prazo = r.prazo_recurso || r.proximo_prazo || r.prazo_analise_inss;
+    const dias = diffDias(prazo);
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
       <td><strong>${escHtml(r.nome_cliente)}</strong></td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${escHtml(r.tipo_beneficio)||'—'}</td>
-      <td>${escHtml(r.fase_atual)||'—'}</td>
-      <td>${fmtDate(r.proximo_prazo)}</td>
+      <td>${fmtDate(r.data_protocolo)}</td>
+      <td>${fmtDate(r.prazo_analise_inss)}</td>
+      <td>${statusBadge(r.resultado_pedido)}</td>
+      <td>${fmtDate(prazo)}</td>
       <td>${dias !== null ? dias + ' dias' : '—'}</td>
       <td>${statusBadge(r.status)}</td>
       <td class="td-actions">
@@ -196,26 +158,25 @@ function renderJud() {
 /* ── SALÁRIO-MATERNIDADE ──────────────────────────────────────────────── */
 let salData = [];
 async function loadSal() {
-  const { data, error } = await sb.from('salario_maternidade').select('*').order('data_limite_pagamento', { ascending: true, nullsFirst: false });
+  const { data, error } = await sb.from('salario_maternidade').select('*').order('prazo_analise_inss', { ascending: true, nullsFirst: false });
   if (error) { toast('Erro ao carregar.', true); return; }
   salData = data || []; renderSal();
 }
 function renderSal() {
   const tbody = document.getElementById('sal-body');
-  if (!salData.length) { tbody.innerHTML = '<tr><td colspan="13" class="empty-state">Nenhum registro cadastrado ainda.</td></tr>'; return; }
+  if (!salData.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Nenhum registro cadastrado ainda.</td></tr>'; return; }
   tbody.innerHTML = salData.map(r => {
-    const dias = diffDias(r.data_limite_pagamento);
+    const prazo = r.prazo_recurso || r.prazo_analise_inss;
+    const dias = diffDias(prazo);
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
       <td><strong>${escHtml(r.nome_cliente)}</strong></td>
       <td>${escHtml(r.cpf)||'—'}</td>
-      <td>${fmtDate(r.dpp)}</td>
-      <td>${escHtml(r.tipo_salario_mat)||'—'}</td>
+      <td>${fmtDate(r.data_protocolo)}</td>
+      <td>${fmtDate(r.prazo_analise_inss)}</td>
+      <td>${statusBadge(r.resultado_pedido)}</td>
       <td>${fmtBRL(r.valor_mensal_beneficio)}</td>
-      <td>${fmtDate(r.data_limite_pagamento)}</td>
-      <td>${dias !== null ? dias + ' dias' : '—'}</td>
-      <td>${statusBadge(r.status_guia)}</td>
       <td>${fmtBRL(r.honorario_total)}</td>
       <td>${statusBadge(r.status_honorario)}</td>
       <td class="td-actions">
@@ -261,7 +222,9 @@ function renderAux() {
 /* ── PRAZOS JUDICIAIS AUXÍLIO ─────────────────────────────────────────── */
 let prazData = [];
 async function loadPraz() {
-  const { data, error } = await sb.from('prazos_judiciais_auxilio').select('*').order('proximo_prazo', { ascending: true, nullsFirst: false });
+  const { data, error } = await sb.from('prazos_judiciais_auxilio').select('*')
+    .or('escopo.is.null,escopo.eq.AUX_MORADIA')
+    .order('proximo_prazo', { ascending: true, nullsFirst: false });
   if (error) { toast('Erro ao carregar.', true); return; }
   prazData = data || []; renderPraz();
 }
@@ -332,13 +295,29 @@ function renderCob() {
 function openModal(type) {
   clearForm(type);
   document.getElementById(`modal-${type}-title`).textContent = getNewTitle(type);
-  document.getElementById(`modal-${type}`).classList.add('open');
+  const modalEl = document.getElementById(`modal-${type}`);
+  modalEl.classList.add('open');
+  // Reseta data-* atributos auxiliares (ex: escopo do prazos)
+  if (type === 'praz') delete modalEl.dataset.escopo;
   // Configurações específicas pós-abertura
   if (type === 'aux') initAuxModal();
   if (type === 'sal') initSalModal();
   if (type === 'praz') initPrazModal();
   if (type === 'adm') initAdmModal();
   if (type === 'cob') initCobModal();
+  if (type === 'axd' && window.MODULOS) {
+    window.MODULOS.atualizarNaturezaAxd();
+    window.MODULOS.atualizarDecisaoAxd();
+  }
+  if (type === 'bpc' && window.MODULOS) {
+    window.MODULOS.atualizarNaturezaBpc();
+    window.MODULOS.atualizarDecisaoBpc();
+  }
+  if (type === 'rec' && window.MODULOS) {
+    window.MODULOS.atualizarModalidadeRec();
+  }
+  // Atualiza datalist de clientes ao abrir qualquer modal
+  if (window.MODULOS?.popularDatalists) window.MODULOS.popularDatalists();
 }
 window.openModal = openModal;
 
@@ -351,21 +330,44 @@ function getNewTitle(t) {
   const titles = {
     adm:'Novo Processo Administrativo', jud:'Novo Processo Judicial INSS',
     sal:'Nova — Salário-Maternidade', aux:'Novo Médico — Auxílio-Moradia',
-    praz:'Novo Prazo Judicial — Auxílio-Moradia', cob:'Nova Cobrança / Honorário',
+    praz:'Novo Prazo Judicial', cob:'Nova Cobrança / Honorário',
+    cli:'Novo Cliente', axd:'Novo Auxílio-Doença', bpc:'Novo BPC / LOAS',
+    rec:'Novo Recurso',
   };
   return titles[t];
 }
 
 function clearForm(type) {
-  document.getElementById('form-' + type).reset();
-  document.getElementById(type + '-id').value = '';
+  const form = document.getElementById('form-' + type);
+  if (form) form.reset();
+  const idEl = document.getElementById(type + '-id');
+  if (idEl) idEl.value = '';
+  // Limpa hidden cliente_id se existir
+  const ci = document.getElementById(type + '-cliente-id'); if (ci) ci.value = '';
   // limpa previews
   ['aux-calc-preview','sal-calc-preview','praz-prazo-preview','adm-prazo-preview',
-   'aux-docs-list','sal-docs-list','praz-docs-list','adm-docs-list','cob-calc-preview']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
+   'aux-prazo-preview','gen-prazo-preview','gen-calc-preview',
+   'aux-docs-list','sal-docs-list','praz-docs-list','adm-docs-list','gen-docs-list',
+   'cob-calc-preview','sal-guias-container','rec-busca-resultado',
+   'adm-prazo-info','adm-honor-preview','axd-honor-preview'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.innerHTML = '';
+  });
   // reset comp-list (auxílio)
   const comp = document.getElementById('aux-comp-list');
   if (comp) comp.innerHTML = '';
+  // Esconde linhas condicionais para começar limpo
+  ['adm-row-recurso','adm-row-parcelas','adm-row-valor',
+   'sal-row-prevpgto','sal-row-recurso',
+   'axd-row-recurso','axd-row-judicial','axd-row-judicial-2',
+   'bpc-row-recurso','bpc-row-judicial','bpc-row-judicial-2',
+   'jud-row-parcelas','jud-row-valor-mensal',
+   'rec-row-judicial','rec-row-judicial-2'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  // Reativa as linhas que devem ficar visíveis por padrão
+  ['adm-row-prevpgto','bpc-row-prevpgto'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.style.display = '';
+  });
 }
 
 /* ── INIT MODAL: AUXÍLIO-MORADIA ──────────────────────────────────────── */
@@ -529,6 +531,9 @@ function initSalModal() {
   const id = document.getElementById('sal-id').value || 'novo';
   window.UI._ultimoKit = 'SAL_MAT'; window.UI._ultimoContainer = 'sal-docs-list';
   carregarDocsELoad('sal', id, 'SAL_MAT', 'sal-docs-list');
+
+  // Renderiza blocos de guia vazios (3) — preenchidos no editRecord se houver dados
+  if (window.MODULOS?.renderGuiasSalMat) window.MODULOS.renderGuiasSalMat([]);
 }
 
 /* ── INIT MODAL: PRAZOS JUDICIAIS AUXÍLIO ─────────────────────────────── */
@@ -601,6 +606,12 @@ function initCobModal() {
 /* ── SALVAR ───────────────────────────────────────────────────────────── */
 async function saveRecord(type) {
   const id = document.getElementById(type + '-id').value;
+
+  // Upsert cliente central (exceto para 'cli' que já é o próprio cliente)
+  if (type !== 'cli' && window.MODULOS?.upsertClienteDoFormulario) {
+    try { await window.MODULOS.upsertClienteDoFormulario(type); } catch(e) { console.warn(e); }
+  }
+
   const payload = buildPayload(type);
   if (!payload) return;
 
@@ -613,22 +624,93 @@ async function saveRecord(type) {
     if (data) novoId = data.id;
   }
   if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
+
+  // Salário-maternidade: persistir as guias (até 3)
+  if (type === 'sal' && novoId && window.MODULOS?.coletarGuiasSalMat) {
+    const guias = window.MODULOS.coletarGuiasSalMat();
+    await window.MODULOS.salvarGuiasSalMat(novoId, guias);
+  }
+
+  // Auto-criação de cobrança (ações com benefício/valor conhecido)
+  if (novoId && !id && window.MODULOS?.criarCobrancaAutomatica) {
+    await tentarCriarCobranca(type, novoId, payload);
+  }
+
   toast(id ? 'Registro atualizado!' : 'Registro criado!');
   closeModal(type);
-  loaded[moduleFor(type)] = false;
-  loadModule(moduleFor(type));
-  if (loaded['dashboard']) { loaded['dashboard'] = false; loadModule('dashboard'); }
+  // Invalida caches; o módulo ativo é re-renderizado.
+  Object.keys(loaded).forEach(k => loaded[k] = false);
+  const ativo = document.querySelector('.nav-item.active')?.dataset.module;
+  if (ativo && typeof window.showModule === 'function') window.showModule(ativo);
 }
 window.saveRecord = saveRecord;
+
+async function tentarCriarCobranca(type, novoId, payload) {
+  const mapa = {
+    sal: () => ({
+      origem_tipo:'sal', origem_id:novoId,
+      cliente_id:payload.cliente_id, nome_cliente:payload.nome_cliente, cpf:payload.cpf,
+      tipo_beneficio:'Salário-Maternidade',
+      valor_mensal:payload.valor_mensal_beneficio,
+      forma_pagamento:v('sal-forma-pgto') || '30% sobre as 4 parcelas',
+      numero_processo:payload.numero_processo,
+    }),
+    aux: () => ({
+      origem_tipo:'aux', origem_id:novoId,
+      nome_cliente:payload.nome_medico, cpf:payload.cpf,
+      tipo_beneficio:'Auxílio-Moradia',
+      valor_acao:payload.valor_acao_calculado,
+      numero_processo:payload.numero_processo,
+    }),
+    axd: () => ({
+      origem_tipo:'axd', origem_id:novoId,
+      cliente_id:payload.cliente_id, nome_cliente:payload.nome_cliente, cpf:payload.cpf,
+      tipo_beneficio:'Auxílio-Doença',
+      valor_mensal:payload.valor_mensal_beneficio,
+      qtd_parcelas:payload.qtd_parcelas_deferidas,
+      indeterminado:payload.tempo_indeterminado,
+      numero_processo:payload.numero_processo,
+    }),
+    bpc: () => ({
+      origem_tipo:'bpc', origem_id:novoId,
+      cliente_id:payload.cliente_id, nome_cliente:payload.nome_cliente, cpf:payload.cpf,
+      tipo_beneficio:'BPC/LOAS',
+      valor_mensal:payload.valor_mensal_beneficio,
+      qtd_parcelas:12,
+      numero_processo:payload.numero_processo,
+    }),
+    gen: () => ({
+      origem_tipo:'gen', origem_id:novoId,
+      cliente_id:payload.cliente_id, nome_cliente:payload.nome_cliente, cpf:payload.cpf,
+      tipo_beneficio:payload.tipo_acao || payload.area,
+      valor_acao:payload.valor_causa,
+      numero_processo:payload.numero_processo,
+    }),
+    jud: () => ({
+      origem_tipo:'jud', origem_id:novoId,
+      cliente_id:payload.cliente_id, nome_cliente:payload.nome_cliente, cpf:payload.cpf,
+      tipo_beneficio:payload.tipo_beneficio,
+      valor_acao:payload.valor_acao,
+      valor_mensal:payload.valor_mensal_beneficio,
+      qtd_parcelas:payload.qtd_parcelas_deferidas,
+      indeterminado:payload.tempo_indeterminado,
+      numero_processo:payload.numero_processo,
+    }),
+  };
+  const fn = mapa[type]; if (!fn) return;
+  try { await window.MODULOS.criarCobrancaAutomatica(fn()); } catch(e) { console.warn(e); }
+}
 
 function tableFor(t) {
   return { adm:'processos_administrativos', jud:'processos_judiciais_inss',
     sal:'salario_maternidade', aux:'auxilio_moradia',
-    praz:'prazos_judiciais_auxilio', cob:'controle_cobrancas' }[t];
+    praz:'prazos_judiciais_auxilio', cob:'controle_cobrancas',
+    cli:'clientes', axd:'auxilio_doenca', bpc:'bpc_loas', rec:'recursos' }[t];
 }
 function moduleFor(t) {
   return { adm:'proc-adm', jud:'proc-jud', sal:'sal-mat',
-    aux:'aux-mor', praz:'prazos-aux', cob:'cobrancas' }[t];
+    aux:'aux-mor', praz:'prazos-aux', cob:'cobrancas',
+    cli:'clientes', axd:'aux-doenca', bpc:'bpc', rec:'recursos' }[t];
 }
 
 function buildPayload(type) {
@@ -636,21 +718,42 @@ function buildPayload(type) {
     case 'adm': {
       const nome = v('adm-nome');
       if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      const tipo = v('adm-tipo');
+      const dias = window.CATALOGOS.diasAnaliseINSS(tipo);
       return { numero_processo:v('adm-numero'), numero_proc_judicial:v('adm-proc-jud'),
-        nome_cliente:nome, cpf:v('adm-cpf'), tipo_beneficio:v('adm-tipo'),
-        data_protocolo:vd('adm-protocolo'), fase_atual:v('adm-fase'),
+        nome_cliente:nome, cpf:v('adm-cpf'), tipo_beneficio:tipo,
+        cliente_id:v('adm-cliente-id'),
+        data_protocolo:vd('adm-protocolo'),
+        prazo_analise_inss:vd('adm-prazo-analise'),
+        dias_prazo_analise:dias,
+        resultado_pedido:v('adm-resultado'),
+        data_decisao:vd('adm-data-decisao'),
+        data_prev_pagamento:vd('adm-prev-pgto'),
+        prazo_recurso:vd('adm-prazo-recurso'),
+        qtd_parcelas_deferidas:vi('adm-qtd-parc'),
+        tempo_indeterminado:document.getElementById('adm-indeterminado')?.checked || false,
+        valor_mensal_beneficio:vn('adm-valor-mensal'),
+        fase_atual:v('adm-fase'),
         proximo_prazo:vd('adm-prazo'), tipo_prazo:v('adm-tipo-prazo'),
-        prazo_boleto:vd('adm-boleto'), status:v('adm-status'),
+        status:v('adm-status'),
         docs_recebidos:vi('adm-docs-rec'), observacoes:v('adm-obs') };
     }
     case 'jud': {
       const nome = v('jud-nome');
       if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      const parteContraria = v('jud-parte-contraria');
+      if (!parteContraria) { toast('Parte contrária é obrigatória.', true); return null; }
       return { numero_processo:v('jud-numero'), numero_proc_adm:v('jud-proc-adm'),
         nome_cliente:nome, cpf:v('jud-cpf'), tipo_beneficio:v('jud-tipo'),
+        cliente_id:v('jud-cliente-id'),
+        parte_contraria:parteContraria,
+        valor_acao:vn('jud-valor-acao'),
+        qtd_parcelas_deferidas:vi('jud-qtd-parc'),
+        tempo_indeterminado:document.getElementById('jud-indeterminado')?.checked || false,
+        valor_mensal_beneficio:vn('jud-valor-mensal'),
         vara_tribunal:v('jud-vara'), juiz:v('jud-juiz'), fase_atual:v('jud-fase'),
         data_proxima_audiencia:vd('jud-data-prazo'), tipo_prazo:v('jud-tipo-prazo'),
-        prazo_boleto:vd('jud-boleto'), status:v('jud-status'), observacoes:v('jud-obs') };
+        status:v('jud-status'), observacoes:v('jud-obs') };
     }
     case 'sal': {
       const nome = v('sal-nome');
@@ -658,18 +761,92 @@ function buildPayload(type) {
       const codTipo = v('sal-tipo');
       const tipoSel = document.getElementById('sal-tipo')?.selectedOptions[0]?.text || null;
       return { numero_processo:v('sal-numero'), nome_cliente:nome, cpf:v('sal-cpf'),
+        cliente_id:v('sal-cliente-id'),
         dpp:vd('sal-dpp'),
-        tipo_salario_mat:tipoSel,                  // nome legível p/ visualização
-        tipo_salario_mat_codigo:codTipo,           // código estrutural
+        tipo_salario_mat:tipoSel, tipo_salario_mat_codigo:codTipo,
         qtd_parcelas_efetivas:vi('sal-parcelas-qtd'),
         prorrog_periodo:v('sal-prorrog-periodo'),
-        valor_mensal_beneficio:vn('sal-valor'), numero_guia:v('sal-guia'),
-        competencia_guia:v('sal-competencia'), data_limite_pagamento:vd('sal-data-limite'),
-        status_guia:v('sal-status-guia'), data_pgto_guia:vd('sal-data-pgto'),
+        valor_mensal_beneficio:vn('sal-valor'),
+        data_protocolo:vd('sal-data-protocolo'),
+        prazo_analise_inss:vd('sal-prazo-analise'),
+        resultado_pedido:v('sal-resultado'),
+        data_decisao:vd('sal-data-decisao'),
+        data_prev_pagamento:vd('sal-prev-pgto'),
+        prazo_recurso:vd('sal-prazo-recurso'),
         honorario_total:vn('sal-honor-total'), numero_parcela:vi('sal-parcela-num'),
         valor_parcela:vn('sal-parcela-valor'), data_cobranca:vd('sal-data-cob'),
         data_recebimento:vd('sal-data-rec'), status_honorario:v('sal-status-honor'),
         observacoes:v('sal-obs') };
+    }
+    case 'cli': {
+      const nome = v('cli-nome');
+      if (!nome) { toast('Nome é obrigatório.', true); return null; }
+      return { nome, cpf:v('cli-cpf'), rg:v('cli-rg'),
+        data_nascimento:vd('cli-nasc'),
+        telefone:v('cli-telefone'), email:v('cli-email'),
+        endereco:v('cli-endereco'), observacoes:v('cli-obs') };
+    }
+    case 'axd': {
+      const nome = v('axd-nome');
+      if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      return { numero_processo:v('axd-numero'), nome_cliente:nome, cpf:v('axd-cpf'),
+        cliente_id:v('axd-cliente-id'),
+        natureza:v('axd-natureza') || 'administrativo',
+        data_protocolo:vd('axd-data-protocolo'),
+        prazo_analise_inss:vd('axd-prazo-analise'),
+        resultado_pedido:v('axd-resultado'),
+        data_decisao:vd('axd-data-decisao'),
+        data_prev_pagamento:vd('axd-prev-pgto'),
+        prazo_recurso:vd('axd-prazo-recurso'),
+        valor_mensal_beneficio:vn('axd-valor-mensal'),
+        qtd_parcelas_deferidas:vi('axd-qtd-parc'),
+        tempo_indeterminado:document.getElementById('axd-indeterminado')?.checked || false,
+        vara_tribunal:v('axd-vara'), parte_contraria:v('axd-parte-contraria'),
+        valor_acao:vn('axd-valor-acao'), fase_atual:v('axd-fase'),
+        proximo_prazo:vd('axd-proximo-prazo'), tipo_prazo:v('axd-tipo-prazo'),
+        status:v('axd-status'), observacoes:v('axd-obs') };
+    }
+    case 'bpc': {
+      const nome = v('bpc-nome');
+      if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      return { numero_processo:v('bpc-numero'), nome_cliente:nome, cpf:v('bpc-cpf'),
+        cliente_id:v('bpc-cliente-id'),
+        modalidade:v('bpc-modalidade'),
+        natureza:v('bpc-natureza') || 'administrativo',
+        data_protocolo:vd('bpc-data-protocolo'),
+        prazo_analise_inss:vd('bpc-prazo-analise'),
+        resultado_pedido:v('bpc-resultado'),
+        data_decisao:vd('bpc-data-decisao'),
+        data_prev_pagamento:vd('bpc-prev-pgto'),
+        prazo_recurso:vd('bpc-prazo-recurso'),
+        valor_mensal_beneficio:vn('bpc-valor-mensal'),
+        meses_atrasados:vi('bpc-meses-atrasados'),
+        vara_tribunal:v('bpc-vara'), parte_contraria:v('bpc-parte-contraria'),
+        valor_acao:vn('bpc-valor-acao'), fase_atual:v('bpc-fase'),
+        proximo_prazo:vd('bpc-proximo-prazo'), tipo_prazo:v('bpc-tipo-prazo'),
+        status:v('bpc-status'), observacoes:v('bpc-obs') };
+    }
+    case 'rec': {
+      const nome = v('rec-nome');
+      if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      const modal = v('rec-modalidade');
+      if (!modal) { toast('Selecione a modalidade (recurso adm ou processo judicial).', true); return null; }
+      return { nome_cliente:nome, cpf:v('rec-cpf'),
+        cliente_id:v('rec-cliente-id'),
+        origem_tipo:v('rec-origem-tipo') || 'manual',
+        origem_id:v('rec-origem-id') || null,
+        numero_requerimento:v('rec-num-req'),
+        numero_processo:v('rec-numero'),
+        tipo_beneficio:v('rec-tipo-beneficio'),
+        modalidade:modal,
+        data_protocolo:vd('rec-data-protocolo'),
+        prazo_resposta:vd('rec-prazo-resposta'),
+        data_decisao:vd('rec-data-decisao'),
+        resultado:v('rec-resultado'),
+        vara_tribunal:v('rec-vara'), parte_contraria:v('rec-parte-contraria'),
+        valor_acao:vn('rec-valor-acao'), fase_atual:v('rec-fase'),
+        proximo_prazo:vd('rec-proximo-prazo'), tipo_prazo:v('rec-tipo-prazo'),
+        status:v('rec-status'), observacoes:v('rec-obs') };
     }
     case 'aux': {
       const nome = v('aux-nome');
@@ -683,6 +860,7 @@ function buildPayload(type) {
       })).filter(c => c.inicio && c.fim);
 
       return { nome_medico:nome, cpf:v('aux-cpf'), crm:v('aux-crm'), rqe:v('aux-rqe'),
+        cliente_id:v('aux-cliente-id'),
         telefone:v('aux-telefone'), email:v('aux-email'), hospital:v('aux-hospital'),
         numero_processo:v('aux-processo'),
         area:v('aux-area'), tipo_acao_codigo:v('aux-tipo-acao'),
@@ -700,8 +878,10 @@ function buildPayload(type) {
     case 'praz': {
       const nome = v('praz-cliente');
       if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
+      const escopo = document.getElementById('modal-praz')?.dataset?.escopo || null;
       return { numero_processo:v('praz-numero'), cliente_medico:nome, cpf:v('praz-cpf'),
         area:v('praz-area'),
+        escopo:escopo,
         tipo_acao_codigo:v('praz-tipo-acao-sel'),
         tipo_acao:document.getElementById('praz-tipo-acao-sel')?.selectedOptions[0]?.text || null,
         vara_tribunal:v('praz-vara'), juiz:v('praz-juiz'),
@@ -728,9 +908,15 @@ function buildPayload(type) {
 
 /* ── EDITAR ───────────────────────────────────────────────────────────── */
 function editRecord(type, id) {
-  const dataMap = { adm: admData, jud: judData, sal: salData, aux: auxData, praz: prazData, cob: cobData };
+  const dataMap = { adm: admData, jud: judData, sal: salData, aux: auxData,
+                    praz: prazData, cob: cobData,
+                    axd: window.MODULOS?.axdData?.() || [],
+                    bpc: window.MODULOS?.bpcData?.() || [],
+                    rec: window.MODULOS?.recData?.() || [] };
   const rec = dataMap[type].find(r => r.id === id);
   if (!rec) return;
+  // Limpa estado anterior (campos + linhas condicionais) antes de preencher
+  clearForm(type);
   document.getElementById(`modal-${type}-title`).textContent = 'Editar Registro';
   document.getElementById(`modal-${type}`).classList.add('open');
   // espera o modal aparecer para inicializar campos especiais
@@ -815,35 +1001,133 @@ function fillForm(type, r) {
     case 'adm':
       set('adm-numero', r.numero_processo); set('adm-proc-jud', r.numero_proc_judicial);
       set('adm-nome', r.nome_cliente); set('adm-cpf', r.cpf);
+      set('adm-cliente-id', r.cliente_id);
       set('adm-tipo', r.tipo_beneficio); set('adm-protocolo', r.data_protocolo?.slice(0,10));
+      set('adm-prazo-analise', r.prazo_analise_inss?.slice(0,10));
+      set('adm-resultado', r.resultado_pedido);
+      set('adm-data-decisao', r.data_decisao?.slice(0,10));
+      set('adm-prev-pgto', r.data_prev_pagamento?.slice(0,10));
+      set('adm-prazo-recurso', r.prazo_recurso?.slice(0,10));
+      set('adm-qtd-parc', r.qtd_parcelas_deferidas);
+      if (r.tempo_indeterminado) document.getElementById('adm-indeterminado').checked = true;
+      set('adm-valor-mensal', r.valor_mensal_beneficio);
       set('adm-fase', r.fase_atual); set('adm-prazo', r.proximo_prazo?.slice(0,10));
-      set('adm-tipo-prazo', r.tipo_prazo); set('adm-boleto', r.prazo_boleto?.slice(0,10));
+      set('adm-tipo-prazo', r.tipo_prazo);
       set('adm-status', r.status); set('adm-docs-rec', r.docs_recebidos);
-      set('adm-obs', r.observacoes); break;
+      set('adm-obs', r.observacoes);
+      // recarrega comportamentos condicionais
+      if (window.MODULOS) {
+        window.MODULOS.recalcPrazoAdm(); window.MODULOS.atualizarDecisaoAdm();
+        window.MODULOS.atualizarParcelasAdm();
+      }
+      break;
     case 'jud':
       set('jud-numero', r.numero_processo); set('jud-proc-adm', r.numero_proc_adm);
       set('jud-nome', r.nome_cliente); set('jud-cpf', r.cpf);
+      set('jud-cliente-id', r.cliente_id);
+      set('jud-parte-contraria', r.parte_contraria);
       set('jud-tipo', r.tipo_beneficio); set('jud-vara', r.vara_tribunal);
       set('jud-juiz', r.juiz); set('jud-fase', r.fase_atual);
+      set('jud-valor-acao', r.valor_acao);
+      set('jud-qtd-parc', r.qtd_parcelas_deferidas);
+      if (r.tempo_indeterminado) document.getElementById('jud-indeterminado').checked = true;
+      set('jud-valor-mensal', r.valor_mensal_beneficio);
       set('jud-data-prazo', r.data_proxima_audiencia?.slice(0,10));
-      set('jud-tipo-prazo', r.tipo_prazo); set('jud-boleto', r.prazo_boleto?.slice(0,10));
-      set('jud-status', r.status); set('jud-obs', r.observacoes); break;
+      set('jud-tipo-prazo', r.tipo_prazo);
+      set('jud-status', r.status); set('jud-obs', r.observacoes);
+      if (window.MODULOS) window.MODULOS.atualizarParcelasJud();
+      break;
     case 'sal':
       set('sal-numero', r.numero_processo); set('sal-nome', r.nome_cliente);
       set('sal-cpf', r.cpf); set('sal-dpp', r.dpp?.slice(0,10));
+      set('sal-cliente-id', r.cliente_id);
       set('sal-tipo', r.tipo_salario_mat_codigo || '');
       set('sal-valor', r.valor_mensal_beneficio);
       set('sal-parcelas-qtd', r.qtd_parcelas_efetivas);
       set('sal-prorrog-periodo', r.prorrog_periodo);
-      set('sal-guia', r.numero_guia); set('sal-competencia', r.competencia_guia);
-      set('sal-data-limite', r.data_limite_pagamento?.slice(0,10));
-      set('sal-status-guia', r.status_guia); set('sal-data-pgto', r.data_pgto_guia?.slice(0,10));
+      set('sal-data-protocolo', r.data_protocolo?.slice(0,10));
+      set('sal-prazo-analise', r.prazo_analise_inss?.slice(0,10));
+      set('sal-resultado', r.resultado_pedido);
+      set('sal-data-decisao', r.data_decisao?.slice(0,10));
+      set('sal-prev-pgto', r.data_prev_pagamento?.slice(0,10));
+      set('sal-prazo-recurso', r.prazo_recurso?.slice(0,10));
       set('sal-honor-total', r.honorario_total); set('sal-parcela-num', r.numero_parcela);
       set('sal-parcela-valor', r.valor_parcela); set('sal-data-cob', r.data_cobranca?.slice(0,10));
       set('sal-data-rec', r.data_recebimento?.slice(0,10));
-      set('sal-status-honor', r.status_honorario); set('sal-obs', r.observacoes); break;
+      set('sal-status-honor', r.status_honorario); set('sal-obs', r.observacoes);
+      if (window.MODULOS) {
+        window.MODULOS.recalcPrazoSalMat(); window.MODULOS.atualizarDecisaoSalMat();
+        window.MODULOS.carregarGuiasSalMat(r.id).then(g => window.MODULOS.renderGuiasSalMat(g));
+      }
+      break;
+    case 'cli':
+      set('cli-nome', r.nome); set('cli-cpf', r.cpf); set('cli-rg', r.rg);
+      set('cli-nasc', r.data_nascimento?.slice(0,10));
+      set('cli-telefone', r.telefone); set('cli-email', r.email);
+      set('cli-endereco', r.endereco); set('cli-obs', r.observacoes);
+      break;
+    case 'axd':
+      set('axd-numero', r.numero_processo); set('axd-nome', r.nome_cliente);
+      set('axd-cpf', r.cpf); set('axd-cliente-id', r.cliente_id);
+      set('axd-natureza', r.natureza || 'administrativo');
+      set('axd-data-protocolo', r.data_protocolo?.slice(0,10));
+      set('axd-prazo-analise', r.prazo_analise_inss?.slice(0,10));
+      set('axd-resultado', r.resultado_pedido);
+      set('axd-data-decisao', r.data_decisao?.slice(0,10));
+      set('axd-prev-pgto', r.data_prev_pagamento?.slice(0,10));
+      set('axd-prazo-recurso', r.prazo_recurso?.slice(0,10));
+      set('axd-valor-mensal', r.valor_mensal_beneficio);
+      set('axd-qtd-parc', r.qtd_parcelas_deferidas);
+      if (r.tempo_indeterminado) document.getElementById('axd-indeterminado').checked = true;
+      set('axd-vara', r.vara_tribunal); set('axd-parte-contraria', r.parte_contraria);
+      set('axd-valor-acao', r.valor_acao); set('axd-fase', r.fase_atual);
+      set('axd-proximo-prazo', r.proximo_prazo?.slice(0,10));
+      set('axd-tipo-prazo', r.tipo_prazo);
+      set('axd-status', r.status); set('axd-obs', r.observacoes);
+      if (window.MODULOS) {
+        window.MODULOS.atualizarNaturezaAxd(); window.MODULOS.atualizarDecisaoAxd();
+        window.MODULOS.atualizarHonorAxd();
+      }
+      break;
+    case 'bpc':
+      set('bpc-numero', r.numero_processo); set('bpc-nome', r.nome_cliente);
+      set('bpc-cpf', r.cpf); set('bpc-cliente-id', r.cliente_id);
+      set('bpc-modalidade', r.modalidade); set('bpc-natureza', r.natureza || 'administrativo');
+      set('bpc-data-protocolo', r.data_protocolo?.slice(0,10));
+      set('bpc-prazo-analise', r.prazo_analise_inss?.slice(0,10));
+      set('bpc-resultado', r.resultado_pedido);
+      set('bpc-data-decisao', r.data_decisao?.slice(0,10));
+      set('bpc-prev-pgto', r.data_prev_pagamento?.slice(0,10));
+      set('bpc-prazo-recurso', r.prazo_recurso?.slice(0,10));
+      set('bpc-valor-mensal', r.valor_mensal_beneficio);
+      set('bpc-meses-atrasados', r.meses_atrasados);
+      set('bpc-vara', r.vara_tribunal); set('bpc-parte-contraria', r.parte_contraria);
+      set('bpc-valor-acao', r.valor_acao); set('bpc-fase', r.fase_atual);
+      set('bpc-proximo-prazo', r.proximo_prazo?.slice(0,10));
+      set('bpc-tipo-prazo', r.tipo_prazo);
+      set('bpc-status', r.status); set('bpc-obs', r.observacoes);
+      if (window.MODULOS) { window.MODULOS.atualizarNaturezaBpc(); window.MODULOS.atualizarDecisaoBpc(); }
+      break;
+    case 'rec':
+      set('rec-origem-tipo', r.origem_tipo); set('rec-origem-id', r.origem_id);
+      set('rec-cliente-id', r.cliente_id);
+      set('rec-num-req', r.numero_requerimento); set('rec-numero', r.numero_processo);
+      set('rec-nome', r.nome_cliente); set('rec-cpf', r.cpf);
+      set('rec-tipo-beneficio', r.tipo_beneficio); set('rec-modalidade', r.modalidade);
+      set('rec-data-protocolo', r.data_protocolo?.slice(0,10));
+      set('rec-prazo-resposta', r.prazo_resposta?.slice(0,10));
+      set('rec-data-decisao', r.data_decisao?.slice(0,10));
+      set('rec-resultado', r.resultado);
+      set('rec-vara', r.vara_tribunal); set('rec-parte-contraria', r.parte_contraria);
+      set('rec-valor-acao', r.valor_acao); set('rec-fase', r.fase_atual);
+      set('rec-proximo-prazo', r.proximo_prazo?.slice(0,10));
+      set('rec-tipo-prazo', r.tipo_prazo);
+      set('rec-status', r.status); set('rec-obs', r.observacoes);
+      if (window.MODULOS) window.MODULOS.atualizarModalidadeRec();
+      break;
     case 'aux':
       set('aux-nome', r.nome_medico); set('aux-cpf', r.cpf);
+      set('aux-cliente-id', r.cliente_id);
       set('aux-crm', r.crm); set('aux-rqe', r.rqe);
       set('aux-telefone', r.telefone); set('aux-email', r.email);
       set('aux-hospital', r.hospital); set('aux-processo', r.numero_processo);
@@ -884,10 +1168,9 @@ async function deleteRecord(type, id) {
   const { error } = await sb.from(tableFor(type)).delete().eq('id', id);
   if (error) { toast('Erro ao excluir.', true); return; }
   toast('Registro excluído.');
-  loaded[moduleFor(type)] = false;
-  loadModule(moduleFor(type));
-  loaded['dashboard'] = false;
-  loadModule('dashboard');
+  Object.keys(loaded).forEach(k => loaded[k] = false);
+  const ativo = document.querySelector('.nav-item.active')?.dataset.module;
+  if (ativo && typeof window.showModule === 'function') window.showModule(ativo);
 }
 window.deleteRecord = deleteRecord;
 
@@ -1031,10 +1314,19 @@ async function saveAcaoGen() {
   const area = document.getElementById('gen-area').value;
   const nome = v('gen-nome');
   if (!nome) { toast('Nome do cliente é obrigatório.', true); return; }
+  const parteContraria = v('gen-parte-contraria');
+  if (!parteContraria) { toast('Parte contrária é obrigatória.', true); return; }
+
+  // Upsert cliente central
+  let clienteId = v('gen-cliente-id');
+  if (window.MODULOS?.upsertClienteDoFormulario) {
+    try { clienteId = await window.MODULOS.upsertClienteDoFormulario('gen'); } catch(e) { console.warn(e); }
+  }
 
   const selTipo = document.getElementById('gen-tipo-acao');
   const payload = {
     area,
+    cliente_id: clienteId,
     nome_cliente: nome,
     cpf: v('gen-cpf'),
     telefone: v('gen-telefone'),
@@ -1065,18 +1357,34 @@ async function saveAcaoGen() {
     tipo_prazo: v('gen-tipo-prazo'),
   };
 
-  let err;
+  let err, novoId = id;
   if (id) {
     ({ error: err } = await sb.from('acoes_genericas').update(payload).eq('id', id));
   } else {
-    ({ error: err } = await sb.from('acoes_genericas').insert(payload));
+    const { data, error } = await sb.from('acoes_genericas').insert(payload).select('id').single();
+    err = error;
+    if (data) novoId = data.id;
   }
   if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
+
+  // Auto-cobrança ao criar
+  if (novoId && !id && window.MODULOS?.criarCobrancaAutomatica) {
+    try {
+      await window.MODULOS.criarCobrancaAutomatica({
+        origem_tipo:'gen', origem_id:novoId,
+        cliente_id:clienteId, nome_cliente:nome, cpf:v('gen-cpf'),
+        tipo_beneficio: payload.tipo_acao || area,
+        valor_acao: payload.valor_causa,
+        numero_processo: payload.numero_processo,
+      });
+    } catch(e) { console.warn(e); }
+  }
+
   toast(id ? 'Registro atualizado!' : 'Registro criado!');
   closeModal('gen');
-  loaded[AREA_TO_MODULE[area]] = false;
-  loadModule(AREA_TO_MODULE[area]);
-  if (loaded['dashboard']) { loaded['dashboard'] = false; loadModule('dashboard'); }
+  Object.keys(loaded).forEach(k => loaded[k] = false);
+  const ativo = document.querySelector('.nav-item.active')?.dataset.module;
+  if (ativo && typeof window.showModule === 'function') window.showModule(ativo);
 }
 window.saveAcaoGen = saveAcaoGen;
 
@@ -1125,8 +1433,9 @@ async function deleteAcaoGen(area, id) {
   const { error } = await sb.from('acoes_genericas').delete().eq('id', id);
   if (error) { toast('Erro ao excluir.', true); return; }
   toast('Registro excluído.');
-  loaded[AREA_TO_MODULE[area]] = false;
-  loadModule(AREA_TO_MODULE[area]);
+  Object.keys(loaded).forEach(k => loaded[k] = false);
+  const ativo = document.querySelector('.nav-item.active')?.dataset.module;
+  if (ativo && typeof window.showModule === 'function') window.showModule(ativo);
 }
 window.deleteAcaoGen = deleteAcaoGen;
 
@@ -1147,8 +1456,14 @@ function inicializar(session) {
   const emailEl = document.getElementById('user-email');
   if (emailEl && currentUser) emailEl.textContent = currentUser.email;
   setDate();
-  loadModule('dashboard');
+  // Adia para o próximo tick — assim o extras.js já reescreveu window.showModule
+  // e o dashboard categorizado é chamado corretamente no primeiro load.
+  setTimeout(() => {
+    if (typeof window.showModule === 'function') window.showModule('dashboard');
+    else loadModule('dashboard');
+  }, 0);
 }
+window.__inicializar__ = inicializar;
 
 if (window.__SESSION__?.user) {
   inicializar(window.__SESSION__);

@@ -34,10 +34,16 @@
     <div class="sidebar-section">Visão Geral</div>
     <a class="nav-item active" data-module="dashboard" href="#dashboard"><span class="icon">📊</span> Dashboard</a>
 
+    <div class="sidebar-section">Clientes</div>
+    <a class="nav-item" data-module="clientes" href="#clientes"><span class="icon">👤</span> Cadastro de Clientes</a>
+
     <div class="sidebar-section">INSS</div>
     <a class="nav-item" data-module="proc-adm" href="#proc-adm"><span class="icon">📋</span> Proc. Administrativos</a>
     <a class="nav-item" data-module="proc-jud" href="#proc-jud"><span class="icon">⚖️</span> Proc. Judiciais</a>
     <a class="nav-item" data-module="sal-mat" href="#sal-mat"><span class="icon">👶</span> Salário-Maternidade</a>
+    <a class="nav-item" data-module="aux-doenca" href="#aux-doenca"><span class="icon">🩺</span> Auxílio-Doença</a>
+    <a class="nav-item" data-module="bpc" href="#bpc"><span class="icon">♿</span> BPC / LOAS</a>
+    <a class="nav-item" data-module="recursos" href="#recursos"><span class="icon">📤</span> Recursos</a>
 
     <div class="sidebar-section">Auxílio-Moradia</div>
     <a class="nav-item" data-module="aux-mor" href="#aux-mor"><span class="icon">🏥</span> Médicos Residentes</a>
@@ -47,9 +53,11 @@
     <a class="nav-item" data-module="civel" href="#civel"><span class="icon">⚖️</span> Ações Cíveis</a>
     <a class="nav-item" data-module="familia" href="#familia"><span class="icon">👨‍👩‍👧</span> Família e Sucessões</a>
     <a class="nav-item" data-module="consumidor" href="#consumidor"><span class="icon">🛒</span> Consumidor</a>
+    <a class="nav-item" data-module="prazos-civel" href="#prazos-civel"><span class="icon">📅</span> Prazos Judiciais · Cível</a>
 
     <div class="sidebar-section">Saúde</div>
     <a class="nav-item" data-module="saude" href="#saude"><span class="icon">🏥</span> Direito à Saúde</a>
+    <a class="nav-item" data-module="prazos-saude" href="#prazos-saude"><span class="icon">📅</span> Prazos Judiciais · Saúde</a>
 
     <div class="sidebar-section">Financeiro</div>
     <a class="nav-item" data-module="cobrancas" href="#cobrancas"><span class="icon">💰</span> Cobranças / Honorários</a>
@@ -80,14 +88,49 @@
         <div class="stat-card laranja"><div class="stat-num" id="dash-urgentes">—</div><div class="stat-label">🟠 Urgentes ≤ 3 dias</div></div>
         <div class="stat-card amarelo"><div class="stat-num" id="dash-atencao">—</div><div class="stat-label">🟡 Atenção ≤ 7 dias</div></div>
         <div class="stat-card verde"><div class="stat-num" id="dash-ok">—</div><div class="stat-label">🟢 No Prazo</div></div>
-        <div class="stat-card azul"><div class="stat-num" id="dash-total">—</div><div class="stat-label">📂 Total de Processos</div></div>
+        <div class="stat-card azul"><div class="stat-num" id="dash-total">—</div><div class="stat-label">📂 Total de Prazos</div></div>
       </div>
+
+      <!-- Categoria 1: GUIAS INSS (pagamento de boletos / guias) -->
       <div class="card">
-        <div class="card-header"><div class="card-title">Prazos Próximos <small>30 dias — todos os módulos</small></div></div>
+        <div class="card-header"><div class="card-title">💳 Pagamento de Guia INSS <small>(salário-maternidade)</small></div></div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Semáforo</th><th>Cliente / Médico</th><th>Módulo</th><th>Prazo</th><th>Dias</th><th>Status</th></tr></thead>
-            <tbody id="dash-table-body"><tr><td colspan="6" class="loading">Carregando prazos…</td></tr></tbody>
+            <thead><tr><th>Semáforo</th><th>Cliente</th><th>Competência</th><th>Nº Guia</th><th>Vencimento</th><th>Dias</th><th>Status</th></tr></thead>
+            <tbody id="dash-guias-body"><tr><td colspan="7" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Categoria 2: COBRANÇA DE HONORÁRIOS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">💰 Cobrança de Honorários <small>(valores a receber dos clientes)</small></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Semáforo</th><th>Cliente</th><th>Origem</th><th>Parcela</th><th>Valor</th><th>Limite Pgto</th><th>Dias</th><th>Status</th></tr></thead>
+            <tbody id="dash-cobr-body"><tr><td colspan="8" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Categoria 3: PRAZOS JUDICIAIS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">⚖️ Prazos Judiciais <small>(peças, audiências, recursos judiciais)</small></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Semáforo</th><th>Cliente</th><th>Módulo</th><th>Peça / Tipo</th><th>Prazo</th><th>Dias</th><th>Status</th></tr></thead>
+            <tbody id="dash-jud-body"><tr><td colspan="7" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Categoria 4: PRAZOS ADMINISTRATIVOS -->
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 Prazos Administrativos <small>(análise INSS, recursos administrativos)</small></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Semáforo</th><th>Cliente</th><th>Benefício</th><th>Etapa</th><th>Prazo</th><th>Dias</th><th>Status</th></tr></thead>
+            <tbody id="dash-adm-body"><tr><td colspan="7" class="loading">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -105,8 +148,8 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th><th>Tipo</th><th>Fase</th><th>Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
-            <tbody id="adm-body"><tr><td colspan="10" class="loading">Carregando…</td></tr></tbody>
+            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th><th>Tipo</th><th>Protocolo</th><th>Prazo INSS</th><th>Resultado</th><th>Próx. Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="adm-body"><tr><td colspan="12" class="loading">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -143,8 +186,8 @@
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>⚡</th><th>Nº Proc.</th><th>Cliente</th><th>CPF</th><th>DPP</th><th>Tipo</th><th>Valor Benef.</th><th>Limite Pgto</th><th>Dias</th><th>Status Guia</th><th>Hon. Total</th><th>St. Hon.</th><th>Ações</th></tr></thead>
-            <tbody id="sal-body"><tr><td colspan="13" class="loading">Carregando…</td></tr></tbody>
+            <thead><tr><th>⚡</th><th>Nº Proc.</th><th>Cliente</th><th>CPF</th><th>Protocolo</th><th>Prazo INSS</th><th>Resultado</th><th>Valor Benef.</th><th>Hon. Total</th><th>St. Hon.</th><th>Ações</th></tr></thead>
+            <tbody id="sal-body"><tr><td colspan="11" class="loading">Carregando…</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -174,7 +217,7 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">Prazos Judiciais — Auxílio-Moradia</div>
-          <button class="btn btn-primary" onclick="openModal('praz')">+ Novo Prazo</button>
+          <button class="btn btn-primary" onclick="openPrazoEscopo('AUX_MORADIA')">+ Novo Prazo</button>
         </div>
         <div style="padding:1rem 1.4rem 0">
           <div class="search-bar"><input type="text" placeholder="Buscar…" oninput="filterTable('praz-body', this.value)"></div>
@@ -264,6 +307,120 @@
       </div>
     </div>
 
+    <!-- CADASTRO DE CLIENTES -->
+    <div class="module" id="mod-clientes">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Cadastro de Clientes</div>
+          <button class="btn btn-primary" onclick="openModal('cli')">+ Novo Cliente</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar por nome, CPF, telefone…" oninput="filterTable('cli-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Nome</th><th>CPF</th><th>Telefone</th><th>E-mail</th><th>Processos</th><th>Ações</th></tr></thead>
+            <tbody id="cli-body"><tr><td colspan="6" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- AUXÍLIO-DOENÇA -->
+    <div class="module" id="mod-aux-doenca">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Auxílio por Incapacidade Temporária (Auxílio-Doença)</div>
+          <button class="btn btn-primary" onclick="openModal('axd')">+ Novo Auxílio-Doença</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar por nome, CPF ou nº processo…" oninput="filterTable('axd-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th><th>Natureza</th><th>Protocolo</th><th>Prazo INSS</th><th>Resultado</th><th>Parcelas</th><th>Próx. Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="axd-body"><tr><td colspan="13" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- BPC / LOAS -->
+    <div class="module" id="mod-bpc">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">BPC / LOAS (Idoso e Deficiente)</div>
+          <button class="btn btn-primary" onclick="openModal('bpc')">+ Novo BPC</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar…" oninput="filterTable('bpc-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Processo</th><th>Cliente</th><th>CPF</th><th>Modalidade</th><th>Natureza</th><th>Protocolo</th><th>Prazo INSS (90d)</th><th>Resultado</th><th>Próx. Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="bpc-body"><tr><td colspan="13" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECURSOS (administrativos e judiciais) -->
+    <div class="module" id="mod-recursos">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Recursos · Administrativos e Judiciais</div>
+          <button class="btn btn-primary" onclick="openModal('rec')">+ Novo Recurso</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar por nº do requerimento, nome, CPF…" oninput="filterTable('rec-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Modalidade</th><th>Nº Req. Original</th><th>Cliente</th><th>Benefício</th><th>Protocolo</th><th>Resultado</th><th>Próx. Prazo</th><th>Dias</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="rec-body"><tr><td colspan="11" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRAZOS CÍVEL -->
+    <div class="module" id="mod-prazos-civel">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Prazos Judiciais · Cível / Família / Consumidor</div>
+          <button class="btn btn-primary" onclick="openPrazoEscopo('CIVEL')">+ Novo Prazo</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar…" oninput="filterTable('praz-civel-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Proc.</th><th>Cliente</th><th>Tipo Ação</th><th>Vara</th><th>Fase</th><th>Prazo</th><th>Peça</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="praz-civel-body"><tr><td colspan="11" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRAZOS SAÚDE -->
+    <div class="module" id="mod-prazos-saude">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Prazos Judiciais · Saúde</div>
+          <button class="btn btn-primary" onclick="openPrazoEscopo('SAUDE')">+ Novo Prazo</button>
+        </div>
+        <div style="padding:1rem 1.4rem 0">
+          <div class="search-bar"><input type="text" placeholder="Buscar…" oninput="filterTable('praz-saude-body', this.value)"></div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>⚡</th><th>Nº Proc.</th><th>Cliente</th><th>Tipo Ação</th><th>Vara</th><th>Fase</th><th>Prazo</th><th>Peça</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="praz-saude-body"><tr><td colspan="11" class="loading">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- COBRANÇAS -->
     <div class="module" id="mod-cobrancas">
       <div class="card">
@@ -307,42 +464,100 @@
       <div class="tab-pane pane-adm active">
         <form id="form-adm">
           <input type="hidden" id="adm-id">
+          <input type="hidden" id="adm-cliente-id">
           <div class="form-row">
             <div class="form-group"><label>Nº Processo Administrativo</label><input type="text" id="adm-numero" placeholder="NB-000.000.000-0"></div>
             <div class="form-group"><label>Nº Processo Judicial Vinculado</label><input type="text" id="adm-proc-jud"></div>
           </div>
           <div class="form-row">
+            <div class="form-group">
+              <label>Buscar cliente já cadastrado</label>
+              <input type="text" id="adm-cli-busca" list="lista-clientes-adm" placeholder="Digite nome ou CPF…" oninput="window.MODULOS.aplicarClienteSelecionado('adm', this.value)">
+              <datalist id="lista-clientes-adm"></datalist>
+            </div>
             <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="adm-nome" required></div>
-            <div class="form-group"><label>CPF</label><input type="text" id="adm-cpf" placeholder="000.000.000-00"></div>
           </div>
           <div class="form-row">
+            <div class="form-group"><label>CPF</label><input type="text" id="adm-cpf" placeholder="000.000.000-00"></div>
             <div class="form-group"><label>Tipo de Benefício</label>
-              <select id="adm-tipo">
+              <select id="adm-tipo" onchange="window.MODULOS.recalcPrazoAdm()">
                 <option value="">— Selecione —</option>
-                <option>Auxílio por Incapacidade Temporária</option>
-                <option>Aposentadoria por Invalidez</option>
-                <option>Aposentadoria por Tempo de Contribuição</option>
-                <option>Aposentadoria por Idade</option>
-                <option>BPC/LOAS</option>
-                <option>Pensão por Morte</option>
                 <option>Salário-Maternidade</option>
+                <option>Auxílio por Incapacidade Temporária</option>
+                <option>Auxílio-Doença</option>
+                <option>Aposentadoria por Invalidez</option>
+                <option>Aposentadoria por Incapacidade Permanente</option>
+                <option>Pensão por Morte</option>
+                <option>Auxílio-Reclusão</option>
+                <option>Auxílio-Acidente</option>
+                <option>Aposentadoria por Idade</option>
+                <option>Aposentadoria por Tempo de Contribuição</option>
+                <option>Aposentadoria Especial</option>
+                <option>BPC/LOAS</option>
                 <option>Outro</option>
               </select>
             </div>
-            <div class="form-group"><label>Data de Protocolo</label><input type="date" id="adm-protocolo"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Fase Atual</label><input type="text" id="adm-fase" placeholder="Ex: Aguardando Recurso"></div>
-            <div class="form-group"><label>Próximo Prazo</label><input type="date" id="adm-prazo"></div>
+            <div class="form-group"><label>Data de Protocolo</label><input type="date" id="adm-protocolo" onchange="window.MODULOS.recalcPrazoAdm()"></div>
+            <div class="form-group"><label>Prazo de análise do INSS <small id="adm-prazo-info" style="color:var(--texto-suave)"></small></label>
+              <input type="date" id="adm-prazo-analise" readonly style="background:rgba(184,145,74,.08)">
+            </div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Tipo de Prazo</label><input type="text" id="adm-tipo-prazo" placeholder="Ex: Prazo de Recurso (30 dias)"></div>
-            <div class="form-group"><label>Prazo Boleto Pagamento</label><input type="date" id="adm-boleto"></div>
+            <div class="form-group"><label>Fase Atual</label>
+              <select id="adm-fase">
+                <option value="">— Selecione —</option>
+                <option>Protocolo</option><option>Em análise</option>
+                <option>Exigência (carta)</option><option>Cumprimento de exigência</option>
+                <option>Perícia médica designada</option><option>Perícia realizada</option>
+                <option>Aguardando deferimento</option>
+                <option>Deferido</option><option>Indeferido</option>
+                <option>Recurso interposto</option><option>Aguardando análise CRPS</option>
+                <option>Decisão CRPS</option><option>Implantado</option><option>Arquivado</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Resultado do pedido</label>
+              <select id="adm-resultado" onchange="window.MODULOS.atualizarDecisaoAdm()">
+                <option value="">— Selecione —</option>
+                <option>Aguardando</option>
+                <option>Deferido</option>
+                <option>Indeferido</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Data da decisão (deferimento/indeferimento)</label><input type="date" id="adm-data-decisao" onchange="window.MODULOS.atualizarDecisaoAdm()"></div>
+            <div class="form-group" id="adm-row-prevpgto"><label>Previsão de pagamento (se deferido)</label><input type="date" id="adm-prev-pgto"></div>
+          </div>
+          <div class="form-row" id="adm-row-recurso" style="display:none">
+            <div class="form-group"><label>Prazo para recurso (30 dias após indeferimento)</label><input type="date" id="adm-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
+            <div class="form-group" style="align-self:flex-end">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('adm')">+ Cadastrar recurso para este pedido</button>
+            </div>
+          </div>
+          <div class="form-row" id="adm-row-parcelas" style="display:none">
+            <div class="form-group"><label>Qtd. parcelas deferidas (1-12)</label>
+              <input type="number" id="adm-qtd-parc" min="1" max="12" placeholder="Ex: 3" oninput="window.MODULOS.atualizarParcelasAdm()">
+            </div>
+            <div class="form-group" style="flex-direction:row; align-items:center; gap:.6rem;">
+              <input type="checkbox" id="adm-indeterminado" style="width:auto;" onchange="window.MODULOS.atualizarParcelasAdm()">
+              <label for="adm-indeterminado" style="margin:0; cursor:pointer">Por tempo indeterminado</label>
+            </div>
+          </div>
+          <div class="form-row" id="adm-row-valor" style="display:none">
+            <div class="form-group"><label>Valor mensal do benefício (R$)</label><input type="number" id="adm-valor-mensal" step="0.01" min="0"></div>
+            <div class="form-group"><label>Honorários estimados (30%)</label><input type="text" id="adm-honor-preview" readonly style="background:rgba(184,145,74,.08)"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Próximo Prazo (livre)</label><input type="date" id="adm-prazo"></div>
+            <div class="form-group"><label>Tipo de Prazo</label><input type="text" id="adm-tipo-prazo" placeholder="Ex: Cumprir exigência"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Status</label>
               <select id="adm-status">
-                <option>Em andamento</option><option>🔴 Recurso Urgente</option><option>🟡 Atenção</option>
+                <option>Em andamento</option><option>Aguardando deferimento</option>
+                <option>🔴 Recurso Urgente</option><option>🟡 Atenção</option>
                 <option>🟢 Deferido</option><option>Indeferido</option><option>Arquivado</option>
               </select>
             </div>
@@ -373,40 +588,67 @@
     <div class="modal-body">
       <form id="form-jud">
         <input type="hidden" id="jud-id">
+        <input type="hidden" id="jud-cliente-id">
         <div class="form-row">
           <div class="form-group"><label>Nº Processo Judicial</label><input type="text" id="jud-numero"></div>
           <div class="form-group"><label>Nº Proc. Adm. Vinculado</label><input type="text" id="jud-proc-adm"></div>
         </div>
         <div class="form-row">
+          <div class="form-group">
+            <label>Buscar cliente já cadastrado</label>
+            <input type="text" id="jud-cli-busca" list="lista-clientes-jud" placeholder="Digite nome ou CPF…" oninput="window.MODULOS.aplicarClienteSelecionado('jud', this.value)">
+            <datalist id="lista-clientes-jud"></datalist>
+          </div>
           <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="jud-nome" required></div>
+        </div>
+        <div class="form-row">
           <div class="form-group"><label>CPF</label><input type="text" id="jud-cpf" placeholder="000.000.000-00"></div>
+          <div class="form-group"><label>Parte Contrária *</label><input type="text" id="jud-parte-contraria" placeholder="INSS / União" required></div>
         </div>
         <div class="form-row">
           <div class="form-group"><label>Tipo de Benefício</label>
-            <select id="jud-tipo">
+            <select id="jud-tipo" onchange="window.MODULOS.atualizarParcelasJud()">
               <option value="">— Selecione —</option>
               <option>Auxílio por Incapacidade Temporária</option>
+              <option>Auxílio-Doença</option>
               <option>Aposentadoria por Invalidez</option>
               <option>Aposentadoria por Tempo de Contribuição</option>
               <option>Aposentadoria por Idade</option>
+              <option>Aposentadoria Especial</option>
               <option>BPC/LOAS</option>
               <option>Pensão por Morte</option>
               <option>Salário-Maternidade</option>
+              <option>Auxílio-Acidente</option>
               <option>Outro</option>
             </select>
           </div>
+          <div class="form-group"><label>Valor da Ação (R$)</label><input type="number" id="jud-valor-acao" step="0.01" min="0"></div>
+        </div>
+        <div class="form-row">
           <div class="form-group"><label>Vara / Tribunal</label><input type="text" id="jud-vara"></div>
-        </div>
-        <div class="form-row">
           <div class="form-group"><label>Juiz(a)</label><input type="text" id="jud-juiz"></div>
-          <div class="form-group"><label>Fase Atual</label><input type="text" id="jud-fase"></div>
         </div>
         <div class="form-row">
+          <div class="form-group"><label>Fase Atual</label>
+            <select id="jud-fase">
+              <option value="">— Selecione —</option>
+              <option>Distribuído</option><option>Despacho inicial</option><option>Citação do réu</option>
+              <option>Contestação</option><option>Réplica</option>
+              <option>Audiência de conciliação/instrução</option><option>Especificação de provas</option>
+              <option>Perícia médica designada</option><option>Laudo pericial juntado</option>
+              <option>Manifestação sobre laudo</option><option>Sentença</option>
+              <option>Embargos de Declaração</option><option>Recurso Inominado</option>
+              <option>Apelação</option><option>Contrarrazões</option>
+              <option>Turma Recursal</option><option>Acórdão</option>
+              <option>Trânsito em julgado</option><option>Cumprimento de sentença</option>
+              <option>Implantação do benefício</option><option>RPV expedida</option>
+              <option>Alvará/Levantamento</option><option>Arquivado</option>
+            </select>
+          </div>
           <div class="form-group"><label>Data Próxima Audiência / Prazo</label><input type="date" id="jud-data-prazo"></div>
-          <div class="form-group"><label>Tipo de Prazo</label><input type="text" id="jud-tipo-prazo"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Prazo Boleto</label><input type="date" id="jud-boleto"></div>
+          <div class="form-group"><label>Tipo de Prazo</label><input type="text" id="jud-tipo-prazo" placeholder="Ex: Réplica (15 dias úteis)"></div>
           <div class="form-group"><label>Status</label>
             <select id="jud-status">
               <option>Em andamento</option><option>Aguardando audiência</option>
@@ -414,6 +656,19 @@
               <option>Improcedente</option><option>Arquivado</option>
             </select>
           </div>
+        </div>
+        <div class="form-row" id="jud-row-parcelas" style="display:none">
+          <div class="form-group"><label>Qtd. parcelas deferidas (1-12)</label>
+            <input type="number" id="jud-qtd-parc" min="1" max="12" placeholder="Ex: 6">
+          </div>
+          <div class="form-group" style="flex-direction:row; align-items:center; gap:.6rem;">
+            <input type="checkbox" id="jud-indeterminado" style="width:auto;">
+            <label for="jud-indeterminado" style="margin:0; cursor:pointer">Por tempo indeterminado</label>
+          </div>
+        </div>
+        <div class="form-row" id="jud-row-valor-mensal" style="display:none">
+          <div class="form-group"><label>Valor mensal benefício (R$)</label><input type="number" id="jud-valor-mensal" step="0.01" min="0"></div>
+          <div class="form-group"></div>
         </div>
         <div class="form-row full"><div class="form-group"><label>Observações</label><textarea id="jud-obs"></textarea></div></div>
       </form>
@@ -435,64 +690,117 @@
     <div class="modal-body">
       <div class="tabs" id="tabs-sal">
         <button type="button" class="tab active" onclick="UI.ativarTab('tabs-sal','pane-sal',0)">Dados</button>
-        <button type="button" class="tab" onclick="UI.ativarTab('tabs-sal','pane-sal',1)">Honorários</button>
-        <button type="button" class="tab" onclick="UI.ativarTab('tabs-sal','pane-sal',2)">Documentos</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-sal','pane-sal',1)">Decisão INSS</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-sal','pane-sal',2)">Guias (até 3)</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-sal','pane-sal',3)">Honorários</button>
+        <button type="button" class="tab" onclick="UI.ativarTab('tabs-sal','pane-sal',4)">Documentos</button>
       </div>
 
       <div class="tab-pane pane-sal active">
         <form id="form-sal">
           <input type="hidden" id="sal-id">
+          <input type="hidden" id="sal-cliente-id">
           <div class="form-row">
+            <div class="form-group">
+              <label>Buscar cliente já cadastrada</label>
+              <input type="text" id="sal-cli-busca" list="lista-clientes-sal" placeholder="Digite nome ou CPF…" oninput="window.MODULOS.aplicarClienteSelecionado('sal', this.value)">
+              <datalist id="lista-clientes-sal"></datalist>
+            </div>
             <div class="form-group"><label>Nº Processo</label><input type="text" id="sal-numero"></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>Nome da Cliente *</label><input type="text" id="sal-nome" required></div>
-          </div>
-          <div class="form-row">
             <div class="form-group"><label>CPF</label><input type="text" id="sal-cpf" placeholder="000.000.000-00"></div>
-            <div class="form-group"><label>Previsão do Parto (DPP)</label><input type="date" id="sal-dpp"></div>
           </div>
           <div class="form-row">
+            <div class="form-group"><label>Data de Protocolo do Pedido Adm.</label><input type="date" id="sal-data-protocolo" onchange="window.MODULOS.recalcPrazoSalMat()"></div>
+            <div class="form-group"><label>Prazo análise INSS (30 dias) <small style="color:var(--texto-suave)">após esse prazo, é possível pedir deferimento provisório</small></label>
+              <input type="date" id="sal-prazo-analise" readonly style="background:rgba(184,145,74,.08)">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Previsão do Parto (DPP)</label><input type="date" id="sal-dpp"></div>
             <div class="form-group"><label>Tipo de Salário-Maternidade</label>
               <select id="sal-tipo"><option value="">— Selecione —</option></select>
             </div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>Valor Mensal Benefício (R$)</label><input type="number" id="sal-valor" step="0.01" min="0"></div>
+            <div class="form-group"><label>Status Honorário</label>
+              <select id="sal-status-honor"><option>Pendente</option><option>Pago</option><option>Atrasado</option></select>
+            </div>
           </div>
           <div class="form-row" id="sal-parcelas-row" style="display:none">
             <div class="form-group"><label>Nº de Parcelas (prorrogação)</label><input type="number" id="sal-parcelas-qtd" min="1" step="1" placeholder="Ex: 2 (60 dias adicionais)"></div>
             <div class="form-group"><label>Período da Prorrogação</label><input type="text" id="sal-prorrog-periodo" placeholder="Ex: 15/03 a 15/05"></div>
           </div>
-          <div class="form-row">
-            <div class="form-group"><label>Nº Guia</label><input type="text" id="sal-guia"></div>
-            <div class="form-group"><label>Competência Guia INSS</label><input type="text" id="sal-competencia" placeholder="MM/AAAA"></div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Data Limite Pagamento</label><input type="date" id="sal-data-limite"></div>
-            <div class="form-group"><label>Status Guia</label>
-              <select id="sal-status-guia"><option>Pendente</option><option>Pago</option><option>Atrasado</option></select>
-            </div>
-          </div>
-          <div class="form-row">
-            <div class="form-group"><label>Data Pgto Guia INSS</label><input type="date" id="sal-data-pgto"></div>
-            <div class="form-group"><label>Status Honorário</label>
-              <select id="sal-status-honor"><option>Pendente</option><option>Pago</option><option>Atrasado</option></select>
-            </div>
-          </div>
           <div class="form-row full"><div class="form-group"><label>Observações</label><textarea id="sal-obs"></textarea></div></div>
         </form>
       </div>
 
+      <!-- DECISÃO INSS -->
       <div class="tab-pane pane-sal">
         <p style="font-size:.85rem; color:var(--texto-suave); margin-bottom:.8rem">
-          O cálculo é feito automaticamente: <strong>valor mensal × 4 parcelas × 30%</strong>.
-          Digite o valor mensal na aba "Dados" para ver o resultado.
+          Após a análise do INSS, registre o resultado. <strong>Deferido</strong> habilita a previsão de pagamento.
+          <strong>Indeferido</strong> gera prazo de 30 dias para recurso.
         </p>
-        <div class="form-row three">
+        <div class="form-row">
+          <div class="form-group"><label>Resultado do pedido</label>
+            <select id="sal-resultado" onchange="window.MODULOS.atualizarDecisaoSalMat()">
+              <option value="">— Selecione —</option>
+              <option>Aguardando</option>
+              <option>Deferido</option>
+              <option>Indeferido</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Data da decisão</label><input type="date" id="sal-data-decisao" onchange="window.MODULOS.atualizarDecisaoSalMat()"></div>
+        </div>
+        <div class="form-row" id="sal-row-prevpgto" style="display:none">
+          <div class="form-group"><label>Previsão de pagamento</label><input type="date" id="sal-prev-pgto"></div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row" id="sal-row-recurso" style="display:none">
+          <div class="form-group"><label>Prazo para recurso (30 dias)</label><input type="date" id="sal-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
+          <div class="form-group" style="align-self:flex-end">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('sal')">+ Cadastrar recurso</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- GUIAS -->
+      <div class="tab-pane pane-sal">
+        <p style="font-size:.85rem; color:var(--texto-suave); margin-bottom:.8rem">
+          Cadastre até <strong>3 guias</strong> de pagamento ao INSS. Cada guia gera um item no <strong>Dashboard · Pagamento de Guia INSS</strong>.
+        </p>
+        <div id="sal-guias-container"></div>
+        <div style="font-size:.78rem; color:var(--texto-suave); margin-top:.4rem">
+          ⚠️ As guias só são salvas após você clicar em <strong>Salvar</strong> abaixo. Necessário ter salvo o cadastro principal antes.
+        </div>
+      </div>
+
+      <!-- HONORÁRIOS -->
+      <div class="tab-pane pane-sal">
+        <p style="font-size:.85rem; color:var(--texto-suave); margin-bottom:.8rem">
+          Cálculo: <strong>valor mensal × 4 parcelas × 30%</strong>.
+          Você pode optar por receber <strong>30% sobre as 4 parcelas</strong> OU <strong>a 1ª parcela integral</strong> do benefício.
+        </p>
+        <div class="form-row">
+          <div class="form-group"><label>Forma de pagamento dos honorários</label>
+            <select id="sal-forma-pgto">
+              <option value="30% sobre as 4 parcelas">30% sobre as 4 parcelas (padrão)</option>
+              <option value="1ª parcela integral">1ª parcela integral do salário-maternidade</option>
+            </select>
+          </div>
           <div class="form-group"><label>Honorário Total (R$)</label><input type="number" id="sal-honor-total" step="0.01" min="0"></div>
+        </div>
+        <div class="form-row three">
           <div class="form-group"><label>Nº Parcela</label><input type="number" id="sal-parcela-num" min="1"></div>
           <div class="form-group"><label>Valor Parcela (R$)</label><input type="number" id="sal-parcela-valor" step="0.01" min="0"></div>
+          <div class="form-group"><label>Data Cobrança</label><input type="date" id="sal-data-cob"></div>
         </div>
         <div class="form-row">
-          <div class="form-group"><label>Data Cobrança</label><input type="date" id="sal-data-cob"></div>
           <div class="form-group"><label>Data Recebimento</label><input type="date" id="sal-data-rec"></div>
+          <div class="form-group"></div>
         </div>
         <div class="calc-preview" id="sal-calc-preview"><em style="color:var(--texto-suave)">Preencha o valor mensal para ver o cálculo.</em></div>
       </div>
@@ -528,12 +836,21 @@
       <div class="tab-pane pane-aux active">
         <form id="form-aux">
           <input type="hidden" id="aux-id">
+          <input type="hidden" id="aux-cliente-id">
           <input type="hidden" id="aux-total-bolsa">
           <input type="hidden" id="aux-valor-acao">
           <input type="hidden" id="aux-honor-calc">
           <div class="form-row">
+            <div class="form-group">
+              <label>Buscar cliente já cadastrado</label>
+              <input type="text" id="aux-cli-busca" list="lista-clientes-aux" placeholder="Digite nome ou CPF…" oninput="window.MODULOS && window.MODULOS.aplicarClienteSelecionado('aux', this.value)">
+              <datalist id="lista-clientes-aux"></datalist>
+            </div>
             <div class="form-group"><label>Nome do Médico *</label><input type="text" id="aux-nome" required></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>CPF</label><input type="text" id="aux-cpf" placeholder="000.000.000-00"></div>
+            <div class="form-group"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>CRM</label><input type="text" id="aux-crm"></div>
@@ -723,9 +1040,18 @@
         <form id="form-gen">
           <input type="hidden" id="gen-id">
           <input type="hidden" id="gen-area">
+          <input type="hidden" id="gen-cliente-id">
           <div class="form-row">
+            <div class="form-group">
+              <label>Buscar cliente já cadastrado</label>
+              <input type="text" id="gen-cli-busca" list="lista-clientes-gen" placeholder="Digite nome ou CPF…" oninput="window.MODULOS.aplicarClienteSelecionado('gen', this.value)">
+              <datalist id="lista-clientes-gen"></datalist>
+            </div>
             <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="gen-nome" required></div>
+          </div>
+          <div class="form-row">
             <div class="form-group"><label>CPF / CNPJ</label><input type="text" id="gen-cpf"></div>
+            <div class="form-group"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Telefone</label><input type="text" id="gen-telefone" placeholder="(85) 9 0000-0000"></div>
@@ -735,7 +1061,7 @@
             <div class="form-group"><label>Endereço do cliente</label><input type="text" id="gen-endereco"></div>
           </div>
           <div class="form-row">
-            <div class="form-group"><label>Parte Contrária</label><input type="text" id="gen-parte-contraria" placeholder="Réu / Requerido / Executado"></div>
+            <div class="form-group"><label>Parte Contrária *</label><input type="text" id="gen-parte-contraria" placeholder="Réu / Requerido / Executado" required></div>
             <div class="form-group"><label>CPF/CNPJ da Parte Contrária</label><input type="text" id="gen-pc-doc"></div>
           </div>
           <div class="form-row full">
@@ -909,6 +1235,343 @@
   </div>
 </div>
 
+<!-- Modal Cliente (cadastro central) -->
+<div class="modal-overlay" id="modal-cli">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-cli-title">Novo Cliente</div>
+      <button class="modal-close" onclick="closeModal('cli')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-cli">
+        <input type="hidden" id="cli-id">
+        <div class="form-row">
+          <div class="form-group"><label>Nome Completo *</label><input type="text" id="cli-nome" required></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="cli-cpf" placeholder="000.000.000-00"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>RG</label><input type="text" id="cli-rg"></div>
+          <div class="form-group"><label>Data de Nascimento</label><input type="date" id="cli-nasc"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Telefone</label><input type="text" id="cli-telefone" placeholder="(85) 9 0000-0000"></div>
+          <div class="form-group"><label>E-mail</label><input type="email" id="cli-email"></div>
+        </div>
+        <div class="form-row full">
+          <div class="form-group"><label>Endereço</label><input type="text" id="cli-endereco"></div>
+        </div>
+        <div class="form-row full"><div class="form-group"><label>Observações</label><textarea id="cli-obs"></textarea></div></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('cli')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('cli')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Auxílio-Doença -->
+<div class="modal-overlay" id="modal-axd">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-axd-title">Novo Auxílio-Doença</div>
+      <button class="modal-close" onclick="closeModal('axd')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-axd">
+        <input type="hidden" id="axd-id">
+        <input type="hidden" id="axd-cliente-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Buscar cliente já cadastrado</label>
+            <input type="text" id="axd-cli-busca" list="lista-clientes-axd" placeholder="Digite nome ou CPF…" oninput="window.MODULOS.aplicarClienteSelecionado('axd', this.value)">
+            <datalist id="lista-clientes-axd"></datalist>
+          </div>
+          <div class="form-group"><label>Nº Processo</label><input type="text" id="axd-numero"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="axd-nome" required></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="axd-cpf"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Natureza</label>
+            <select id="axd-natureza" onchange="window.MODULOS.atualizarNaturezaAxd()">
+              <option value="administrativo">Administrativo (pedido inicial)</option>
+              <option value="judicial">Judicial (após indeferimento)</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Data de Protocolo</label><input type="date" id="axd-data-protocolo" onchange="window.MODULOS.recalcPrazoAxd()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Prazo análise INSS (45 dias)</label><input type="date" id="axd-prazo-analise" readonly style="background:rgba(184,145,74,.08)"></div>
+          <div class="form-group"><label>Resultado do pedido</label>
+            <select id="axd-resultado" onchange="window.MODULOS.atualizarDecisaoAxd()">
+              <option value="">— Selecione —</option>
+              <option>Aguardando</option><option>Deferido</option><option>Indeferido</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Data da decisão</label><input type="date" id="axd-data-decisao" onchange="window.MODULOS.atualizarDecisaoAxd()"></div>
+          <div class="form-group" id="axd-row-prevpgto"><label>Previsão de pagamento</label><input type="date" id="axd-prev-pgto"></div>
+        </div>
+        <div class="form-row" id="axd-row-recurso" style="display:none">
+          <div class="form-group"><label>Prazo para recurso (30 dias)</label><input type="date" id="axd-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
+          <div class="form-group" style="align-self:flex-end">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('axd')">+ Cadastrar recurso</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Qtd. parcelas deferidas (1-12)</label>
+            <input type="number" id="axd-qtd-parc" min="1" max="12" placeholder="Ex: 6" oninput="window.MODULOS.atualizarHonorAxd()">
+          </div>
+          <div class="form-group" style="flex-direction:row; align-items:center; gap:.6rem;">
+            <input type="checkbox" id="axd-indeterminado" style="width:auto;" onchange="window.MODULOS.atualizarHonorAxd()">
+            <label for="axd-indeterminado" style="margin:0; cursor:pointer">Por tempo indeterminado</label>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor mensal benefício (R$)</label><input type="number" id="axd-valor-mensal" step="0.01" min="0" oninput="window.MODULOS.atualizarHonorAxd()"></div>
+          <div class="form-group"><label>Honorários (30%)</label><input type="text" id="axd-honor-preview" readonly style="background:rgba(184,145,74,.08)"></div>
+        </div>
+        <div class="form-row" id="axd-row-judicial" style="display:none">
+          <div class="form-group"><label>Vara / Tribunal</label><input type="text" id="axd-vara"></div>
+          <div class="form-group"><label>Parte Contrária</label><input type="text" id="axd-parte-contraria" placeholder="INSS"></div>
+        </div>
+        <div class="form-row" id="axd-row-judicial-2" style="display:none">
+          <div class="form-group"><label>Valor da Ação (R$)</label><input type="number" id="axd-valor-acao" step="0.01" min="0"></div>
+          <div class="form-group"><label>Fase Atual</label>
+            <select id="axd-fase">
+              <option value="">—</option>
+              <option>Distribuído</option><option>Despacho inicial</option><option>Citação do réu</option>
+              <option>Contestação</option><option>Réplica</option>
+              <option>Perícia médica designada</option><option>Laudo pericial juntado</option>
+              <option>Sentença</option><option>Apelação</option><option>Contrarrazões</option>
+              <option>Acórdão</option><option>Trânsito em julgado</option>
+              <option>Implantação do benefício</option><option>RPV expedida</option><option>Arquivado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Próximo Prazo</label><input type="date" id="axd-proximo-prazo"></div>
+          <div class="form-group"><label>Tipo de Prazo</label><input type="text" id="axd-tipo-prazo"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Status</label>
+            <select id="axd-status">
+              <option>Em andamento</option><option>Aguardando deferimento</option>
+              <option>🟢 Deferido</option><option>Indeferido</option>
+              <option>Aguardando sentença</option><option>🟢 Procedente</option>
+              <option>Improcedente</option><option>Arquivado</option>
+            </select>
+          </div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row full"><div class="form-group"><label>Observações</label><textarea id="axd-obs"></textarea></div></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('axd')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('axd')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal BPC/LOAS -->
+<div class="modal-overlay" id="modal-bpc">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-bpc-title">Novo BPC / LOAS</div>
+      <button class="modal-close" onclick="closeModal('bpc')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-bpc">
+        <input type="hidden" id="bpc-id">
+        <input type="hidden" id="bpc-cliente-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Buscar cliente já cadastrado</label>
+            <input type="text" id="bpc-cli-busca" list="lista-clientes-bpc" placeholder="Digite nome ou CPF…" oninput="window.MODULOS.aplicarClienteSelecionado('bpc', this.value)">
+            <datalist id="lista-clientes-bpc"></datalist>
+          </div>
+          <div class="form-group"><label>Nº Processo</label><input type="text" id="bpc-numero"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="bpc-nome" required></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="bpc-cpf"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Modalidade</label>
+            <select id="bpc-modalidade"><option>Idoso</option><option>Deficiente</option></select>
+          </div>
+          <div class="form-group"><label>Natureza</label>
+            <select id="bpc-natureza" onchange="window.MODULOS.atualizarNaturezaBpc()">
+              <option value="administrativo">Administrativo</option>
+              <option value="judicial">Judicial</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Data de Protocolo</label><input type="date" id="bpc-data-protocolo" onchange="window.MODULOS.recalcPrazoBpc()"></div>
+          <div class="form-group"><label>Prazo análise INSS (90 dias)</label><input type="date" id="bpc-prazo-analise" readonly style="background:rgba(184,145,74,.08)"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Resultado</label>
+            <select id="bpc-resultado" onchange="window.MODULOS.atualizarDecisaoBpc()">
+              <option value="">— Selecione —</option>
+              <option>Aguardando</option><option>Deferido</option><option>Indeferido</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Data da decisão</label><input type="date" id="bpc-data-decisao" onchange="window.MODULOS.atualizarDecisaoBpc()"></div>
+        </div>
+        <div class="form-row" id="bpc-row-prevpgto">
+          <div class="form-group"><label>Previsão de pagamento</label><input type="date" id="bpc-prev-pgto"></div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row" id="bpc-row-recurso" style="display:none">
+          <div class="form-group"><label>Prazo recurso (30 dias)</label><input type="date" id="bpc-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
+          <div class="form-group" style="align-self:flex-end">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('bpc')">+ Cadastrar recurso</button>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor mensal (1 SM)</label><input type="number" id="bpc-valor-mensal" step="0.01" min="0"></div>
+          <div class="form-group"><label>Meses em atraso</label><input type="number" id="bpc-meses-atrasados" min="0"></div>
+        </div>
+        <div class="form-row" id="bpc-row-judicial" style="display:none">
+          <div class="form-group"><label>Vara / Tribunal</label><input type="text" id="bpc-vara"></div>
+          <div class="form-group"><label>Parte Contrária</label><input type="text" id="bpc-parte-contraria" placeholder="INSS"></div>
+        </div>
+        <div class="form-row" id="bpc-row-judicial-2" style="display:none">
+          <div class="form-group"><label>Valor da Ação (R$)</label><input type="number" id="bpc-valor-acao" step="0.01" min="0"></div>
+          <div class="form-group"><label>Fase Atual</label>
+            <select id="bpc-fase">
+              <option value="">—</option>
+              <option>Distribuído</option><option>Citação</option><option>Contestação</option>
+              <option>Réplica</option><option>Estudo social</option><option>Perícia</option>
+              <option>Sentença</option><option>Apelação</option><option>Acórdão</option>
+              <option>Trânsito em julgado</option><option>Implantação</option><option>Arquivado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Próximo Prazo</label><input type="date" id="bpc-proximo-prazo"></div>
+          <div class="form-group"><label>Tipo de Prazo</label><input type="text" id="bpc-tipo-prazo"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Status</label>
+            <select id="bpc-status">
+              <option>Em andamento</option><option>Aguardando deferimento</option>
+              <option>🟢 Deferido</option><option>Indeferido</option>
+              <option>🟢 Procedente</option><option>Improcedente</option><option>Arquivado</option>
+            </select>
+          </div>
+          <div class="form-group"></div>
+        </div>
+        <div class="form-row full"><div class="form-group"><label>Observações</label><textarea id="bpc-obs"></textarea></div></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('bpc')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('bpc')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Recurso -->
+<div class="modal-overlay" id="modal-rec">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-rec-title">Novo Recurso</div>
+      <button class="modal-close" onclick="closeModal('rec')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-rec">
+        <input type="hidden" id="rec-id">
+        <input type="hidden" id="rec-origem-tipo">
+        <input type="hidden" id="rec-origem-id">
+        <input type="hidden" id="rec-cliente-id">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Buscar pelo Nº do requerimento original</label>
+            <input type="text" id="rec-busca-req" placeholder="Digite o nº do processo administrativo / NB…" oninput="window.MODULOS.buscarRequerimento(this.value)">
+            <div id="rec-busca-resultado" style="font-size:.78rem; color:var(--texto-suave); margin-top:.3rem"></div>
+          </div>
+          <div class="form-group"><label>Modalidade *</label>
+            <select id="rec-modalidade" onchange="window.MODULOS.atualizarModalidadeRec()">
+              <option value="">— Selecione —</option>
+              <option>Recurso Administrativo</option>
+              <option>Processo Judicial</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Nº Requerimento Original</label><input type="text" id="rec-num-req"></div>
+          <div class="form-group"><label>Nº do Recurso / Processo</label><input type="text" id="rec-numero"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Nome do Cliente *</label><input type="text" id="rec-nome" required></div>
+          <div class="form-group"><label>CPF</label><input type="text" id="rec-cpf"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Tipo de Benefício</label>
+            <select id="rec-tipo-beneficio">
+              <option value="">— Selecione —</option>
+              <option>Salário-Maternidade</option>
+              <option>Auxílio-Doença</option>
+              <option>Auxílio por Incapacidade Temporária</option>
+              <option>Aposentadoria por Invalidez</option>
+              <option>BPC/LOAS</option>
+              <option>Aposentadoria</option>
+              <option>Pensão por Morte</option>
+              <option>Outro</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Data de Protocolo do Recurso</label><input type="date" id="rec-data-protocolo" onchange="window.MODULOS.recalcPrazoRec()"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Prazo de Resposta</label><input type="date" id="rec-prazo-resposta" readonly style="background:rgba(184,145,74,.08)"></div>
+          <div class="form-group"><label>Resultado</label>
+            <select id="rec-resultado">
+              <option value="">— Selecione —</option>
+              <option>Aguardando</option>
+              <option>Provido</option><option>Improvido</option>
+              <option>Procedente</option><option>Improcedente</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" id="rec-row-judicial" style="display:none">
+          <div class="form-group"><label>Vara / Tribunal</label><input type="text" id="rec-vara"></div>
+          <div class="form-group"><label>Parte Contrária</label><input type="text" id="rec-parte-contraria" placeholder="INSS"></div>
+        </div>
+        <div class="form-row" id="rec-row-judicial-2" style="display:none">
+          <div class="form-group"><label>Valor da Ação (R$)</label><input type="number" id="rec-valor-acao" step="0.01" min="0"></div>
+          <div class="form-group"><label>Fase Atual</label><input type="text" id="rec-fase"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Próximo Prazo</label><input type="date" id="rec-proximo-prazo"></div>
+          <div class="form-group"><label>Tipo de Prazo</label><input type="text" id="rec-tipo-prazo" placeholder="Ex: Razões CRPS (30 dias corridos)"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Data da Decisão</label><input type="date" id="rec-data-decisao"></div>
+          <div class="form-group"><label>Status</label>
+            <select id="rec-status">
+              <option>Em andamento</option><option>Aguardando</option>
+              <option>🟢 Provido</option><option>Improvido</option>
+              <option>🟢 Procedente</option><option>Improcedente</option><option>Arquivado</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row full"><div class="form-group"><label>Observações</label><textarea id="rec-obs"></textarea></div></div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('rec')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('rec')">Salvar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════ SCRIPTS ════════════ -->
 <!-- Auth guard inline: lê a sessão direto do localStorage (sem criar
      um segundo GoTrueClient). Se não há sessão válida, vai pro login. -->
@@ -936,6 +1599,7 @@
 <script src="js/config.js" onerror="console.error('Falha ao carregar config.js')"></script>
 <script src="js/ui.js" onerror="console.error('Falha ao carregar ui.js')"></script>
 <script src="js/modulos.js" onerror="console.error('Falha ao carregar modulos.js')"></script>
+<script src="js/extras.js" onerror="console.error('Falha ao carregar extras.js')"></script>
 
 <!-- ════════════════════════════════════════════════════════════════════════
      EVENT DELEGATION — Sidebar + Logout

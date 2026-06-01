@@ -797,6 +797,36 @@ const PECAS = [
   { codigo: 'JEC_REC',         nome: 'Recurso Inominado (JEC art. 41)',          dias: 10, contagem: 'uteis',  dobro_fazenda: false },
 ];
 
+/* ── PRAZOS DE ANÁLISE INSS POR TIPO DE BENEFÍCIO ───────────────────────────
+   Lei 9.784/99 + portaria PRES/INSS — prazos para análise administrativa.
+   Se ultrapassado, possibilita pedido de deferimento provisório/judicialização. */
+const PRAZOS_ANALISE_INSS = {
+  'Salário-Maternidade':                       30,
+  'Auxílio por Incapacidade Temporária':       45,
+  'Auxílio-Doença':                            45,
+  'Aposentadoria por Invalidez':               45,
+  'Aposentadoria por Incapacidade Permanente': 45,
+  'Pensão por Morte':                          60,
+  'Auxílio-Reclusão':                          60,
+  'Auxílio-Acidente':                          60,
+  'Aposentadoria por Idade':                   90,
+  'Aposentadoria por Tempo de Contribuição':   90,
+  'Aposentadoria Especial':                    90,
+  'Aposentadoria':                             90,
+  'BPC/LOAS':                                  90,
+  'BPC':                                       90,
+  'Outro':                                     45,
+};
+
+function diasAnaliseINSS(tipoBeneficio) {
+  if (!tipoBeneficio) return null;
+  // match case-insensitive parcial
+  const key = Object.keys(PRAZOS_ANALISE_INSS).find(k =>
+    tipoBeneficio.toLowerCase().includes(k.toLowerCase()) ||
+    k.toLowerCase().includes(tipoBeneficio.toLowerCase()));
+  return key ? PRAZOS_ANALISE_INSS[key] : 45;
+}
+
 /* ── FERIADOS NACIONAIS + ESTADUAIS CE + FORTALEZA ─────────────────────────
    Lista mantida manualmente; atualizar anualmente.
    Datas no formato YYYY-MM-DD.                                             */
@@ -826,6 +856,7 @@ function emRecessoForense(date) {
 window.CATALOGOS = {
   AREAS, TIPOS_ACAO, FASES_POR_RITO, DOCS_POR_KIT, PECAS, FERIADOS, emRecessoForense,
   TIPOS_SAL_MAT, COMARCAS_CE, VARAS_FORTALEZA, VARAS_TRF5_CE,
+  PRAZOS_ANALISE_INSS, diasAnaliseINSS,
 };
 
 })();

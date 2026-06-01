@@ -634,3 +634,75 @@ tbody tr:last-child td { border-bottom: none; }
 
 /* Quando sidebar offcanvas estiver aberta, trava scroll do body */
 body.sidebar-open { overflow: hidden; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   MELHORIAS v2 — Componentes adicionais
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Bloco de cada Guia INSS no modal de salário-maternidade */
+.guia-block {
+  background: linear-gradient(to bottom, rgba(184,145,74,.04), rgba(184,145,74,.01));
+  border: 1px solid rgba(184,145,74,.22);
+  padding: .9rem 1.1rem;
+  border-radius: 8px;
+  margin-bottom: .8rem;
+  transition: border-color .15s ease;
+}
+.guia-block:hover { border-color: rgba(184,145,74,.45); }
+.guia-block > div:first-child {
+  font-weight: 600;
+  color: var(--caramelo, #b8914a);
+  margin-bottom: .6rem;
+  letter-spacing: .02em;
+}
+
+/* Resultado da busca de requerimento (modal de Recurso) */
+.rec-busca-item {
+  transition: background .12s ease, border-color .12s ease;
+}
+.rec-busca-item:hover {
+  background: rgba(184,145,74,.08) !important;
+  border-color: rgba(184,145,74,.55) !important;
+}
+
+/* Cards do dashboard categorizado: dão um leve respiro entre seções */
+#mod-dashboard .card + .card { margin-top: 1rem; }
+#mod-dashboard .card .card-title small {
+  font-weight: 400;
+  color: var(--texto-suave, #8a7a5e);
+  margin-left: .4rem;
+  font-size: .78rem;
+}
+
+/* Campos readonly em destaque (prazos auto-calculados) */
+input[readonly] {
+  cursor: not-allowed;
+  color: var(--texto, #3a2008);
+  font-weight: 500;
+}
+
+/* Datalist (busca de cliente) com leve indicação visual */
+input[list] {
+  background-image: linear-gradient(45deg, transparent 50%, rgba(184,145,74,.55) 50%),
+                    linear-gradient(135deg, rgba(184,145,74,.55) 50%, transparent 50%);
+  background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 28px !important;
+}
+
+/* Botão "+ Cadastrar recurso" inline (alinha com prazo) */
+.form-group button.btn-sm {
+  margin-top: .25rem;
+  white-space: nowrap;
+}
+
+/* Ajuste tipográfico: títulos das seções de dashboard ficam mais limpos */
+#mod-dashboard .card-header { padding-bottom: .6rem; }
+
+/* Mobile: blocos de guia ficam mais compactos */
+@media (max-width: 768px) {
+  .guia-block { padding: .7rem .8rem; }
+  .guia-block .form-row { flex-direction: column; }
+  #mod-dashboard .card + .card { margin-top: .6rem; }
+}

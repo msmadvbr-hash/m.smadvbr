@@ -88,6 +88,16 @@ function fmtDateBR(iso) {
   return new Date(iso + 'T00:00:00').toLocaleDateString('pt-BR');
 }
 
-window.PRAZOS = { calcularPrazo, diasRestantes, isDiaUtil, proximoDiaUtil };
+/* ── ADIÇÃO SIMPLES DE DIAS (corridos) ────────────────────────────────────
+   Soma N dias corridos a uma data (formato YYYY-MM-DD).
+   Retorna no formato YYYY-MM-DD. Usada para prazos administrativos.       */
+function somarDias(dataIso, dias) {
+  if (!dataIso || dias == null) return null;
+  const d = new Date(dataIso + 'T00:00:00');
+  d.setDate(d.getDate() + Number(dias));
+  return d.toISOString().slice(0, 10);
+}
+
+window.PRAZOS = { calcularPrazo, diasRestantes, isDiaUtil, proximoDiaUtil, somarDias };
 
 })();
