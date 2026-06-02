@@ -1201,7 +1201,7 @@ function renderDashboardPrazosChart(venc, urg, ate, ok) {
           '#27ae60'  // verde elegante
         ],
         borderWidth: 2,
-        borderColor: '#0a0b0d'
+        borderColor: '#ffffff'
       }]
     },
     options: {
@@ -1212,7 +1212,7 @@ function renderDashboardPrazosChart(venc, urg, ate, ok) {
           position: 'right',
           labels: {
             font: { family: 'Plus Jakarta Sans', size: 11 },
-            color: '#9c9485',
+            color: '#665f55',
             boxWidth: 12
           }
         }
@@ -1287,20 +1287,20 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
         plugins: {
           legend: {
             position: 'top',
-            labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#a1a1aa' }
+            labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#665f55' }
           }
         },
         scales: {
           x: { 
             stacked: true, 
             grid: { display: false },
-            ticks: { color: '#a1a1aa', font: { family: 'Plus Jakarta Sans', size: 11 } }
+            ticks: { color: '#665f55', font: { family: 'Plus Jakarta Sans', size: 11 } }
           },
           y: { 
             stacked: true, 
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            grid: { color: 'rgba(140, 123, 101, 0.12)' },
             ticks: { 
-              color: '#a1a1aa', 
+              color: '#665f55', 
               font: { family: 'Plus Jakarta Sans', size: 11 },
               callback: value => 'R$ ' + value.toLocaleString('pt-BR') 
             } 
@@ -1322,9 +1322,9 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
         labels: ['Vandressa (50%)', 'Thaynar (50%)'],
         datasets: [{
           data: [shareVandressa, shareThaynar],
-          backgroundColor: ['#c5a880', '#6b6355'],
+          backgroundColor: ['#9c7c4f', '#665f55'],
           borderWidth: 2,
-          borderColor: '#0a0b0d'
+          borderColor: '#ffffff'
         }]
       },
       options: {
@@ -1333,7 +1333,7 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#a1a1aa' }
+            labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#665f55' }
           },
           tooltip: {
             callbacks: {
