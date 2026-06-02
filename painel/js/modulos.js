@@ -179,7 +179,7 @@ async function loadSal() {
 }
 function renderSal() {
   const tbody = document.getElementById('sal-body');
-  if (!salData.length) { tbody.innerHTML = '<tr><td colspan="11" class="empty-state">Nenhum registro cadastrado ainda.</td></tr>'; return; }
+  if (!salData.length) { tbody.innerHTML = '<tr><td colspan="12" class="empty-state">Nenhum registro cadastrado ainda.</td></tr>'; return; }
   tbody.innerHTML = salData.map(r => {
     const prazo = r.prazo_recurso || r.prazo_analise_inss;
     const dias = diffDias(prazo);
@@ -188,6 +188,7 @@ function renderSal() {
       <td>${escHtml(r.numero_processo)||'—'}</td>
       <td><strong>${escHtml(r.nome_cliente)}</strong></td>
       <td>${escHtml(r.cpf)||'—'}</td>
+      <td>${fmtDate(r.dpp)}</td>
       <td>${fmtDate(r.data_protocolo)}</td>
       <td>${fmtDate(r.prazo_analise_inss)}</td>
       <td>${statusBadge(r.resultado_pedido)}</td>
