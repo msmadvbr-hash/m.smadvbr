@@ -28,7 +28,7 @@ window.logout = logout;
 
 /* ── NAVEGAÇÃO ────────────────────────────────────────────────────────── */
 const titles = {
-  dashboard:  'Dashboard · Prazos Próximos',
+  dashboard:  'Painel de Controle · Prazos Próximos',
   clientes:   'Cadastro de Clientes',
   'proc-adm': 'Processos Administrativos · INSS',
   'proc-jud': 'Processos Judiciais · INSS',
