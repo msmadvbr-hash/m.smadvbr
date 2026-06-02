@@ -2060,7 +2060,11 @@ window.APP.prepararNotificacaoZap = function(nomeCliente, telefone, origem, id) 
   }
 
   window.APP.atualizarMensagemZapPreview();
-  window.openModal('zap');
+  // Abre o modal diretamente — não passamos por openModal() porque o modal-zap
+  // não segue a convenção (sem #modal-zap-title, sem #form-zap), e o openModal
+  // tentaria setar textContent em um elemento nulo.
+  const modalEl = document.getElementById('modal-zap');
+  if (modalEl) modalEl.classList.add('open');
 };
 
 window.APP.atualizarMensagemZapPreview = function() {
