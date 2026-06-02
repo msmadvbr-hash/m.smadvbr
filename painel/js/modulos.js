@@ -655,6 +655,18 @@ async function saveRecord(type) {
   }
   if (err) { toast('Erro ao salvar: ' + err.message, true); return; }
 
+  // Se for processo judicial novo e tiver processo adm pré-vinculado, copia os documentos do adm
+  if (type === 'jud' && novoId && window._docLinkPending) {
+    try {
+      if (typeof window.copiarDocumentosVinculados === 'function') {
+        await window.copiarDocumentosVinculados(window._docLinkPending.deTipo, window._docLinkPending.deId, 'jud', novoId);
+      }
+    } catch(e) {
+      console.warn('Erro ao copiar docs:', e);
+    }
+    window._docLinkPending = null;
+  }
+
   // Salário-maternidade: persistir as guias (até 3) e as parcelas de cobrança
   if (type === 'sal' && novoId) {
     if (window.MODULOS?.coletarGuiasSalMat) {

@@ -98,7 +98,12 @@
           <canvas id="chart-dashboard-prazos"></canvas>
         </div>
         <div style="flex: 1; min-width: 250px;">
-          <h3 style="font-family: 'Cinzel', serif; font-size: 1rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em;">Resumo Operacional dos Prazos</h3>
+          <h3 style="font-family: 'Cinzel', serif; font-size: 1rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+            Resumo Operacional dos Prazos
+            <span id="dash-filtro-info" style="display:none; font-size: 0.7rem; background: rgba(192,57,43,.1); color: var(--vermelho); padding: 4px 10px; border-radius: 20px; font-family: Lato, sans-serif; font-weight: bold; cursor: pointer; border: 1px solid rgba(192,57,43,.2);" onclick="window.limparDashboardFiltro()">
+              Filtro: <span id="dash-filtro-nome"></span> ✕
+            </span>
+          </h3>
           <p style="font-size: 0.9rem; line-height: 1.6; color: var(--texto-suave);">
             Este gráfico apresenta a distribuição de todos os prazos pendentes no escritório. Priorize o atendimento dos prazos <strong>vencidos</strong> e <strong>urgentes</strong> para evitar prejuízos aos clientes e garantir a eficiência processual.
           </p>

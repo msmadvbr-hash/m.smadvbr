@@ -703,6 +703,149 @@ function atualizarParcelasJud() {
   if (rowVal)  rowVal.style.display  = ehAuxDoenca ? '' : 'none';
 }
 
+/* ── BUSCA AUTOMÁTICA DE PROCESSO ADM PARA JUDICIAL ─────────────────────── */
+async function lookupAdmDoJud(numJud) {
+  if (!numJud) return;
+  numJud = numJud.trim();
+
+  // Tenta encontrar em processos_administrativos, auxilio_doenca, bpc_loas ou salario_maternidade
+  let admRec = null;
+  let origemTipo = '';
+
+  // 1. processos_administrativos
+  const res1 = await sb.from('processos_administrativos').select('*')
+    .or(`processo_judicial_numero.eq."${numJud}",numero_proc_judicial.eq."${numJud}"`)
+    .limit(1);
+  if (res1.data && res1.data.length) {
+    admRec = res1.data[0];
+    origemTipo = 'adm';
+  }
+
+  // 2. salario_maternidade
+  if (!admRec) {
+    const res2 = await sb.from('salario_maternidade').select('*')
+      .eq('processo_judicial_numero', numJud)
+      .limit(1);
+    if (res2.data && res2.data.length) {
+      admRec = res2.data[0];
+      origemTipo = 'sal';
+    }
+  }
+
+  // 3. auxilio_doenca
+  if (!admRec) {
+    const res3 = await sb.from('auxilio_doenca').select('*')
+      .eq('processo_judicial_numero', numJud)
+      .limit(1);
+    if (res3.data && res3.data.length) {
+      admRec = res3.data[0];
+      origemTipo = 'axd';
+    }
+  }
+
+  // 4. bpc_loas
+  if (!admRec) {
+    const res4 = await sb.from('bpc_loas').select('*')
+      .eq('processo_judicial_numero', numJud)
+      .limit(1);
+    if (res4.data && res4.data.length) {
+      admRec = res4.data[0];
+      origemTipo = 'bpc';
+    }
+  }
+
+  // Se não achar por número do processo judicial, tenta buscar pelo CPF ou NB que já estejam no form judicial
+  if (!admRec) {
+    const cpf = v('jud-cpf');
+    const nb = v('jud-nb');
+    if (cpf || nb) {
+      let queryParts = [];
+      if (cpf) queryParts.push(`cpf.eq."${cpf}"`);
+      if (nb) queryParts.push(`numero_beneficio.eq."${nb}"`);
+      
+      const resCpf = await sb.from('processos_administrativos').select('*')
+        .or(queryParts.join(','))
+        .limit(1);
+      if (resCpf.data && resCpf.data.length) {
+        admRec = resCpf.data[0];
+        origemTipo = 'adm';
+      }
+    }
+  }
+
+  if (admRec) {
+    // Auto-preenche os campos do formulário judicial
+    set('jud-proc-adm', admRec.numero_processo || '');
+    if (admRec.numero_beneficio) set('jud-nb', admRec.numero_beneficio);
+    if (admRec.cliente_id) set('jud-cliente-id', admRec.cliente_id);
+    if (admRec.nome_cliente) set('jud-nome', admRec.nome_cliente);
+    if (admRec.cpf) set('jud-cpf', admRec.cpf);
+
+    let tipoBeneficio = admRec.tipo_beneficio || '';
+    if (origemTipo === 'sal') tipoBeneficio = 'Salário-Maternidade';
+    if (origemTipo === 'axd') tipoBeneficio = 'Auxílio-Doença';
+    if (origemTipo === 'bpc') tipoBeneficio = 'BPC/LOAS';
+
+    if (tipoBeneficio) {
+      set('jud-tipo', tipoBeneficio);
+      atualizarParcelasJud();
+    }
+
+    const obsEl = document.getElementById('jud-obs');
+    if (obsEl && !obsEl.value) {
+      obsEl.value = `Histórico fático importado do Processo Administrativo (${admRec.numero_processo || 'Sem nº'}):\n` +
+                    `- Resultado Adm: ${admRec.resultado_pedido || 'Aguardando'}\n` +
+                    `- Motivo Indeferimento: ${admRec.motivo_indeferimento || '—'}\n` +
+                    `Observações Adm: ${admRec.observacoes || '—'}`;
+    }
+
+    // Mostra o card informativo
+    const infoEl = document.getElementById('jud-adm-info');
+    if (infoEl) {
+      infoEl.style.display = 'block';
+      const badgeClass = admRec.resultado_pedido === 'Deferido' ? 'badge-verde' : (admRec.resultado_pedido === 'Indeferido' ? 'badge-vermelho' : 'badge-amarelo');
+      infoEl.innerHTML = `
+        <strong>✓ Processo Administrativo Vinculado Detectado</strong><br>
+        Protocolo: <strong>${admRec.numero_processo || '—'}</strong> | NB: <strong>${admRec.numero_beneficio || '—'}</strong><br>
+        Benefício: ${tipoBeneficio}<br>
+        Resultado Administrativo: <span class="badge ${badgeClass}">${admRec.resultado_pedido || 'Aguardando'}</span><br>
+        ${admRec.motivo_indeferimento ? `Motivo Indeferimento: <em>${admRec.motivo_indeferimento}</em>` : ''}
+      `;
+    }
+
+    // Pendência de cópia de documentos
+    window._docLinkPending = { deTipo: origemTipo, deId: admRec.id };
+
+    toast('Dados do Processo Administrativo vinculados com sucesso!');
+  }
+}
+
+async function copiarDocumentosVinculados(deTipo, deId, paraTipo, paraId) {
+  try {
+    const { data: docs, error } = await sb.from('documentos_processo')
+      .select('*')
+      .eq('processo_tipo', deTipo)
+      .eq('processo_id', deId);
+    if (error || !docs || !docs.length) return;
+
+    for (const d of docs) {
+      const payload = {
+        processo_tipo: paraTipo,
+        processo_id: paraId,
+        nome: d.nome,
+        status: d.status,
+        observacao: d.observacao,
+        uploaded_at: d.uploaded_at,
+        storage_path: d.storage_path
+      };
+      await sb.from('documentos_processo').insert(payload);
+    }
+  } catch(e) {
+    console.error('Erro ao copiar documentos vinculados:', e);
+  }
+}
+window.copiarDocumentosVinculados = copiarDocumentosVinculados;
+
 /* ── RECURSOS ──────────────────────────────────────────────────────────── */
 let recData = [];
 async function loadRec() {
@@ -851,9 +994,22 @@ let dashboardPrazosChart = null;
 let faturamentoTotalChart = null;
 let faturamentoSplitChart = null;
 
+// Cache local de dados do dashboard para filtragem instantânea sem nova requisição
+let dashboardDataCache = null;
+let currentDashboardFilter = null; // 'venc' | 'urg' | 'ate' | 'ok' | null
+
 function renderDashboardPrazosChart(venc, urg, ate, ok) {
-  const ctx = document.getElementById('chart-dashboard-prazos')?.getContext('2d');
+  const canvas = document.getElementById('chart-dashboard-prazos');
+  const ctx = canvas?.getContext('2d');
   if (!ctx) return;
+
+  if (typeof Chart === 'undefined') {
+    if (canvas.parentNode) {
+      canvas.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:0.8rem;color:var(--texto-suave);text-align:center;padding:1rem;border:1px dashed rgba(184,145,74,0.3);border-radius:8px;font-family:Lato,sans-serif;">⚠️ Gráficos indisponíveis (Chart.js não carregado)</div>';
+    }
+    return;
+  }
+
   if (dashboardPrazosChart) {
     dashboardPrazosChart.destroy();
   }
@@ -886,15 +1042,36 @@ function renderDashboardPrazosChart(venc, urg, ate, ok) {
           }
         }
       },
-      cutout: '65%'
+      cutout: '65%',
+      onClick: (evt, activeElements) => {
+        if (activeElements.length > 0) {
+          const firstPoint = activeElements[0];
+          const label = dashboardPrazosChart.data.labels[firstPoint.index];
+          if (typeof window.filtrarTabelasDashboardPorStatus === 'function') {
+            window.filtrarTabelasDashboardPorStatus(label);
+          }
+        }
+      }
     }
   });
 }
 
 function renderFaturamentoCharts(mesesData, sortedMeses) {
-  const ctxTotal = document.getElementById('chart-faturamento-total')?.getContext('2d');
-  const ctxSplit = document.getElementById('chart-faturamento-split')?.getContext('2d');
+  const canvasTotal = document.getElementById('chart-faturamento-total');
+  const canvasSplit = document.getElementById('chart-faturamento-split');
+  const ctxTotal = canvasTotal?.getContext('2d');
+  const ctxSplit = canvasSplit?.getContext('2d');
   if (!ctxTotal && !ctxSplit) return;
+
+  if (typeof Chart === 'undefined') {
+    if (canvasTotal && canvasTotal.parentNode) {
+      canvasTotal.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:0.8rem;color:var(--texto-suave);text-align:center;padding:1rem;border:1px dashed rgba(184,145,74,0.3);border-radius:8px;">⚠️ Gráfico indisponível (Chart.js não carregado)</div>';
+    }
+    if (canvasSplit && canvasSplit.parentNode) {
+      canvasSplit.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:0.8rem;color:var(--texto-suave);text-align:center;padding:1rem;border:1px dashed rgba(184,145,74,0.3);border-radius:8px;">⚠️ Gráfico indisponível (Chart.js não carregado)</div>';
+    }
+    return;
+  }
 
   const nomeMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
   const labels = sortedMeses.map(m => {
@@ -985,6 +1162,102 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
   }
 }
 
+/* ── FILTRAGEM DINÂMICA DO DASHBOARD POR STATUS ────────────────────────── */
+function filtrarTabelasDashboardPorStatus(statusLabel) {
+  const map = {
+    'Vencidos': 'venc',
+    'Urgentes (≤3 dias)': 'urg',
+    'Atenção (≤7 dias)': 'ate',
+    'No Prazo': 'ok'
+  };
+
+  const filterKey = map[statusLabel];
+  if (!filterKey) return;
+
+  if (currentDashboardFilter === filterKey) {
+    currentDashboardFilter = null; // desmarca se clicar no mesmo
+  } else {
+    currentDashboardFilter = filterKey;
+  }
+
+  // Atualiza badge de filtro ativo no UI
+  const infoEl = document.getElementById('dash-filtro-info');
+  const nomeEl = document.getElementById('dash-filtro-nome');
+  if (infoEl && nomeEl) {
+    if (currentDashboardFilter) {
+      infoEl.style.display = 'inline-block';
+      nomeEl.textContent = statusLabel.split(' ')[0]; // pega só 'Vencidos', 'Urgentes', etc.
+    } else {
+      infoEl.style.display = 'none';
+    }
+  }
+
+  renderDashboardComDadosCache();
+}
+window.filtrarTabelasDashboardPorStatus = filtrarTabelasDashboardPorStatus;
+
+window.limparDashboardFiltro = function() {
+  currentDashboardFilter = null;
+  const infoEl = document.getElementById('dash-filtro-info');
+  if (infoEl) infoEl.style.display = 'none';
+  renderDashboardComDadosCache();
+};
+
+function renderDashboardComDadosCache() {
+  if (!dashboardDataCache) return;
+
+  const { guiasItens, cobrItens, judItens, admItens } = dashboardDataCache;
+
+  let filteredGuias = guiasItens.filter(r => r.dias !== null && r.dias <= 60);
+  let filteredCobr = cobrItens.filter(r => r.dias !== null && r.dias <= 60);
+  let filteredJud = judItens.filter(r => r.dias !== null && r.dias <= 30);
+  let filteredAdm = admItens.filter(r => r.dias !== null && r.dias <= 60);
+
+  if (currentDashboardFilter) {
+    const filterFn = r => {
+      if (r.dias === null) return false;
+      if (currentDashboardFilter === 'venc') return r.dias < 0;
+      if (currentDashboardFilter === 'urg') return r.dias >= 0 && r.dias <= 3;
+      if (currentDashboardFilter === 'ate') return r.dias > 3 && r.dias <= 7;
+      if (currentDashboardFilter === 'ok') return r.dias > 7;
+      return true;
+    };
+    filteredGuias = filteredGuias.filter(filterFn);
+    filteredCobr = filteredCobr.filter(filterFn);
+    filteredJud = filteredJud.filter(filterFn);
+    filteredAdm = filteredAdm.filter(filterFn);
+  }
+
+  // Render tabelas
+  renderDashTabela('dash-guias-body', filteredGuias, row => `
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+        <td>${escHtml(row.competencia)||'—'}</td><td>${escHtml(row.numero)||'—'}</td>
+        <td>${fmtDate(row.prazo)}</td><td>${row.dias} dias</td>
+        <td>${statusBadge(row.status)}</td></tr>`,
+    'Nenhuma guia pendente ✓');
+
+  renderDashTabela('dash-cobr-body', filteredCobr, row => `
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+        <td>${escHtml(row.origem)}</td><td>${row.parcela||'—'}</td>
+        <td>${fmtBRL(row.valor)}</td><td>${fmtDate(row.prazo)}</td>
+        <td>${row.dias} dias</td><td>${statusBadge(row.status)}</td></tr>`,
+    'Nenhuma cobrança em aberto ✓');
+
+  renderDashTabela('dash-jud-body', filteredJud, row => `
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+        <td><span class="badge badge-azul">${escHtml(row.modulo)}</span></td>
+        <td>${escHtml(row.tipo)}</td><td>${fmtDate(row.prazo)}</td>
+        <td>${row.dias} dias</td><td>${statusBadge(row.status)}</td></tr>`,
+    'Nenhum prazo judicial nos próximos 30 dias ✓');
+
+  renderDashTabela('dash-adm-body', filteredAdm, row => `
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+        <td>${escHtml(row.beneficio)}</td><td>${escHtml(row.etapa)}</td>
+        <td>${fmtDate(row.prazo)}</td><td>${row.dias} dias</td>
+        <td>${statusBadge(row.status)}</td></tr>`,
+    'Nenhum prazo administrativo próximo ✓');
+}
+
 /* ── DASHBOARD CATEGORIZADO ────────────────────────────────────────────── */
 async function loadDashboardCategorizado() {
   const [adm, jud, aux, sal, praz, gen, axd, bpc, rec, cobr, guias] = await Promise.all([
@@ -1064,34 +1337,11 @@ async function loadDashboardCategorizado() {
   // Render donut chart para prazos
   renderDashboardPrazosChart(venc, urg, ate, ok);
 
-  // Render tabelas
-  renderDashTabela('dash-guias-body', guiasItens.filter(r => r.dias !== null && r.dias <= 60), row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
-        <td>${escHtml(row.competencia)||'—'}</td><td>${escHtml(row.numero)||'—'}</td>
-        <td>${fmtDate(row.prazo)}</td><td>${row.dias} dias</td>
-        <td>${statusBadge(row.status)}</td></tr>`,
-    'Nenhuma guia pendente ✓');
+  // Salva no cache local para filtragem instantânea sem nova requisição
+  dashboardDataCache = { guiasItens, cobrItens, judItens, admItens };
 
-  renderDashTabela('dash-cobr-body', cobrItens.filter(r => r.dias !== null && r.dias <= 60), row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
-        <td>${escHtml(row.origem)}</td><td>${row.parcela||'—'}</td>
-        <td>${fmtBRL(row.valor)}</td><td>${fmtDate(row.prazo)}</td>
-        <td>${row.dias} dias</td><td>${statusBadge(row.status)}</td></tr>`,
-    'Nenhuma cobrança em aberto ✓');
-
-  renderDashTabela('dash-jud-body', judItens.filter(r => r.dias !== null && r.dias <= 30), row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
-        <td><span class="badge badge-azul">${escHtml(row.modulo)}</span></td>
-        <td>${escHtml(row.tipo)}</td><td>${fmtDate(row.prazo)}</td>
-        <td>${row.dias} dias</td><td>${statusBadge(row.status)}</td></tr>`,
-    'Nenhum prazo judicial nos próximos 30 dias ✓');
-
-  renderDashTabela('dash-adm-body', admItens.filter(r => r.dias !== null && r.dias <= 60), row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
-        <td>${escHtml(row.beneficio)}</td><td>${escHtml(row.etapa)}</td>
-        <td>${fmtDate(row.prazo)}</td><td>${row.dias} dias</td>
-        <td>${statusBadge(row.status)}</td></tr>`,
-    'Nenhum prazo administrativo próximo ✓');
+  // Renderiza tabelas de acordo com filtro atual
+  renderDashboardComDadosCache();
 }
 
 function set_text(id, val) {
