@@ -132,6 +132,10 @@ function renderAdm() {
       <td>${dias !== null ? dias + ' dias' : '—'}</td>
       <td>${statusBadge(r.status)}</td>
       <td class="td-actions">
+        ${r.resultado_pedido === 'Indeferido' ? `
+          <button class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarDeRow('${origemTipo}','${r.id}')">⚖️ Ajuizar</button>
+          <button class="btn btn-secondary btn-sm" style="color:var(--accent-primary); border-color:var(--border);" onclick="window.MODULOS.criarRecursoDeRow('${origemTipo}','${r.id}')">📤 Recurso</button>
+        ` : ''}
         <button class="btn btn-secondary btn-sm" onclick="editRecord('${origemTipo}','${r.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('${origemTipo}','${r.id}')">Del</button>
       </td>
@@ -196,6 +200,10 @@ function renderSal() {
       <td>${fmtBRL(r.honorario_total)}</td>
       <td>${statusBadge(r.status_honorario)}</td>
       <td class="td-actions">
+        ${r.resultado_pedido === 'Indeferido' ? `
+          <button class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarDeRow('sal','${r.id}')">⚖️ Ajuizar</button>
+          <button class="btn btn-secondary btn-sm" style="color:var(--accent-primary); border-color:var(--border);" onclick="window.MODULOS.criarRecursoDeRow('sal','${r.id}')">📤 Recurso</button>
+        ` : ''}
         <button class="btn btn-secondary btn-sm" onclick="editRecord('sal','${r.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('sal','${r.id}')">Del</button>
       </td>

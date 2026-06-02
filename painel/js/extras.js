@@ -115,6 +115,14 @@ async function loadClientesModule() {
       <td>${escHtml(c.email)||'—'}</td>
       <td>${contagens[c.id] || 0}</td>
       <td class="td-actions">
+        <select class="btn btn-secondary btn-sm" onchange="window.MODULOS.iniciarProcessoParaCliente('${c.id}', this.value); this.value='';" style="width: auto; padding: 4px 8px; text-transform: none;">
+          <option value="">➕ Iniciar Caso</option>
+          <option value="adm">Proc. Administrativo</option>
+          <option value="jud">Proc. Judicial</option>
+          <option value="sal">Salário-Maternidade</option>
+          <option value="axd">Auxílio-Doença</option>
+          <option value="bpc">BPC / LOAS</option>
+        </select>
         <button class="btn btn-secondary btn-sm" onclick="editCliente('${c.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteCliente('${c.id}')">Del</button>
       </td>
@@ -530,6 +538,10 @@ function renderAxd() {
       <td>${dias !== null ? dias + ' dias' : '—'}</td>
       <td>${statusBadge(r.status)}</td>
       <td class="td-actions">
+        ${r.resultado_pedido === 'Indeferido' ? `
+          <button class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarDeRow('axd','${r.id}')">⚖️ Ajuizar</button>
+          <button class="btn btn-secondary btn-sm" style="color:var(--accent-primary); border-color:var(--border);" onclick="window.MODULOS.criarRecursoDeRow('axd','${r.id}')">📤 Recurso</button>
+        ` : ''}
         <button class="btn btn-secondary btn-sm" onclick="editRecord('axd','${r.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('axd','${r.id}')">Del</button>
       </td>
@@ -606,6 +618,10 @@ function renderBpc() {
       <td>${dias !== null ? dias + ' dias' : '—'}</td>
       <td>${statusBadge(r.status)}</td>
       <td class="td-actions">
+        ${r.resultado_pedido === 'Indeferido' ? `
+          <button class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarDeRow('bpc','${r.id}')">⚖️ Ajuizar</button>
+          <button class="btn btn-secondary btn-sm" style="color:var(--accent-primary); border-color:var(--border);" onclick="window.MODULOS.criarRecursoDeRow('bpc','${r.id}')">📤 Recurso</button>
+        ` : ''}
         <button class="btn btn-secondary btn-sm" onclick="editRecord('bpc','${r.id}')">Editar</button>
         <button class="btn btn-danger btn-sm" onclick="deleteRecord('bpc','${r.id}')">Del</button>
       </td>
@@ -846,6 +862,165 @@ async function copiarDocumentosVinculados(deTipo, deId, paraTipo, paraId) {
 }
 window.copiarDocumentosVinculados = copiarDocumentosVinculados;
 
+async function ajuizarDeRow(origemTipo, id) {
+  let tab = '';
+  if (origemTipo === 'adm') tab = 'processos_administrativos';
+  else if (origemTipo === 'sal') tab = 'salario_maternidade';
+  else if (origemTipo === 'axd') tab = 'auxilio_doenca';
+  else if (origemTipo === 'bpc') tab = 'bpc_loas';
+  if (!tab) return;
+
+  const { data, error } = await sb.from(tab).select('*').eq('id', id).single();
+  if (error || !data) {
+    toast('Erro ao buscar dados do processo administrativo.', true);
+    return;
+  }
+
+  if (typeof window.openModal === 'function') {
+    window.openModal('jud');
+  } else {
+    document.getElementById('modal-jud')?.classList.add('open');
+  }
+
+  const safeSet = (fieldId, val) => { const el = document.getElementById(fieldId); if (el) el.value = val || ''; };
+  safeSet('jud-nome', data.nome_cliente);
+  safeSet('jud-cpf', data.cpf);
+  safeSet('jud-nb', data.numero_beneficio);
+  safeSet('jud-proc-adm', data.numero_processo);
+  
+  let tipoBeneficio = data.tipo_beneficio || '';
+  if (origemTipo === 'sal') tipoBeneficio = 'Salário-Maternidade';
+  else if (origemTipo === 'axd') tipoBeneficio = 'Auxílio-Doença';
+  else if (origemTipo === 'bpc') tipoBeneficio = 'BPC/LOAS';
+  safeSet('jud-tipo', tipoBeneficio);
+  
+  if (data.cliente_id) safeSet('jud-cliente-id', data.cliente_id);
+  
+  const obsEl = document.getElementById('jud-obs');
+  if (obsEl) {
+    obsEl.value = `Ajuizamento automático a partir do Processo Administrativo (${data.numero_processo || 'Sem nº'}):\n` +
+                  `- Resultado Adm: ${data.resultado_pedido || 'Aguardando'}\n` +
+                  `- Motivo Indeferimento: ${data.motivo_indeferimento || '—'}\n` +
+                  `Observações Adm: ${data.observacoes || '—'}`;
+  }
+
+  if (typeof window.MODULOS.atualizarParcelasJud === 'function') {
+    window.MODULOS.atualizarParcelasJud();
+  }
+
+  const infoEl = document.getElementById('jud-adm-info');
+  if (infoEl) {
+    infoEl.style.display = 'block';
+    const badgeClass = data.resultado_pedido === 'Deferido' ? 'badge-verde' : (data.resultado_pedido === 'Indeferido' ? 'badge-vermelho' : 'badge-amarelo');
+    infoEl.innerHTML = `
+      <strong>✓ Processo Administrativo Vinculado Detectado</strong><br>
+      Protocolo: <strong>${data.numero_processo || '—'}</strong> | NB: <strong>${data.numero_beneficio || '—'}</strong><br>
+      Benefício: ${tipoBeneficio}<br>
+      Resultado Administrativo: <span class="badge ${badgeClass}">${data.resultado_pedido || 'Aguardando'}</span><br>
+      ${data.motivo_indeferimento ? `Motivo Indeferimento: <em>${data.motivo_indeferimento}</em>` : ''}
+    `;
+  }
+
+  window._docLinkPending = { deTipo: origemTipo, deId: id };
+  toast('Dados administrativos vinculados ao novo processo judicial!');
+}
+window.ajuizarDeRow = ajuizarDeRow;
+
+async function ajuizarAcaoDe(prefix) {
+  const id = v(prefix + '-id');
+  if (!id) {
+    toast('Salve o registro administrativo antes de ajuizar a ação.', true);
+    return;
+  }
+  if (typeof window.closeModal === 'function') {
+    window.closeModal(prefix);
+  } else {
+    document.getElementById('modal-' + prefix)?.classList.remove('open');
+  }
+  await ajuizarDeRow(prefix, id);
+}
+window.ajuizarAcaoDe = ajuizarAcaoDe;
+
+async function iniciarProcessoParaCliente(clienteId, tipo) {
+  if (!tipo) return;
+  const cli = clientesCache.find(c => c.id === clienteId);
+  if (!cli) {
+    toast('Cliente não encontrado.', true);
+    return;
+  }
+
+  if (typeof window.openModal === 'function') {
+    window.openModal(tipo);
+  } else {
+    document.getElementById('modal-' + tipo)?.classList.add('open');
+  }
+
+  const safeSet = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  safeSet(tipo + '-cliente-id', cli.id);
+  safeSet(tipo + '-nome', cli.nome);
+  safeSet(tipo + '-cpf', cli.cpf || '');
+  safeSet(tipo + '-cli-busca', `${cli.nome}${cli.cpf ? ' · ' + cli.cpf : ''}`);
+
+  toast(`Novo caso de ${tipo.toUpperCase()} iniciado para ${cli.nome}!`);
+}
+window.iniciarProcessoParaCliente = iniciarProcessoParaCliente;
+
+async function criarRecursoDeRow(prefix, id) {
+  let tab = '';
+  if (prefix === 'adm') tab = 'processos_administrativos';
+  else if (prefix === 'sal') tab = 'salario_maternidade';
+  else if (prefix === 'axd') tab = 'auxilio_doenca';
+  else if (prefix === 'bpc') tab = 'bpc_loas';
+  if (!tab) return;
+
+  const { data, error } = await sb.from(tab).select('*').eq('id', id).single();
+  if (error || !data) {
+    toast('Erro ao buscar dados do processo administrativo.', true);
+    return;
+  }
+
+  if (typeof window.openModal === 'function') {
+    window.openModal('rec');
+  } else {
+    document.getElementById('modal-rec')?.classList.add('open');
+  }
+  document.getElementById('form-rec').reset();
+
+  const safeSet = (fieldId, val) => { const el = document.getElementById(fieldId); if (el) el.value = val || ''; };
+  safeSet('rec-id', '');
+  safeSet('rec-origem-tipo', prefix);
+  safeSet('rec-origem-id', id);
+  safeSet('rec-num-req', data.numero_processo);
+  safeSet('rec-nome', data.nome_cliente);
+  safeSet('rec-cpf', data.cpf || '');
+
+  const tipoBenef = (prefix === 'sal') ? 'Salário-Maternidade'
+                  : (prefix === 'axd') ? 'Auxílio-Doença'
+                  : (prefix === 'bpc') ? 'BPC/LOAS'
+                  : data.tipo_beneficio || '';
+  safeSet('rec-tipo-beneficio', tipoBenef);
+  if (data.cliente_id) safeSet('rec-cliente-id', data.cliente_id);
+
+  safeSet('rec-modalidade', 'Recurso Administrativo');
+  if (window.MODULOS && typeof window.MODULOS.atualizarModalidadeRec === 'function') {
+    window.MODULOS.atualizarModalidadeRec();
+  }
+
+  if (data.data_decisao) {
+    safeSet('rec-data-protocolo', data.data_decisao.slice(0, 10));
+    if (window.MODULOS && typeof window.MODULOS.recalcPrazoRec === 'function') {
+      window.MODULOS.recalcPrazoRec();
+    }
+  }
+
+  const buscaRes = document.getElementById('rec-busca-resultado');
+  if (buscaRes) buscaRes.innerHTML = '<span style="color:var(--verde)">✓ Vinculado ao processo original.</span>';
+  document.getElementById('modal-rec-title').textContent = 'Novo Recurso vinculado';
+
+  toast('Recurso administrativo iniciado com os dados importados!');
+}
+window.criarRecursoDeRow = criarRecursoDeRow;
+
 /* ── RECURSOS ──────────────────────────────────────────────────────────── */
 let recData = [];
 async function loadRec() {
@@ -1020,13 +1195,13 @@ function renderDashboardPrazosChart(venc, urg, ate, ok) {
       datasets: [{
         data: [venc, urg, ate, ok],
         backgroundColor: [
-          '#ef4444', // vermelho
-          '#f97316', // laranja
-          '#eab308', // amarelo
-          '#10b981'  // verde
+          '#c0392b', // vermelho elegante
+          '#d35400', // laranja elegante
+          '#f1c40f', // amarelo elegante
+          '#27ae60'  // verde elegante
         ],
         borderWidth: 2,
-        borderColor: '#0c0c0e'
+        borderColor: '#0a0b0d'
       }]
     },
     options: {
@@ -1037,7 +1212,7 @@ function renderDashboardPrazosChart(venc, urg, ate, ok) {
           position: 'right',
           labels: {
             font: { family: 'Plus Jakarta Sans', size: 11 },
-            color: '#a1a1aa',
+            color: '#9c9485',
             boxWidth: 12
           }
         }
@@ -1095,13 +1270,13 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
           {
             label: 'Recebido',
             data: recebidos,
-            backgroundColor: '#10b981',
+            backgroundColor: '#27ae60',
             borderRadius: 4
           },
           {
             label: 'Pendente',
             data: pendentes,
-            backgroundColor: '#eab308',
+            backgroundColor: '#f1c40f',
             borderRadius: 4
           }
         ]
@@ -1147,9 +1322,9 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
         labels: ['Vandressa (50%)', 'Thaynar (50%)'],
         datasets: [{
           data: [shareVandressa, shareThaynar],
-          backgroundColor: ['#2f80ed', '#52525b'],
+          backgroundColor: ['#c5a880', '#6b6355'],
           borderWidth: 2,
-          borderColor: '#0c0c0e'
+          borderColor: '#0a0b0d'
         }]
       },
       options: {
@@ -1652,7 +1827,8 @@ window.MODULOS = {
   recalcPrazoBpc, atualizarDecisaoBpc, atualizarNaturezaBpc, loadBpc, bpcData: () => bpcData,
   atualizarParcelasJud, lookupAdmDoJud,
   loadRec, recData: () => recData, recalcPrazoRec, atualizarModalidadeRec, buscarRequerimento,
-  selecionarRequerimento, criarRecursoDe,
+  selecionarRequerimento, criarRecursoDe, ajuizarDeRow, ajuizarAcaoDe,
+  iniciarProcessoParaCliente, criarRecursoDeRow,
   loadDashboardCategorizado, criarCobrancaAutomatica, sincronizarRecursoAutomatico,
   carregarMedicos, aplicarMedicoSelecionado, loadFaturamento,
   loadPrazosFiltrado, loadClientesModule,

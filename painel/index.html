@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="../icons/icon-512.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../icons/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/painel.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -607,8 +607,9 @@
           </div>
           <div class="form-row" id="adm-row-recurso" style="display:none">
             <div class="form-group"><label>Prazo para recurso (30 dias após indeferimento)</label><input type="date" id="adm-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
-            <div class="form-group" style="align-self:flex-end">
-              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('adm')">+ Cadastrar recurso para este pedido</button>
+            <div class="form-group" style="align-self:flex-end; display:flex; gap:.5rem;">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('adm')">+ Cadastrar recurso</button>
+              <button type="button" class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarAcaoDe('adm')">⚖️ Ajuizar Ação</button>
             </div>
           </div>
           <div class="form-row full" id="adm-row-motivo-indef" style="display:none">
@@ -880,8 +881,9 @@
         </div>
         <div class="form-row" id="sal-row-recurso" style="display:none">
           <div class="form-group"><label>Prazo para recurso (30 dias)</label><input type="date" id="sal-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
-          <div class="form-group" style="align-self:flex-end">
+          <div class="form-group" style="align-self:flex-end; display:flex; gap:.5rem;">
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('sal')">+ Cadastrar recurso</button>
+            <button type="button" class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarAcaoDe('sal')">⚖️ Ajuizar Ação</button>
           </div>
         </div>
         <div class="form-row full" id="sal-motivo-indef-row" style="display:none">
@@ -1447,8 +1449,9 @@
         </div>
         <div class="form-row" id="axd-row-recurso" style="display:none">
           <div class="form-group"><label>Prazo para recurso (30 dias)</label><input type="date" id="axd-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
-          <div class="form-group" style="align-self:flex-end">
+          <div class="form-group" style="align-self:flex-end; display:flex; gap:.5rem;">
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('axd')">+ Cadastrar recurso</button>
+            <button type="button" class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarAcaoDe('axd')">⚖️ Ajuizar Ação</button>
           </div>
         </div>
         <div class="form-row full" id="axd-row-motivo-indef" style="display:none">
@@ -1572,8 +1575,9 @@
         </div>
         <div class="form-row" id="bpc-row-recurso" style="display:none">
           <div class="form-group"><label>Prazo recurso (30 dias)</label><input type="date" id="bpc-prazo-recurso" readonly style="background:rgba(192,57,43,.08)"></div>
-          <div class="form-group" style="align-self:flex-end">
+          <div class="form-group" style="align-self:flex-end; display:flex; gap:.5rem;">
             <button type="button" class="btn btn-secondary btn-sm" onclick="window.MODULOS.criarRecursoDe('bpc')">+ Cadastrar recurso</button>
+            <button type="button" class="btn btn-primary btn-sm" style="background:#8c7b65; border-color:#8c7b65;" onclick="window.MODULOS.ajuizarAcaoDe('bpc')">⚖️ Ajuizar Ação</button>
           </div>
         </div>
         <div class="form-row full" id="bpc-row-motivo-indef" style="display:none">
