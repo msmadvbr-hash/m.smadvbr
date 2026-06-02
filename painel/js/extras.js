@@ -846,6 +846,145 @@ function criarRecursoDe(prefix) {
   document.getElementById('modal-rec-title').textContent = 'Novo Recurso vinculado';
 }
 
+/* ── INSTÂNCIAS GLOBAIS DE GRÁFICOS (CHART.JS) ─────────────────────────── */
+let dashboardPrazosChart = null;
+let faturamentoTotalChart = null;
+let faturamentoSplitChart = null;
+
+function renderDashboardPrazosChart(venc, urg, ate, ok) {
+  const ctx = document.getElementById('chart-dashboard-prazos')?.getContext('2d');
+  if (!ctx) return;
+  if (dashboardPrazosChart) {
+    dashboardPrazosChart.destroy();
+  }
+  dashboardPrazosChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Vencidos', 'Urgentes (≤3 dias)', 'Atenção (≤7 dias)', 'No Prazo'],
+      datasets: [{
+        data: [venc, urg, ate, ok],
+        backgroundColor: [
+          '#c0392b', // vermelho
+          '#e67e22', // laranja
+          '#f1c40f', // amarelo
+          '#27ae60'  // verde
+        ],
+        borderWidth: 2,
+        borderColor: '#FDFAF5'
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'right',
+          labels: {
+            font: { family: 'Lato', size: 11 },
+            color: '#3A2810',
+            boxWidth: 12
+          }
+        }
+      },
+      cutout: '65%'
+    }
+  });
+}
+
+function renderFaturamentoCharts(mesesData, sortedMeses) {
+  const ctxTotal = document.getElementById('chart-faturamento-total')?.getContext('2d');
+  const ctxSplit = document.getElementById('chart-faturamento-split')?.getContext('2d');
+  if (!ctxTotal && !ctxSplit) return;
+
+  const nomeMeses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  const labels = sortedMeses.map(m => {
+    const mesNum = parseInt(m.slice(5, 7), 10);
+    return nomeMeses[mesNum - 1];
+  });
+
+  const recebidos = sortedMeses.map(m => mesesData[m].recebido);
+  const pendentes = sortedMeses.map(m => mesesData[m].total - mesesData[m].recebido);
+
+  const totalRecebido = recebidos.reduce((a, b) => a + b, 0);
+  const totalPendente = pendentes.reduce((a, b) => a + b, 0);
+
+  if (ctxTotal) {
+    if (faturamentoTotalChart) faturamentoTotalChart.destroy();
+    faturamentoTotalChart = new Chart(ctxTotal, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'Recebido',
+            data: recebidos,
+            backgroundColor: '#27ae60',
+            borderRadius: 4
+          },
+          {
+            label: 'Pendente',
+            data: pendentes,
+            backgroundColor: '#f1c40f',
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { font: { family: 'Lato', size: 11 }, color: '#3A2810' }
+          }
+        },
+        scales: {
+          x: { stacked: true, grid: { display: false } },
+          y: { stacked: true, ticks: { callback: value => 'R$ ' + value.toLocaleString('pt-BR') } }
+        }
+      }
+    });
+  }
+
+  if (ctxSplit) {
+    if (faturamentoSplitChart) faturamentoSplitChart.destroy();
+    const totalGeral = totalRecebido + totalPendente;
+    const shareVandressa = totalGeral / 2;
+    const shareThaynar = totalGeral / 2;
+
+    faturamentoSplitChart = new Chart(ctxSplit, {
+      type: 'pie',
+      data: {
+        labels: ['Vandressa (50%)', 'Thaynar (50%)'],
+        datasets: [{
+          data: [shareVandressa, shareThaynar],
+          backgroundColor: ['#B8914A', '#5C3D1A'],
+          borderWidth: 2,
+          borderColor: '#FDFAF5'
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: { font: { family: 'Lato', size: 11 }, color: '#3A2810' }
+          },
+          tooltip: {
+            callbacks: {
+              label: context => {
+                const val = context.raw || 0;
+                return context.label + ': ' + val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
 /* ── DASHBOARD CATEGORIZADO ────────────────────────────────────────────── */
 async function loadDashboardCategorizado() {
   const [adm, jud, aux, sal, praz, gen, axd, bpc, rec, cobr, guias] = await Promise.all([
@@ -921,6 +1060,9 @@ async function loadDashboardCategorizado() {
   set_text('dash-atencao',  ate);
   set_text('dash-ok',       ok);
   set_text('dash-total',    todos.length);
+
+  // Render donut chart para prazos
+  renderDashboardPrazosChart(venc, urg, ate, ok);
 
   // Render tabelas
   renderDashTabela('dash-guias-body', guiasItens.filter(r => r.dias !== null && r.dias <= 60), row => `
@@ -1215,6 +1357,9 @@ async function loadFaturamento() {
   document.getElementById('fat-ano-pendente').textContent  = fmtBRL(pendAno);
   document.getElementById('fat-ano-vandressa').textContent = fmtBRL(totalAno / 2);
   document.getElementById('fat-ano-thaynar').textContent   = fmtBRL(totalAno / 2);
+
+  // Renderizar gráficos de faturamento e divisão
+  renderFaturamentoCharts(meses, sortedMeses);
 }
 
 /* ── HOOK: showModule → carrega os módulos novos ───────────────────────── */

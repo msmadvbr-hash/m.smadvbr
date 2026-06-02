@@ -92,6 +92,19 @@
         <div class="stat-card azul"><div class="stat-num" id="dash-total">—</div><div class="stat-label">📂 Total de Prazos</div></div>
       </div>
 
+      <!-- GRÁFICO DE PRAZOS -->
+      <div style="background: var(--branco); border: 1px solid rgba(201,153,58,.18); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: center; gap: 3rem; flex-wrap: wrap;">
+        <div style="width: 220px; height: 220px; position: relative;">
+          <canvas id="chart-dashboard-prazos"></canvas>
+        </div>
+        <div style="flex: 1; min-width: 250px;">
+          <h3 style="font-family: 'Cinzel', serif; font-size: 1rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em;">Resumo Operacional dos Prazos</h3>
+          <p style="font-size: 0.9rem; line-height: 1.6; color: var(--texto-suave);">
+            Este gráfico apresenta a distribuição de todos os prazos pendentes no escritório. Priorize o atendimento dos prazos <strong>vencidos</strong> e <strong>urgentes</strong> para evitar prejuízos aos clientes e garantir a eficiência processual.
+          </p>
+        </div>
+      </div>
+
       <!-- Categoria 1: GUIAS INSS (pagamento de boletos / guias) -->
       <div class="card">
         <div class="card-header"><div class="card-title">💳 Pagamento de Guia INSS <small>(salário-maternidade)</small></div></div>
@@ -438,6 +451,22 @@
             <div class="stat-card amarelo"><div class="stat-num" id="fat-ano-pendente">—</div><div class="stat-label">⏳ A receber (pendente)</div></div>
             <div class="stat-card azul"><div class="stat-num" id="fat-ano-vandressa">—</div><div class="stat-label">👩‍⚖️ Vandressa (50%)</div></div>
             <div class="stat-card azul"><div class="stat-num" id="fat-ano-thaynar">—</div><div class="stat-label">👩‍⚖️ Thaynar (50%)</div></div>
+          </div>
+
+          <!-- GRÁFICOS DE FATURAMENTO -->
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;" id="faturamento-charts-container">
+            <div style="background: var(--branco); border: 1px solid rgba(201,153,58,.18); border-radius: 8px; padding: 1.2rem; min-height: 280px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
+              <div style="font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em; font-weight: 600;">Status do Faturamento Mensal</div>
+              <div style="flex: 1; position: relative;">
+                <canvas id="chart-faturamento-total" style="max-height: 240px;"></canvas>
+              </div>
+            </div>
+            <div style="background: var(--branco); border: 1px solid rgba(201,153,58,.18); border-radius: 8px; padding: 1.2rem; min-height: 280px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
+              <div style="font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em; font-weight: 600;">Divisão de Honorários (50% / 50%)</div>
+              <div style="flex: 1; position: relative;">
+                <canvas id="chart-faturamento-split" style="max-height: 240px;"></canvas>
+              </div>
+            </div>
           </div>
         </div>
         <div class="table-wrap">
@@ -1704,6 +1733,7 @@
   }
 })();
 </script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="js/catalogos.js" onerror="console.error('Falha ao carregar catalogos.js')"></script>
 <script src="js/calculadoras.js" onerror="console.error('Falha ao carregar calculadoras.js')"></script>
 <script src="js/prazos.js" onerror="console.error('Falha ao carregar prazos.js')"></script>

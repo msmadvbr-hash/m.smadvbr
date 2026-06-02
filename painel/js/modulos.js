@@ -362,6 +362,10 @@ function clearForm(type) {
   if (idEl) idEl.value = '';
   // Limpa hidden cliente_id se existir
   const ci = document.getElementById(type + '-cliente-id'); if (ci) ci.value = '';
+  // Limpa hidden fields adicionais de relacionamento e calculadoras
+  ['praz-medico-id', 'rec-origem-id', 'rec-origem-tipo', 'aux-total-bolsa', 'aux-valor-acao', 'aux-honor-calc'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
   // limpa previews
   ['aux-calc-preview','sal-calc-preview','praz-prazo-preview',
    'aux-prazo-preview','gen-prazo-preview','gen-calc-preview',
