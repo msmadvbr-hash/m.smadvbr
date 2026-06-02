@@ -16,85 +16,90 @@
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --creme: #F5EFE4;
-    --bege: #E8D9C0;
-    --bege-medio: #D4BC96;
-    --caramelo: #B8914A;
-    --dourado: #C9993A;
-    --dourado-escuro: #9A7230;
-    --marrom: #5C3D1A;
-    --texto: #3A2810;
-    --texto-suave: #6B4F2A;
-    --branco: #FDFAF5;
+    --bg-main: #09090b;
+    --bg-card: rgba(20, 20, 25, 0.65);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-focus: #2f80ed;
+    --accent: #2f80ed; /* Electric Blue */
+    --accent-hover: #1e5ec8;
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --white: #ffffff;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'Lato', sans-serif;
-    background: radial-gradient(circle at center, #2e1e0d 0%, #0d0500 100%);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: radial-gradient(circle at center, #18181b 0%, #09090b 100%);
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
+    color: var(--text-primary);
   }
   body::before {
     content: '';
     position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9993A' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    background: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.12;
     pointer-events: none;
   }
   .login-card {
-    background: rgba(245, 239, 228, 0.82);
-    backdrop-filter: blur(16px) saturate(120%);
-    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
     width: 100%; max-width: 420px;
-    padding: 3rem 2.8rem;
+    padding: 3rem 2.5rem;
     position: relative;
     z-index: 2;
-    box-shadow: 0 24px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.4);
-    border: 1px solid rgba(184,145,74,0.22);
-    border-radius: 12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 16px;
     animation: fadeInCard 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   .login-card::before {
     content: '';
     position: absolute; top: 0; left: 0; right: 0;
-    height: 4px;
-    background: linear-gradient(to right, var(--caramelo), var(--dourado), var(--caramelo));
-    border-radius: 12px 12px 0 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    border-radius: 16px 16px 0 0;
   }
   .login-logo {
     text-align: center;
-    margin-bottom: 2.4rem;
+    margin-bottom: 2rem;
   }
   .login-logo-v {
-    width: 58px; height: 58px;
-    border: 1.5px solid var(--caramelo);
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Cinzel', serif;
-    font-size: 1rem; font-weight: 600;
-    color: var(--caramelo);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--white);
     margin: 0 auto 1.2rem;
-    letter-spacing: .05em;
-    background: rgba(184, 145, 74, 0.05);
-    box-shadow: 0 4px 12px rgba(184, 145, 74, 0.1);
+    letter-spacing: 0.05em;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 64px; height: 64px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
   .login-logo-name {
-    font-family: 'Cinzel', serif;
-    font-size: .75rem; letter-spacing: .2em;
-    color: var(--texto); text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    font-size: .85rem; letter-spacing: .15em;
+    color: var(--text-primary); text-transform: uppercase;
     display: block; margin-bottom: .4rem;
+    font-weight: 600;
   }
   .login-logo-sub {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: .95rem; font-style: italic;
-    color: var(--texto-suave);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: .8rem;
+    color: var(--text-secondary);
+    display: block;
   }
   .ornament {
     display: flex; align-items: center; gap: 12px;
@@ -102,105 +107,107 @@
   }
   .ornament::before, .ornament::after {
     content: ''; flex: 1; height: 1px;
-    background: linear-gradient(to right, rgba(184,145,74,0), rgba(184,145,74,0.3), rgba(184,145,74,0));
+    background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.08), rgba(255,255,255,0));
   }
-  .ornament::before { background: linear-gradient(to left, rgba(184,145,74,0.3), rgba(184,145,74,0)); }
+  .ornament::before { background: linear-gradient(to left, rgba(255,255,255,0.08), rgba(255,255,255,0)); }
   .ornament-diamond {
-    width: 6px; height: 6px;
-    background: var(--caramelo);
-    transform: rotate(45deg);
+    width: 4px; height: 4px;
+    background: var(--text-muted);
+    border-radius: 50%;
     flex-shrink: 0;
   }
   .form-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 1.45rem; font-weight: 400;
-    color: var(--texto);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.15rem; font-weight: 500;
+    color: var(--text-primary);
     text-align: center;
     margin-bottom: 1.8rem;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
   }
   .form-group { margin-bottom: 1.4rem; }
   label {
     display: block;
-    font-family: 'Cinzel', serif;
-    font-size: .65rem; letter-spacing: .2em;
-    color: var(--caramelo); text-transform: uppercase;
+    font-family: 'Outfit', sans-serif;
+    font-size: .65rem; letter-spacing: .15em;
+    color: var(--text-secondary); text-transform: uppercase;
     margin-bottom: .6rem;
+    font-weight: 500;
   }
   input[type="email"], input[type="password"] {
     width: 100%;
-    border: 1px solid rgba(184,145,74,0.3);
-    background: rgba(253, 250, 245, 0.75);
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.03);
     padding: 13px 16px;
-    font-family: 'Lato', sans-serif;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     font-size: .95rem;
-    color: var(--texto);
+    color: var(--text-primary);
     outline: none;
-    border-radius: 6px;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
   input[type="email"]:focus, input[type="password"]:focus {
-    border-color: var(--caramelo);
-    background: var(--branco);
-    box-shadow: 0 0 0 3px rgba(184, 145, 74, 0.15);
+    border-color: var(--border-focus);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.15);
   }
   .btn-login {
     width: 100%;
-    background: linear-gradient(135deg, var(--caramelo), var(--dourado-escuro));
-    color: var(--branco);
+    background: var(--white);
+    color: var(--bg-main);
     border: none; cursor: pointer;
     padding: 14px;
-    font-family: 'Cinzel', serif;
-    font-size: .75rem; letter-spacing: .2em;
+    font-family: 'Outfit', sans-serif;
+    font-size: .75rem; letter-spacing: .15em;
     text-transform: uppercase;
-    border-radius: 6px;
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    font-weight: 600;
+    border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     margin-top: .5rem;
-    box-shadow: 0 4px 12px rgba(184, 145, 74, 0.2);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   }
   .btn-login:hover {
-    background: linear-gradient(135deg, var(--dourado), var(--caramelo));
-    transform: translateY(-1.5px);
-    box-shadow: 0 6px 20px rgba(184, 145, 74, 0.35);
+    background: var(--text-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
   }
   .btn-login:active {
     transform: translateY(0);
   }
   .btn-login:disabled {
-    background: var(--bege-medio);
+    background: rgba(255,255,255,0.08);
+    color: var(--text-muted);
     box-shadow: none;
     cursor: not-allowed;
     transform: none;
   }
   .error-msg {
-    background: rgba(220,50,50,.08);
-    border: 1px solid rgba(220,50,50,.25);
-    color: #c0392b;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #ef4444;
     padding: 12px 14px;
     font-size: .85rem;
     margin-top: 1rem;
     display: none;
     text-align: center;
     line-height: 1.5;
-    border-radius: 6px;
+    border-radius: 8px;
   }
   .back-link {
     display: block; text-align: center;
     margin-top: 1.8rem;
-    font-family: 'Cinzel', serif;
-    font-size: .6rem; letter-spacing: .15em;
-    color: var(--texto-suave); text-decoration: none;
+    font-family: 'Outfit', sans-serif;
+    font-size: .65rem; letter-spacing: .12em;
+    color: var(--text-secondary); text-decoration: none;
     text-transform: uppercase;
     transition: color .2s, transform .2s;
   }
   .back-link:hover {
-    color: var(--caramelo);
-    transform: translateY(-0.5px);
+    color: var(--white);
   }
   .spinner {
     width: 14px; height: 14px;
-    border: 2px solid rgba(255,255,255,.4);
-    border-top-color: white;
+    border: 2px solid rgba(0,0,0,.15);
+    border-top-color: var(--bg-main);
     border-radius: 50%;
     animation: spin .6s linear infinite;
     vertical-align: middle;

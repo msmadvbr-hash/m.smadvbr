@@ -5,103 +5,149 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Recuperar Senha · M&SM Advocacia</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
-    --creme: #F5EFE4; --bege: #E8D9C0; --bege-medio: #D4BC96;
-    --caramelo: #B8914A; --dourado: #C9993A; --dourado-escuro: #9A7230;
-    --marrom: #5C3D1A; --texto: #3A2810; --texto-suave: #6B4F2A; --branco: #FDFAF5;
+    --bg-main: #09090b;
+    --bg-card: rgba(20, 20, 25, 0.65);
+    --border: rgba(255, 255, 255, 0.08);
+    --border-focus: #2f80ed;
+    --accent: #2f80ed; /* Electric Blue */
+    --accent-hover: #1e5ec8;
+    --text-primary: #f4f4f5;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --white: #ffffff;
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
-    font-family: 'Lato', sans-serif;
-    background: var(--marrom);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: radial-gradient(circle at center, #18181b 0%, #09090b 100%);
     min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
     position: relative; overflow: hidden;
+    color: var(--text-primary);
   }
   body::before {
     content: ''; position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9993A' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-    pointer-events: none;
+    background: radial-gradient(rgba(255, 255, 255, 0.15) 1px, transparent 1px);
+    background-size: 24px 24px;
+    opacity: 0.12; pointer-events: none;
   }
   .card {
-    background: var(--creme);
+    background: var(--bg-card);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
     width: 100%; max-width: 420px;
-    padding: 3rem 2.8rem;
+    padding: 3rem 2.5rem;
     position: relative; z-index: 2;
-    box-shadow: 0 32px 80px rgba(0,0,0,.35);
+    box-shadow: 0 30px 80px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    animation: fadeInCard 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
   .card::before {
     content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(to right, var(--caramelo), var(--dourado), var(--caramelo));
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    border-radius: 16px 16px 0 0;
   }
   .logo { text-align: center; margin-bottom: 2rem; }
   .logo-v {
-    width: 52px; height: 52px; border: 1.5px solid var(--caramelo);
-    display: flex; align-items: center; justify-content: center;
-    font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600;
-    color: var(--caramelo); margin: 0 auto .8rem; letter-spacing: .05em;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--white); margin: 0 auto 1.2rem; letter-spacing: 0.05em;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 64px; height: 64px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
   }
   .logo-name {
-    font-family: 'Cinzel', serif; font-size: .7rem; letter-spacing: .2em;
-    color: var(--texto); text-transform: uppercase; display: block; margin-bottom: .25rem;
+    font-family: 'Outfit', sans-serif; font-size: .85rem; letter-spacing: .15em;
+    color: var(--text-primary); text-transform: uppercase; display: block; margin-bottom: .4rem;
+    font-weight: 600;
   }
   .logo-sub {
-    font-family: 'Cormorant Garamond', serif; font-size: .88rem;
-    font-style: italic; color: var(--texto-suave);
+    font-family: 'Plus Jakarta Sans', sans-serif; font-size: .8rem;
+    color: var(--text-secondary); display: block;
   }
   .ornament { display: flex; align-items: center; gap: 12px; margin-bottom: 1.8rem; }
-  .ornament::before, .ornament::after { content: ''; flex: 1; height: 1px; background: rgba(184,145,74,.3); }
-  .diamond { width: 6px; height: 6px; background: var(--caramelo); transform: rotate(45deg); flex-shrink: 0; }
+  .ornament::before, .ornament::after {
+    content: ''; flex: 1; height: 1px;
+    background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.08), rgba(255,255,255,0));
+  }
+  .ornament::before { background: linear-gradient(to left, rgba(255,255,255,0.08), rgba(255,255,255,0)); }
+  .diamond { width: 4px; height: 4px; background: var(--text-muted); border-radius: 50%; flex-shrink: 0; }
   .form-title {
-    font-family: 'Cormorant Garamond', serif; font-size: 1.25rem; font-weight: 400;
-    color: var(--texto); text-align: center; margin-bottom: .6rem;
+    font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 500;
+    color: var(--text-primary); text-align: center; margin-bottom: .6rem;
   }
   .form-desc {
-    font-size: .85rem; color: var(--texto-suave); text-align: center;
-    line-height: 1.6; margin-bottom: 1.6rem; font-weight: 300;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: .85rem; color: var(--text-secondary); text-align: center;
+    line-height: 1.6; margin-bottom: 1.6rem;
   }
   .form-group { margin-bottom: 1.2rem; }
   label {
-    display: block; font-family: 'Cinzel', serif; font-size: .6rem;
-    letter-spacing: .2em; color: var(--caramelo); text-transform: uppercase; margin-bottom: .5rem;
+    display: block; font-family: 'Outfit', sans-serif; font-size: .65rem;
+    letter-spacing: .15em; color: var(--text-secondary); text-transform: uppercase; margin-bottom: .5rem;
+    font-weight: 500;
   }
   input[type="email"] {
-    width: 100%; border: 1px solid rgba(184,145,74,.35); background: var(--branco);
-    padding: 12px 14px; font-family: 'Lato', sans-serif; font-size: .95rem;
-    color: var(--texto); outline: none; transition: border-color .2s;
+    width: 100%; border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03);
+    padding: 13px 16px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: .95rem;
+    color: var(--text-primary); outline: none; border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  input[type="email"]:focus { border-color: var(--caramelo); }
+  input[type="email"]:focus {
+    border-color: var(--border-focus);
+    background: rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 0 3px rgba(47, 128, 237, 0.15);
+  }
   .btn {
-    width: 100%; background: var(--caramelo); color: var(--branco);
-    border: none; cursor: pointer; padding: 13px;
-    font-family: 'Cinzel', serif; font-size: .72rem; letter-spacing: .2em;
-    text-transform: uppercase; transition: background .25s; margin-top: .4rem;
+    width: 100%; background: var(--white); color: var(--bg-main);
+    border: none; cursor: pointer; padding: 14px;
+    font-family: 'Outfit', sans-serif; font-size: .75rem; letter-spacing: .15em;
+    text-transform: uppercase; font-weight: 600; border-radius: 8px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); margin-top: .4rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.25);
   }
-  .btn:hover { background: var(--dourado-escuro); }
-  .btn:disabled { background: var(--bege-medio); cursor: not-allowed; }
+  .btn:hover {
+    background: var(--text-primary);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled {
+    background: rgba(255,255,255,0.08); color: var(--text-muted);
+    box-shadow: none; cursor: not-allowed; transform: none;
+  }
   .msg {
     padding: 12px 14px; font-size: .85rem; margin-top: 1rem;
-    display: none; text-align: center; line-height: 1.5;
+    display: none; text-align: center; line-height: 1.5; border-radius: 8px;
   }
-  .msg.erro   { background: rgba(220,50,50,.1); border: 1px solid rgba(220,50,50,.3); color: #c0392b; }
-  .msg.ok     { background: rgba(39,174,96,.1);  border: 1px solid rgba(39,174,96,.3);  color: #1e7a40; }
+  .msg.erro   { background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); color: #ef4444; }
+  .msg.ok     { background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: #10b981; }
   .back-link {
     display: block; text-align: center; margin-top: 1.8rem;
-    font-family: 'Cinzel', serif; font-size: .58rem; letter-spacing: .15em;
-    color: var(--texto-suave); text-decoration: none; text-transform: uppercase;
-    transition: color .2s;
+    font-family: 'Outfit', sans-serif; font-size: .65rem; letter-spacing: .12em;
+    color: var(--text-secondary); text-decoration: none; text-transform: uppercase;
+    transition: color .2s, transform .2s;
   }
-  .back-link:hover { color: var(--caramelo); }
+  .back-link:hover { color: var(--white); }
   .spinner {
-    width: 14px; height: 14px; border: 2px solid rgba(255,255,255,.4);
-    border-top-color: white; border-radius: 50%;
+    width: 14px; height: 14px; border: 2px solid rgba(0,0,0,.15);
+    border-top-color: var(--bg-main); border-radius: 50%;
     animation: spin .6s linear infinite; vertical-align: middle;
     margin-right: 6px; display: none;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes fadeInCard {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
 </style>
 </head>
 <body>

@@ -1020,13 +1020,13 @@ function renderDashboardPrazosChart(venc, urg, ate, ok) {
       datasets: [{
         data: [venc, urg, ate, ok],
         backgroundColor: [
-          '#c0392b', // vermelho
-          '#e67e22', // laranja
-          '#f1c40f', // amarelo
-          '#27ae60'  // verde
+          '#ef4444', // vermelho
+          '#f97316', // laranja
+          '#eab308', // amarelo
+          '#10b981'  // verde
         ],
         borderWidth: 2,
-        borderColor: '#FDFAF5'
+        borderColor: '#0c0c0e'
       }]
     },
     options: {
@@ -1036,8 +1036,8 @@ function renderDashboardPrazosChart(venc, urg, ate, ok) {
         legend: {
           position: 'right',
           labels: {
-            font: { family: 'Lato', size: 11 },
-            color: '#3A2810',
+            font: { family: 'Plus Jakarta Sans', size: 11 },
+            color: '#a1a1aa',
             boxWidth: 12
           }
         }
@@ -1065,10 +1065,10 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
 
   if (typeof Chart === 'undefined') {
     if (canvasTotal && canvasTotal.parentNode) {
-      canvasTotal.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:0.8rem;color:var(--texto-suave);text-align:center;padding:1rem;border:1px dashed rgba(184,145,74,0.3);border-radius:8px;">⚠️ Gráfico indisponível (Chart.js não carregado)</div>';
+      canvasTotal.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:0.8rem;color:var(--text-secondary);text-align:center;padding:1rem;border:1px dashed var(--border);border-radius:8px;">⚠️ Gráfico indisponível (Chart.js não carregado)</div>';
     }
     if (canvasSplit && canvasSplit.parentNode) {
-      canvasSplit.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:0.8rem;color:var(--texto-suave);text-align:center;padding:1rem;border:1px dashed rgba(184,145,74,0.3);border-radius:8px;">⚠️ Gráfico indisponível (Chart.js não carregado)</div>';
+      canvasSplit.parentNode.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;font-size:0.8rem;color:var(--text-secondary);text-align:center;padding:1rem;border:1px dashed var(--border);border-radius:8px;">⚠️ Gráfico indisponível (Chart.js não carregado)</div>';
     }
     return;
   }
@@ -1095,13 +1095,13 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
           {
             label: 'Recebido',
             data: recebidos,
-            backgroundColor: '#27ae60',
+            backgroundColor: '#10b981',
             borderRadius: 4
           },
           {
             label: 'Pendente',
             data: pendentes,
-            backgroundColor: '#f1c40f',
+            backgroundColor: '#eab308',
             borderRadius: 4
           }
         ]
@@ -1112,12 +1112,24 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
         plugins: {
           legend: {
             position: 'top',
-            labels: { font: { family: 'Lato', size: 11 }, color: '#3A2810' }
+            labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#a1a1aa' }
           }
         },
         scales: {
-          x: { stacked: true, grid: { display: false } },
-          y: { stacked: true, ticks: { callback: value => 'R$ ' + value.toLocaleString('pt-BR') } }
+          x: { 
+            stacked: true, 
+            grid: { display: false },
+            ticks: { color: '#a1a1aa', font: { family: 'Plus Jakarta Sans', size: 11 } }
+          },
+          y: { 
+            stacked: true, 
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { 
+              color: '#a1a1aa', 
+              font: { family: 'Plus Jakarta Sans', size: 11 },
+              callback: value => 'R$ ' + value.toLocaleString('pt-BR') 
+            } 
+          }
         }
       }
     });
@@ -1135,9 +1147,9 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
         labels: ['Vandressa (50%)', 'Thaynar (50%)'],
         datasets: [{
           data: [shareVandressa, shareThaynar],
-          backgroundColor: ['#B8914A', '#5C3D1A'],
+          backgroundColor: ['#2f80ed', '#52525b'],
           borderWidth: 2,
-          borderColor: '#FDFAF5'
+          borderColor: '#0c0c0e'
         }]
       },
       options: {
@@ -1146,7 +1158,7 @@ function renderFaturamentoCharts(mesesData, sortedMeses) {
         plugins: {
           legend: {
             position: 'bottom',
-            labels: { font: { family: 'Lato', size: 11 }, color: '#3A2810' }
+            labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#a1a1aa' }
           },
           tooltip: {
             callbacks: {

@@ -16,7 +16,7 @@
 <link rel="icon" type="image/png" sizes="512x512" href="../icons/icon-512.png">
 <link rel="apple-touch-icon" sizes="180x180" href="../icons/icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Cinzel:wght@400;500;600&family=Lato:wght@300;400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/painel.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -93,18 +93,18 @@
       </div>
 
       <!-- GRÁFICO DE PRAZOS -->
-      <div style="background: var(--branco); border: 1px solid rgba(201,153,58,.18); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: center; gap: 3rem; flex-wrap: wrap;">
-        <div style="width: 220px; height: 220px; position: relative;">
+      <div class="dashboard-summary-card">
+        <div class="chart-wrapper">
           <canvas id="chart-dashboard-prazos"></canvas>
         </div>
-        <div style="flex: 1; min-width: 250px;">
-          <h3 style="font-family: 'Cinzel', serif; font-size: 1rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <div class="summary-info">
+          <h3>
             Resumo Operacional dos Prazos
-            <span id="dash-filtro-info" style="display:none; font-size: 0.7rem; background: rgba(192,57,43,.1); color: var(--vermelho); padding: 4px 10px; border-radius: 20px; font-family: Lato, sans-serif; font-weight: bold; cursor: pointer; border: 1px solid rgba(192,57,43,.2);" onclick="window.limparDashboardFiltro()">
+            <span id="dash-filtro-info" style="display:none;" onclick="window.limparDashboardFiltro()">
               Filtro: <span id="dash-filtro-nome"></span> ✕
             </span>
           </h3>
-          <p style="font-size: 0.9rem; line-height: 1.6; color: var(--texto-suave);">
+          <p>
             Este gráfico apresenta a distribuição de todos os prazos pendentes no escritório. Priorize o atendimento dos prazos <strong>vencidos</strong> e <strong>urgentes</strong> para evitar prejuízos aos clientes e garantir a eficiência processual.
           </p>
         </div>
@@ -459,17 +459,17 @@
           </div>
 
           <!-- GRÁFICOS DE FATURAMENTO -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 1.5rem;" id="faturamento-charts-container">
-            <div style="background: var(--branco); border: 1px solid rgba(201,153,58,.18); border-radius: 8px; padding: 1.2rem; min-height: 280px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
-              <div style="font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em; font-weight: 600;">Status do Faturamento Mensal</div>
-              <div style="flex: 1; position: relative;">
-                <canvas id="chart-faturamento-total" style="max-height: 240px;"></canvas>
+          <div class="faturamento-charts-grid" id="faturamento-charts-container">
+            <div class="chart-container-card">
+              <div class="chart-title-legend">Status do Faturamento Mensal</div>
+              <div class="chart-wrapper">
+                <canvas id="chart-faturamento-total"></canvas>
               </div>
             </div>
-            <div style="background: var(--branco); border: 1px solid rgba(201,153,58,.18); border-radius: 8px; padding: 1.2rem; min-height: 280px; box-shadow: 0 4px 10px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
-              <div style="font-family: 'Cinzel', serif; font-size: 0.8rem; color: var(--caramelo); margin-bottom: 0.8rem; letter-spacing: 0.05em; font-weight: 600;">Divisão de Honorários (50% / 50%)</div>
-              <div style="flex: 1; position: relative;">
-                <canvas id="chart-faturamento-split" style="max-height: 240px;"></canvas>
+            <div class="chart-container-card">
+              <div class="chart-title-legend">Divisão de Honorários (50% / 50%)</div>
+              <div class="chart-wrapper">
+                <canvas id="chart-faturamento-split"></canvas>
               </div>
             </div>
           </div>
@@ -534,7 +534,7 @@
             <div class="form-group"><label>Nº Protocolo de Requerimento</label><input type="text" id="adm-numero" placeholder="Ex: 1234567/2025"></div>
             <div class="form-group"><label>Nº do Benefício (NB)</label>
               <div style="display:flex; gap:.3rem; align-items:center">
-                <span style="font-family:Lato,sans-serif; font-weight:600; color:var(--caramelo,#b8914a); padding:.5rem .6rem; background:rgba(184,145,74,.1); border-radius:4px; border:1px solid rgba(184,145,74,.25)">NB:</span>
+                <span class="badge-nb">NB:</span>
                 <input type="text" id="adm-nb" placeholder="000.000.000-0" style="flex:1">
               </div>
             </div>
@@ -677,7 +677,7 @@
         <div class="form-row">
           <div class="form-group"><label>Nº do Benefício (NB)</label>
             <div style="display:flex; gap:.3rem; align-items:center">
-              <span style="font-family:Lato,sans-serif; font-weight:600; color:var(--caramelo,#b8914a); padding:.5rem .6rem; background:rgba(184,145,74,.1); border-radius:4px; border:1px solid rgba(184,145,74,.25)">NB:</span>
+              <span class="badge-nb">NB:</span>
               <input type="text" id="jud-nb" placeholder="000.000.000-0" style="flex:1">
             </div>
           </div>
@@ -804,7 +804,7 @@
           <div class="form-row">
             <div class="form-group"><label>Nº do Benefício (NB)</label>
               <div style="display:flex; gap:.3rem; align-items:center">
-                <span style="font-family:Lato,sans-serif; font-weight:600; color:var(--caramelo,#b8914a); padding:.5rem .6rem; background:rgba(184,145,74,.1); border-radius:4px; border:1px solid rgba(184,145,74,.25)">NB:</span>
+                <span class="badge-nb">NB:</span>
                 <input type="text" id="sal-nb" placeholder="000.000.000-0" style="flex:1">
               </div>
             </div>
@@ -1413,7 +1413,7 @@
         <div class="form-row">
           <div class="form-group"><label>Nº do Benefício (NB)</label>
             <div style="display:flex; gap:.3rem; align-items:center">
-              <span style="font-family:Lato,sans-serif; font-weight:600; color:var(--caramelo,#b8914a); padding:.5rem .6rem; background:rgba(184,145,74,.1); border-radius:4px; border:1px solid rgba(184,145,74,.25)">NB:</span>
+              <span class="badge-nb">NB:</span>
               <input type="text" id="axd-nb" placeholder="000.000.000-0" style="flex:1">
             </div>
           </div>
@@ -1532,7 +1532,7 @@
         <div class="form-row">
           <div class="form-group"><label>Nº do Benefício (NB)</label>
             <div style="display:flex; gap:.3rem; align-items:center">
-              <span style="font-family:Lato,sans-serif; font-weight:600; color:var(--caramelo,#b8914a); padding:.5rem .6rem; background:rgba(184,145,74,.1); border-radius:4px; border:1px solid rgba(184,145,74,.25)">NB:</span>
+              <span class="badge-nb">NB:</span>
               <input type="text" id="bpc-nb" placeholder="000.000.000-0" style="flex:1">
             </div>
           </div>
