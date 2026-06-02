@@ -1585,6 +1585,20 @@ function inicializar(session) {
   currentUser = session?.user || null;
   const emailEl = document.getElementById('user-email');
   if (emailEl && currentUser) emailEl.textContent = currentUser.email;
+  
+  // Ajusta a inicial do logotipo da barra lateral dinamicamente
+  const logoVEl = document.querySelector('.sidebar-logo-v');
+  if (logoVEl && currentUser) {
+    let initial = 'V'; // Fallback padrão
+    const name = currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '';
+    if (name) {
+      initial = name.trim().charAt(0).toUpperCase();
+    } else if (currentUser.email) {
+      initial = currentUser.email.trim().charAt(0).toUpperCase();
+    }
+    logoVEl.textContent = initial;
+  }
+
   setDate();
   // Adia para o próximo tick — assim o extras.js já reescreveu window.showModule
   // e o dashboard categorizado é chamado corretamente no primeiro load.
