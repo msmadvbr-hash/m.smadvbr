@@ -53,6 +53,8 @@ function popularPecas(selectEl) {
 
 /* ── CHECKLIST DE DOCUMENTOS ──────────────────────────────────────────── */
 let _docsCache = {}; // chave: `${tipo}:${id}` → array de docs
+// Buffer para registros novos (ainda sem id): persiste no save
+window._pendingDocs = window._pendingDocs || {}; // chave: containerId → array de docs
 
 async function carregarDocs(processoTipo, processoId) {
   const key = `${processoTipo}:${processoId}`;
@@ -69,22 +71,25 @@ function renderChecklistDocs(containerId, kit, processoTipo, processoId, salvos 
   const docsKit = DOCS_POR_KIT[kit] || [];
   const isNovo = (processoId === 'novo' || !processoId);
 
+  // Para novos registros, mesclar buffer pendente
+  const pendentes = isNovo ? (window._pendingDocs[containerId] || []) : [];
+  const fonteEstado = isNovo ? pendentes : salvos;
+
   // mescla: doc do kit + doc personalizado já salvo que não está no kit
-  const extras = salvos.filter(s => !docsKit.includes(s.nome));
+  const extras = fonteEstado.filter(s => !docsKit.includes(s.nome));
   const todos = [
-    ...docsKit.map(nome => ({ nome, salvo: salvos.find(s => s.nome === nome) })),
+    ...docsKit.map(nome => ({ nome, salvo: fonteEstado.find(s => s.nome === nome) })),
     ...extras.map(s => ({ nome: s.nome, salvo: s, extra: true })),
   ];
 
-  const totalOk       = salvos.filter(s => s.status === 'OK').length;
-  const totalFaltante = salvos.filter(s => s.status === 'FALTANTE').length;
-  const totalNa       = salvos.filter(s => s.status === 'NA').length;
+  const totalOk       = fonteEstado.filter(s => s.status === 'OK').length;
+  const totalFaltante = fonteEstado.filter(s => s.status === 'FALTANTE').length;
+  const totalNa       = fonteEstado.filter(s => s.status === 'NA').length;
   const totalGeral    = todos.length;
 
   const avisoNovo = isNovo
     ? `<div style="background:rgba(241,196,15,.15); border-left:3px solid #c9a300; padding:.7rem 1rem; margin-bottom:.6rem; font-size:.82rem">
-         ⚠️ <strong>Salve o registro primeiro</strong> (botão Salvar no rodapé) para começar a marcar
-         o status dos documentos. Esta é apenas a lista sugerida.
+         💡 Você pode marcar o status agora — será salvo automaticamente quando você clicar em <strong>Salvar</strong>.
        </div>` : '';
 
   container.innerHTML = `
@@ -102,43 +107,60 @@ function renderChecklistDocs(containerId, kit, processoTipo, processoId, salvos 
         <li>
           <span>${escHtml(d.nome)}${d.extra ? ' <em style="color:var(--texto-suave);font-size:.7rem">(extra)</em>' : ''}</span>
           <select class="doc-status ${st.toLowerCase()}" data-nome="${escHtml(d.nome)}"
-                  ${isNovo ? 'disabled' : ''}
-                  onchange="window.UI.atualizarStatusDoc('${processoTipo}','${processoId}', this)">
+                  onchange="window.UI.atualizarStatusDoc('${processoTipo}','${processoId}','${containerId}', this)">
             <option value=""         ${st===''         ?'selected':''}>— status —</option>
             <option value="OK"       ${st==='OK'       ?'selected':''}>OK</option>
             <option value="FALTANTE" ${st==='FALTANTE' ?'selected':''}>FALTANTE</option>
             <option value="NA"       ${st==='NA'       ?'selected':''}>N/A</option>
           </select>
-          <button class="btn btn-secondary btn-sm" type="button" ${isNovo ? 'disabled' : ''}
-                  onclick="window.UI.editarObs('${processoTipo}','${processoId}','${escHtml(d.nome)}')">
+          <button class="btn btn-secondary btn-sm" type="button"
+                  onclick="window.UI.editarObs('${processoTipo}','${processoId}','${escHtml(d.nome)}','${containerId}')">
             📝
           </button>
         </li>`;
       }).join('')}
     </ul>
-    ${isNovo ? '' : `
     <div style="margin-top:.8rem; display:flex; gap:.5rem;">
       <input type="text" id="${containerId}-novo-doc" placeholder="+ Adicionar documento personalizado"
              style="flex:1; border:1px solid rgba(184,145,74,.35); padding:8px 10px;">
       <button class="btn btn-secondary btn-sm" type="button"
               onclick="window.UI.adicionarDocExtra('${containerId}','${processoTipo}','${processoId}')">Adicionar</button>
-    </div>`}`;
+    </div>`;
 }
 
-async function atualizarStatusDoc(processoTipo, processoId, selectEl) {
+async function atualizarStatusDoc(processoTipo, processoId, containerId, selectEl) {
   const nome = selectEl.dataset.nome;
   const status = selectEl.value;
   selectEl.className = `doc-status ${status.toLowerCase()}`;
 
+  const isNovo = (processoId === 'novo' || !processoId);
+  if (isNovo) {
+    // Armazena em buffer pendente; será persistido no save do registro pai
+    window._pendingDocs[containerId] = window._pendingDocs[containerId] || [];
+    const arr = window._pendingDocs[containerId];
+    const idx = arr.findIndex(d => d.nome === nome);
+    if (idx >= 0) arr[idx].status = status || null;
+    else arr.push({ nome, status: status || null });
+    return;
+  }
   const payload = { processo_tipo: processoTipo, processo_id: processoId, nome, status: status || null };
-  // upsert por (processo_tipo, processo_id, nome)
   const { error } = await sb.from('documentos_processo').upsert(payload, { onConflict: 'processo_tipo,processo_id,nome' });
   if (error) { toast('Erro ao salvar status do doc.', true); console.error(error); }
 }
 
-async function editarObs(processoTipo, processoId, nome) {
+async function editarObs(processoTipo, processoId, nome, containerId) {
   const obs = prompt('Observação para "' + nome + '":');
   if (obs === null) return;
+  const isNovo = (processoId === 'novo' || !processoId);
+  if (isNovo) {
+    window._pendingDocs[containerId] = window._pendingDocs[containerId] || [];
+    const arr = window._pendingDocs[containerId];
+    const idx = arr.findIndex(d => d.nome === nome);
+    if (idx >= 0) arr[idx].observacao = obs;
+    else arr.push({ nome, observacao: obs });
+    toast('Observação salva (será persistida ao Salvar).');
+    return;
+  }
   const { error } = await sb.from('documentos_processo')
     .upsert({ processo_tipo: processoTipo, processo_id: processoId, nome, observacao: obs },
             { onConflict: 'processo_tipo,processo_id,nome' });
@@ -149,16 +171,38 @@ async function adicionarDocExtra(containerId, processoTipo, processoId) {
   const inp = document.getElementById(containerId + '-novo-doc');
   const nome = inp.value.trim();
   if (!nome) return;
+  const isNovo = (processoId === 'novo' || !processoId);
+  if (isNovo) {
+    window._pendingDocs[containerId] = window._pendingDocs[containerId] || [];
+    window._pendingDocs[containerId].push({ nome, status: 'FALTANTE' });
+    inp.value = '';
+    if (window.UI._ultimoKit && window.UI._ultimoContainer === containerId) {
+      renderChecklistDocs(containerId, window.UI._ultimoKit, processoTipo, processoId, []);
+    }
+    return;
+  }
   const { error } = await sb.from('documentos_processo')
     .insert({ processo_tipo: processoTipo, processo_id: processoId, nome, status: 'FALTANTE' });
   if (error) { toast('Erro ao adicionar.', true); return; }
   inp.value = '';
-  // recarrega o checklist
   const salvos = await carregarDocs(processoTipo, processoId);
-  // detecta o kit a partir do select aberto (heurística simples: usa o último kit que foi renderizado)
   if (window.UI._ultimoKit && window.UI._ultimoContainer === containerId) {
     renderChecklistDocs(containerId, window.UI._ultimoKit, processoTipo, processoId, salvos);
   }
+}
+
+/* Persiste docs pendentes no DB ao terminar o save do registro pai */
+async function persistirDocsPendentes(processoTipo, processoId, containerId) {
+  const arr = window._pendingDocs[containerId];
+  if (!arr || !arr.length) return;
+  const payload = arr.map(d => ({
+    processo_tipo: processoTipo, processo_id: processoId,
+    nome: d.nome, status: d.status || null, observacao: d.observacao || null,
+  }));
+  const { error } = await sb.from('documentos_processo')
+    .upsert(payload, { onConflict: 'processo_tipo,processo_id,nome' });
+  if (error) console.warn('Erro ao persistir docs pendentes:', error.message);
+  delete window._pendingDocs[containerId];
 }
 
 /* ── PREVIEW DE CÁLCULO (chama as funções de calculadoras.js) ─────────── */
@@ -205,6 +249,7 @@ function ativarTab(tabsContainerId, paneClass, tabIndex) {
 window.UI = {
   popularAreas, popularTiposAcao, popularFases, popularPecas,
   carregarDocs, renderChecklistDocs, atualizarStatusDoc, editarObs, adicionarDocExtra,
+  persistirDocsPendentes,
   renderCalcPreview, calcularEMostrarPrazo, ativarTab,
   _ultimoKit: null, _ultimoContainer: null,
 };

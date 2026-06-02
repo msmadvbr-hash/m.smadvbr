@@ -762,6 +762,7 @@ const VARAS_TRF5_CE = [
    contagem: 'uteis' (CPC, dias úteis) ou 'corridos' (mandado segurança etc.)
    dobro_fazenda: aplica art. 183 CPC? (não aplica em JEF e MS)              */
 const PECAS = [
+  { codigo: 'INICIAL',         nome: 'Petição Inicial (protocolização da ação)',  dias: 0,  contagem: 'uteis',  dobro_fazenda: false },
   { codigo: 'CONTEST_CPC',     nome: 'Contestação · Procedimento Comum',         dias: 15, contagem: 'uteis',  dobro_fazenda: true  },
   { codigo: 'CONTEST_JEF',     nome: 'Contestação · JEF',                        dias: 30, contagem: 'uteis',  dobro_fazenda: false },
   { codigo: 'REPLICA',         nome: 'Réplica',                                  dias: 15, contagem: 'uteis',  dobro_fazenda: true  },

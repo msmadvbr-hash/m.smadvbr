@@ -151,15 +151,32 @@ function recalcPrazoAdm() {
   const rowVal  = document.getElementById('adm-row-valor');
   if (rowParc) rowParc.style.display = ehAuxDoenca ? '' : 'none';
   if (rowVal)  rowVal.style.display  = ehAuxDoenca ? '' : 'none';
+
+  // Sugere aba específica se houver
+  const sugestaoEl = document.getElementById('adm-sugestao-especifica');
+  if (sugestaoEl) {
+    let sugestao = '';
+    if (tipoLower.includes('maternidade')) sugestao = 'Salário-Maternidade';
+    else if (ehAuxDoenca) sugestao = 'Auxílio-Doença';
+    else if (tipoLower.includes('bpc') || tipoLower.includes('loas')) sugestao = 'BPC / LOAS';
+    if (sugestao) {
+      sugestaoEl.innerHTML = `💡 Este tipo tem aba dedicada com controle mais completo — recomendamos cadastrar em <strong>${sugestao}</strong> (você pode fechar este modal e usar a aba específica). Salvar aqui também funciona, mas você terá menos campos.`;
+      sugestaoEl.style.display = '';
+    } else {
+      sugestaoEl.style.display = 'none';
+    }
+  }
 }
 
 function atualizarDecisaoAdm() {
   const result = v('adm-resultado');
   const dataDec = vd('adm-data-decisao');
-  const rowRec = document.getElementById('adm-row-recurso');
+  const rowRec  = document.getElementById('adm-row-recurso');
   const rowPgto = document.getElementById('adm-row-prevpgto');
+  const rowMot  = document.getElementById('adm-row-motivo-indef');
   if (rowRec)  rowRec.style.display  = (result === 'Indeferido') ? '' : 'none';
-  if (rowPgto) rowPgto.style.display = (result === 'Deferido') ? '' : '';
+  if (rowPgto) rowPgto.style.display = (result === 'Deferido')   ? '' : '';
+  if (rowMot)  rowMot.style.display  = (result === 'Indeferido') ? '' : 'none';
   if (result === 'Indeferido' && dataDec) {
     set('adm-prazo-recurso', window.PRAZOS.somarDias(dataDec, 30));
   }
@@ -190,12 +207,18 @@ function recalcPrazoSalMat() {
 function atualizarDecisaoSalMat() {
   const result = v('sal-resultado');
   const dataDec = vd('sal-data-decisao');
-  const rowRec = document.getElementById('sal-row-recurso');
+  const rowRec  = document.getElementById('sal-row-recurso');
   const rowPgto = document.getElementById('sal-row-prevpgto');
+  const rowMot  = document.getElementById('sal-motivo-indef-row');
   if (rowRec)  rowRec.style.display  = (result === 'Indeferido') ? '' : 'none';
   if (rowPgto) rowPgto.style.display = (result === 'Deferido')   ? '' : 'none';
+  if (rowMot)  rowMot.style.display  = (result === 'Indeferido') ? '' : 'none';
   if (result === 'Indeferido' && dataDec) {
     set('sal-prazo-recurso', window.PRAZOS.somarDias(dataDec, 30));
+  }
+  // Quando deferido, mostra o controle das 4 parcelas
+  if (result === 'Deferido' && !document.getElementById('sal-parc1-data')) {
+    renderParcelasBeneficio({});
   }
 }
 
@@ -207,30 +230,62 @@ function renderGuiasSalMat(guias = []) {
   for (let i = 1; i <= 3; i++) {
     const g = guias.find(x => x.ordem === i) || {};
     html += `
-      <div class="guia-block" style="border:1px solid rgba(184,145,74,.25); padding:.8rem 1rem; border-radius:6px; margin-bottom:.7rem;">
-        <div style="font-weight:600; margin-bottom:.5rem;">Guia ${i}</div>
+      <div class="guia-block">
+        <div>Guia ${i}</div>
         <input type="hidden" data-guia-id="${i}" value="${g.id || ''}">
         <div class="form-row">
-          <div class="form-group"><label>Nº Guia</label><input type="text" data-guia-numero="${i}" value="${escHtml(g.numero_guia||'')}"></div>
-          <div class="form-group"><label>Competência (MM/AAAA)</label><input type="text" data-guia-comp="${i}" placeholder="MM/AAAA" value="${escHtml(g.competencia||'')}"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Vencimento</label><input type="date" data-guia-venc="${i}" value="${g.data_vencimento?.slice(0,10) || ''}"></div>
-          <div class="form-group"><label>Valor (R$)</label><input type="number" step="0.01" data-guia-valor="${i}" value="${g.valor_guia||''}"></div>
-        </div>
-        <div class="form-row">
-          <div class="form-group"><label>Status</label>
+          <div class="form-group"><label>Status da guia</label>
             <select data-guia-status="${i}">
-              <option ${g.status_guia==='Pendente' ? 'selected':''}>Pendente</option>
-              <option ${g.status_guia==='Pago'     ? 'selected':''}>Pago</option>
-              <option ${g.status_guia==='Atrasado' ? 'selected':''}>Atrasado</option>
+              <option value="A Gerar"  ${g.status_guia==='A Gerar'  ? 'selected':''}>📝 A Gerar (preciso emitir)</option>
+              <option value="Pendente" ${g.status_guia==='Pendente' ? 'selected':''}>⏳ Pendente (emitida, aguardando pagamento)</option>
+              <option value="Pago"     ${g.status_guia==='Pago'     ? 'selected':''}>✅ Pago</option>
+              <option value="Atrasado" ${g.status_guia==='Atrasado' ? 'selected':''}>🔴 Atrasado</option>
             </select>
           </div>
-          <div class="form-group"><label>Data Pagamento</label><input type="date" data-guia-pago="${i}" value="${g.data_pagamento?.slice(0,10) || ''}"></div>
+          <div class="form-group"><label>Competência (MM/AAAA)</label>
+            <input type="text" data-guia-comp="${i}" placeholder="MM/AAAA" value="${escHtml(g.competencia||'')}"
+                   oninput="window.MODULOS.vencimentoAutoGuia(${i})">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Vencimento <small style="color:var(--texto-suave); font-weight:400">(auto: dia 15 do mês seguinte)</small></label>
+            <input type="date" data-guia-venc="${i}" value="${g.data_vencimento?.slice(0,10) || ''}">
+          </div>
+          <div class="form-group"><label>Nº da Guia</label>
+            <input type="text" data-guia-numero="${i}" placeholder="Preencher após emitir" value="${escHtml(g.numero_guia||'')}">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Valor (R$)</label>
+            <input type="number" step="0.01" data-guia-valor="${i}" value="${g.valor_guia||''}">
+          </div>
+          <div class="form-group"><label>Data do Pagamento (quando paga)</label>
+            <input type="date" data-guia-pago="${i}" value="${g.data_pagamento?.slice(0,10) || ''}">
+          </div>
         </div>
       </div>`;
   }
   container.innerHTML = html;
+}
+
+/* Quando o usuário digita a competência MM/AAAA, preenche vencimento = dia 15 do mês seguinte */
+function vencimentoAutoGuia(i) {
+  const compInp = document.querySelector(`[data-guia-comp="${i}"]`);
+  const vencInp = document.querySelector(`[data-guia-venc="${i}"]`);
+  if (!compInp || !vencInp) return;
+  const val = (compInp.value || '').trim();
+  // aceita "MM/AAAA" ou "M/AAAA"
+  const m = val.match(/^(\d{1,2})\/(\d{4})$/);
+  if (!m) return;
+  let mes = parseInt(m[1], 10);
+  let ano = parseInt(m[2], 10);
+  if (mes < 1 || mes > 12) return;
+  // próximo mês:
+  mes += 1;
+  if (mes > 12) { mes = 1; ano += 1; }
+  const mm = String(mes).padStart(2, '0');
+  // Se vencimento ainda não foi manualmente alterado, sobrescreve
+  vencInp.value = `${ano}-${mm}-15`;
 }
 
 function coletarGuiasSalMat() {
@@ -266,6 +321,162 @@ async function carregarGuiasSalMat(salMatId) {
   if (!salMatId) return [];
   const { data } = await sb.from('guias_sal_mat').select('*').eq('sal_mat_id', salMatId).order('ordem');
   return data || [];
+}
+
+/* ── CÁLCULO AUTOMÁTICO DE HONORÁRIOS — SAL-MAT ───────────────────────── */
+function recalcHonorariosSalMat() {
+  const valor = vn('sal-valor');
+  const parcelas = (vi('sal-parcelas-qtd') || 4); // 4 padrão; prorrogação pode variar
+  const forma = v('sal-forma-pgto') || '30% sobre cada parcela';
+  if (!valor) {
+    set('sal-honor-total', '');
+    document.getElementById('sal-calc-preview').innerHTML =
+      '<em style="color:var(--texto-suave)">Preencha o valor mensal na aba "Dados".</em>';
+    return;
+  }
+  let honorTotal;
+  if (forma === '1ª parcela integral') {
+    honorTotal = valor;
+  } else {
+    honorTotal = valor * parcelas * 0.30;
+  }
+  set('sal-honor-total', honorTotal.toFixed(2));
+  const fmt = window.CALC.fmt;
+  let memo;
+  if (forma === '1ª parcela integral') {
+    memo = `Forma: <strong>1ª parcela integral</strong><br>` +
+           `Valor mensal: ${fmt(valor)}<br>` +
+           `<span class="destaque">Honorário total: ${fmt(honorTotal)}</span> (uma única cobrança)`;
+  } else {
+    const porParcela = valor * 0.30;
+    memo = `Forma: <strong>30% sobre cada parcela</strong><br>` +
+           `${parcelas} parcela(s) × ${fmt(valor)} × 30% = ${fmt(porParcela)}/mês<br>` +
+           `<span class="destaque">Honorário total: ${fmt(honorTotal)} em ${parcelas} cobranças</span>`;
+  }
+  document.getElementById('sal-calc-preview').innerHTML = memo;
+}
+
+/* ── CONTROLE DAS 4 PARCELAS DO BENEFÍCIO ──────────────────────────────── */
+function renderParcelasBeneficio(rec = {}) {
+  const container = document.getElementById('sal-parcelas-controle');
+  if (!container) return;
+  const parcelasQtd = parseInt(document.getElementById('sal-parcelas-qtd')?.value || 4, 10) || 4;
+  let html = '';
+  for (let i = 1; i <= Math.min(parcelasQtd, 4); i++) {
+    const dataKey = `parc${i}_data`, statusKey = `parc${i}_status`;
+    const data = rec[dataKey] ? rec[dataKey].slice(0,10) : '';
+    const status = rec[statusKey] || 'A receber';
+    html += `
+      <div class="form-group">
+        <label>${i}ª parcela</label>
+        <input type="date" id="sal-parc${i}-data" value="${data}">
+        <select id="sal-parc${i}-status" style="margin-top:.4rem">
+          <option ${status==='A receber' ? 'selected':''}>A receber</option>
+          <option ${status==='Recebida'  ? 'selected':''}>Recebida</option>
+          <option ${status==='Atrasada'  ? 'selected':''}>Atrasada</option>
+        </select>
+      </div>`;
+  }
+  container.innerHTML = html;
+}
+
+/* Quando o user informa a data de início efetivo do pagamento, preenche as 4 parcelas mensais */
+function atualizarParcelasSalMat() {
+  const inicio = vd('sal-data-inicio-pgto');
+  if (!inicio) return;
+  // Garante que o controle das parcelas já foi renderizado
+  if (!document.getElementById('sal-parc1-data')) renderParcelasBeneficio({});
+  const base = new Date(inicio + 'T00:00:00');
+  for (let i = 1; i <= 4; i++) {
+    const d = new Date(base); d.setMonth(d.getMonth() + (i - 1));
+    const inp = document.getElementById(`sal-parc${i}-data`);
+    if (inp && !inp.value) inp.value = d.toISOString().slice(0, 10);
+  }
+}
+
+function coletarParcelasSalMat() {
+  const out = {};
+  for (let i = 1; i <= 4; i++) {
+    const data = document.getElementById(`sal-parc${i}-data`)?.value || null;
+    const status = document.getElementById(`sal-parc${i}-status`)?.value || null;
+    out[`parc${i}_data`] = data;
+    out[`parc${i}_status`] = status;
+  }
+  return out;
+}
+
+/* ── GERAÇÃO DE PARCELAS DE COBRANÇA (honorários) ─────────────────────── */
+function gerarParcelasCobrancaSalMat() {
+  const valor = vn('sal-valor');
+  const parcelas = (vi('sal-parcelas-qtd') || 4);
+  const forma = v('sal-forma-pgto') || '30% sobre cada parcela';
+  const dataInicial = vd('sal-data-cob');
+  const out = document.getElementById('sal-parcelas-cobranca-preview');
+  if (!out) return;
+  if (!valor || !dataInicial) {
+    out.innerHTML = '<em style="color:var(--texto-suave)">Informe o valor mensal e a data inicial de cobrança.</em>';
+    return;
+  }
+  const fmt = window.CALC.fmt;
+  let lista;
+  if (forma === '1ª parcela integral') {
+    lista = [{ numero: 1, data: dataInicial, valor: valor, descricao: '1ª parcela integral' }];
+  } else {
+    const porParcela = valor * 0.30;
+    lista = Array.from({ length: parcelas }, (_, i) => {
+      const d = new Date(dataInicial + 'T00:00:00');
+      d.setMonth(d.getMonth() + i);
+      return { numero: i + 1, data: d.toISOString().slice(0, 10), valor: porParcela,
+               descricao: `Parcela ${i + 1}/${parcelas}` };
+    });
+  }
+  out.innerHTML = `
+    <div style="background:rgba(184,145,74,.06); border:1px solid rgba(184,145,74,.2); border-radius:6px; padding:.7rem 1rem;">
+      <strong>Parcelas de cobrança que serão geradas ao salvar:</strong>
+      <table style="width:100%; margin-top:.5rem; font-size:.85rem">
+        <thead><tr><th style="text-align:left">#</th><th>Data</th><th style="text-align:right">Valor</th><th>Descrição</th></tr></thead>
+        <tbody>
+          ${lista.map(p => `
+            <tr><td>${p.numero}</td><td>${new Date(p.data+'T00:00:00').toLocaleDateString('pt-BR')}</td>
+                <td style="text-align:right">${fmt(p.valor)}</td><td>${p.descricao}</td></tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>`;
+  // Armazena temporariamente para uso no save
+  window._parcelasCobrancaPendente = lista;
+}
+
+/* Persiste as parcelas geradas na tabela controle_cobrancas (chamado pelo saveRecord do 'sal') */
+async function persistirParcelasCobrancaSalMat(salMatId, dadosCliente) {
+  const lista = window._parcelasCobrancaPendente;
+  if (!lista || !lista.length || !salMatId) return;
+  const forma = v('sal-forma-pgto') || '30% sobre cada parcela';
+  const grupoId = crypto.randomUUID ? crypto.randomUUID() :
+                  ('grp-' + Date.now() + '-' + Math.random().toString(36).slice(2,8));
+  // Remove cobranças anteriores deste mesmo registro (idempotente em re-salvamentos)
+  await sb.from('controle_cobrancas').delete().eq('origem_tipo','sal').eq('origem_id', salMatId);
+  const payload = lista.map(p => ({
+    cliente_id: dadosCliente.cliente_id,
+    origem_tipo: 'sal', origem_id: salMatId, grupo_cobranca_id: grupoId,
+    nome_cliente: dadosCliente.nome_cliente, cpf: dadosCliente.cpf,
+    numero_processo: dadosCliente.numero_processo,
+    tipo_beneficio: 'Salário-Maternidade',
+    valor_parcela: p.valor,
+    numero_parcela: p.numero,
+    qtd_parcelas_total: lista.length,
+    qtd_parcelas: lista.length,
+    data_cobranca: p.data,
+    data_limite_pgto: p.data,
+    mes_referencia: p.data.slice(0,7),  // AAAA-MM
+    forma_pagamento: forma,
+    categoria: 'honorário',
+    status: 'Pendente',
+    honorarios_totais: lista.reduce((s, x) => s + x.valor, 0),
+  }));
+  const { error } = await sb.from('controle_cobrancas').insert(payload);
+  if (error) console.warn('Erro ao persistir parcelas de cobrança:', error.message);
+  window._parcelasCobrancaPendente = null;
 }
 
 /* ── AUX-DOENÇA ────────────────────────────────────────────────────────── */
@@ -312,7 +523,9 @@ function atualizarDecisaoAxd() {
   const result = v('axd-resultado');
   const dataDec = vd('axd-data-decisao');
   const rowRec  = document.getElementById('axd-row-recurso');
+  const rowMot  = document.getElementById('axd-row-motivo-indef');
   if (rowRec) rowRec.style.display = (result === 'Indeferido') ? '' : 'none';
+  if (rowMot) rowMot.style.display = (result === 'Indeferido') ? '' : 'none';
   if (result === 'Indeferido' && dataDec) {
     set('axd-prazo-recurso', window.PRAZOS.somarDias(dataDec, 30));
   }
@@ -385,8 +598,10 @@ function atualizarDecisaoBpc() {
   const dataDec = vd('bpc-data-decisao');
   const rowRec  = document.getElementById('bpc-row-recurso');
   const rowPgto = document.getElementById('bpc-row-prevpgto');
+  const rowMot  = document.getElementById('bpc-row-motivo-indef');
   if (rowRec)  rowRec.style.display  = (result === 'Indeferido') ? '' : 'none';
   if (rowPgto) rowPgto.style.display = (result === 'Deferido')   ? '' : 'none';
+  if (rowMot)  rowMot.style.display  = (result === 'Indeferido') ? '' : 'none';
   if (result === 'Indeferido' && dataDec) {
     set('bpc-prazo-recurso', window.PRAZOS.somarDias(dataDec, 30));
   }
@@ -398,6 +613,59 @@ function atualizarNaturezaBpc() {
   const jud2 = document.getElementById('bpc-row-judicial-2');
   if (jud1) jud1.style.display = (nat === 'judicial') ? '' : 'none';
   if (jud2) jud2.style.display = (nat === 'judicial') ? '' : 'none';
+}
+
+/* ── PROCESSO JUDICIAL INSS — auto-fill via número do administrativo ──── */
+async function lookupAdmDoJud(numProcJud) {
+  if (!numProcJud || numProcJud.length < 5) return;
+  // Procura em todas as tabelas administrativas se algum tem processo_judicial_numero igual
+  const tabelas = [
+    { tbl:'processos_administrativos', label:'Administrativo INSS' },
+    { tbl:'salario_maternidade',       label:'Salário-Maternidade' },
+    { tbl:'auxilio_doenca',            label:'Auxílio-Doença' },
+    { tbl:'bpc_loas',                  label:'BPC/LOAS' },
+  ];
+  let encontrado = null;
+  for (const { tbl, label } of tabelas) {
+    const { data } = await sb.from(tbl).select('*')
+      .eq('processo_judicial_numero', numProcJud).limit(1);
+    if (data && data.length) { encontrado = { ...data[0], _label: label }; break; }
+  }
+  // Se não achou, tenta também pelo numero_proc_judicial (campo legado em adm)
+  if (!encontrado) {
+    const { data } = await sb.from('processos_administrativos').select('*')
+      .eq('numero_proc_judicial', numProcJud).limit(1);
+    if (data && data.length) encontrado = { ...data[0], _label: 'Administrativo INSS' };
+  }
+  const card = document.getElementById('jud-adm-info');
+  if (!card) return;
+  if (!encontrado) { card.style.display = 'none'; card.innerHTML = ''; return; }
+
+  // Auto-preenche campos visíveis se vazios
+  const safeSet = (id, val) => { const el = document.getElementById(id); if (el && !el.value && val) el.value = val; };
+  safeSet('jud-nome',          encontrado.nome_cliente);
+  safeSet('jud-cpf',           encontrado.cpf);
+  safeSet('jud-proc-adm',      encontrado.numero_processo);
+  safeSet('jud-nb',            encontrado.numero_beneficio);
+  safeSet('jud-tipo',          encontrado.tipo_beneficio);
+  if (encontrado.cliente_id) safeSet('jud-cliente-id', encontrado.cliente_id);
+
+  // Guarda motivo no card para inclusão no payload
+  card.dataset.motivo = encontrado.motivo_indeferimento || '';
+
+  card.innerHTML = `
+    <div style="font-weight:600; color:var(--caramelo,#b8914a); margin-bottom:.3rem">
+      📎 Dados puxados do Processo Administrativo (${escHtml(encontrado._label)})
+    </div>
+    <div><strong>Cliente:</strong> ${escHtml(encontrado.nome_cliente)} · <strong>CPF:</strong> ${escHtml(encontrado.cpf||'—')}</div>
+    <div><strong>Nº Protocolo Adm.:</strong> ${escHtml(encontrado.numero_processo||'—')}
+         · <strong>NB:</strong> ${escHtml(encontrado.numero_beneficio||'—')}</div>
+    <div><strong>Tipo benefício:</strong> ${escHtml(encontrado.tipo_beneficio||'—')}</div>
+    <div><strong>Data protocolo:</strong> ${fmtDate(encontrado.data_protocolo)}
+         · <strong>Data indeferimento:</strong> ${fmtDate(encontrado.data_decisao)}</div>
+    ${encontrado.motivo_indeferimento ? `<div style="margin-top:.3rem"><strong>Motivo do indeferimento:</strong> ${escHtml(encontrado.motivo_indeferimento)}</div>` : ''}
+  `;
+  card.style.display = '';
 }
 
 /* ── PROCESSO JUDICIAL INSS — parcelas conforme tipo ───────────────────── */
@@ -697,6 +965,66 @@ async function criarCobrancaAutomatica({ origem_tipo, origem_id, cliente_id, nom
   });
 }
 
+/* ── MÉDICOS RESIDENTES ↔ PRAZOS JUDICIAIS AUX-MORADIA ─────────────────── */
+let _medicosCache = [];
+async function carregarMedicos() {
+  const { data, error } = await sb.from('auxilio_moradia').select('*').order('nome_medico');
+  if (error) { console.error(error); return; }
+  _medicosCache = data || [];
+  const dl = document.getElementById('lista-medicos-praz');
+  if (dl) {
+    dl.innerHTML = _medicosCache.map(m =>
+      `<option value="${escHtml(m.nome_medico)}${m.crm ? ' · CRM '+escHtml(m.crm) : ''}">`).join('');
+  }
+}
+
+function aplicarMedicoSelecionado(valor) {
+  if (!valor) return;
+  const nome = valor.split('·')[0].trim();
+  const med = _medicosCache.find(m => m.nome_medico === nome);
+  if (!med) return;
+  set('praz-medico-id', med.id);
+  set('praz-cliente', med.nome_medico);
+  set('praz-cpf', med.cpf);
+  if (med.numero_processo) set('praz-numero', med.numero_processo);
+  if (med.area) set('praz-area', med.area);
+  if (med.tipo_acao_codigo) set('praz-tipo-acao-sel', med.tipo_acao_codigo);
+  if (med.fase_processo) set('praz-fase-sel', med.fase_processo);
+  toast(`Dados do(a) Dr(a). ${med.nome_medico} preenchidos.`);
+}
+
+/* ── SINCRONIZAÇÃO RECURSO INTERPOSTO ─────────────────────────────────── */
+/* Quando a fase do adm/axd/bpc/sal vira "Recurso interposto", cria automática
+   uma entrada na tabela `recursos` (idempotente: 1 por origem). */
+async function sincronizarRecursoAutomatico(origemTipo, origemId, payload) {
+  const fase = (payload.fase_atual || '').toLowerCase();
+  if (!fase.includes('recurso interposto')) return;
+  // Já existe recurso vinculado? não duplica.
+  const { data: existe } = await sb.from('recursos').select('id')
+    .eq('origem_tipo', origemTipo).eq('origem_id', origemId).limit(1);
+  if (existe && existe.length) return;
+  await sb.from('recursos').insert({
+    origem_tipo: origemTipo, origem_id: origemId,
+    cliente_id: payload.cliente_id,
+    numero_requerimento: payload.numero_processo,
+    nome_cliente: payload.nome_cliente,
+    cpf: payload.cpf,
+    tipo_beneficio: payload.tipo_beneficio || (
+      origemTipo === 'sal' ? 'Salário-Maternidade' :
+      origemTipo === 'axd' ? 'Auxílio-Doença' :
+      origemTipo === 'bpc' ? 'BPC/LOAS' : null
+    ),
+    modalidade: 'Recurso Administrativo',
+    data_protocolo: payload.data_decisao || null,  // recurso protocolado a partir da decisão
+    prazo_resposta: payload.prazo_recurso || null,
+    fase_atual: 'Aguardando análise CRPS',
+    proximo_prazo: payload.prazo_recurso || null,
+    tipo_prazo: 'Recurso administrativo (CRPS)',
+    status: 'Em andamento',
+    resultado: 'Aguardando',
+  });
+}
+
 /* ── PRAZOS JUDICIAIS POR ESCOPO ───────────────────────────────────────── */
 function openPrazoEscopo(escopo) {
   window.openModal('praz');
@@ -742,6 +1070,74 @@ async function loadPrazosFiltrado(escopoTabela, escopo) {
   }).join('');
 }
 
+/* ── FATURAMENTO MENSAL (50/50 Vandressa + Thaynar) ────────────────────── */
+async function loadFaturamento() {
+  // Popula seletor de anos
+  const selAno = document.getElementById('fat-ano');
+  if (selAno && !selAno.options.length) {
+    const anoAtual = new Date().getFullYear();
+    let html = '';
+    for (let a = anoAtual - 1; a <= anoAtual + 2; a++) {
+      html += `<option value="${a}" ${a === anoAtual ? 'selected':''}>${a}</option>`;
+    }
+    selAno.innerHTML = html;
+  }
+  const ano = parseInt(selAno?.value || new Date().getFullYear(), 10);
+
+  const { data, error } = await sb.from('controle_cobrancas')
+    .select('mes_referencia,data_limite_pgto,data_recebimento,valor_parcela,valor_recebido,status,nome_cliente,tipo_beneficio')
+    .eq('categoria', 'honorário');
+  if (error) { toast('Erro ao carregar faturamento.', true); return; }
+
+  // Agrupa por mês (AAAA-MM): usa mes_referencia se houver, senão data_limite_pgto
+  const meses = {};
+  (data || []).forEach(c => {
+    let mes = c.mes_referencia;
+    if (!mes && c.data_limite_pgto) mes = c.data_limite_pgto.slice(0, 7);
+    if (!mes) return;
+    if (!mes.startsWith(String(ano))) return;
+    if (!meses[mes]) meses[mes] = { total: 0, recebido: 0, count: 0 };
+    const valor = Number(c.valor_parcela || 0);
+    const rec   = Number(c.valor_recebido || 0);
+    meses[mes].total += valor;
+    meses[mes].recebido += rec;
+    meses[mes].count += 1;
+  });
+
+  // Render
+  const nomeMeses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const sortedMeses = Object.keys(meses).sort();
+  const tbody = document.getElementById('fat-body');
+  if (!sortedMeses.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">Nenhuma cobrança registrada para ${ano}.</td></tr>`;
+  } else {
+    tbody.innerHTML = sortedMeses.map(mes => {
+      const m = meses[mes];
+      const mesNum = parseInt(mes.slice(5, 7), 10);
+      const pendente = m.total - m.recebido;
+      const metade = m.total / 2;
+      return `<tr>
+        <td><strong>${nomeMeses[mesNum-1]} / ${mes.slice(0,4)}</strong></td>
+        <td>${fmtBRL(m.total)}</td>
+        <td>${fmtBRL(metade)}</td>
+        <td>${fmtBRL(metade)}</td>
+        <td style="color:var(--verde)">${fmtBRL(m.recebido)}</td>
+        <td style="color:${pendente > 0 ? 'var(--vermelho)' : 'var(--texto-suave)'}">${fmtBRL(pendente)}</td>
+        <td>${m.count}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Totais do ano
+  const totalAno = Object.values(meses).reduce((s, m) => s + m.total, 0);
+  const recAno   = Object.values(meses).reduce((s, m) => s + m.recebido, 0);
+  const pendAno  = totalAno - recAno;
+  document.getElementById('fat-ano-total').textContent     = fmtBRL(recAno);
+  document.getElementById('fat-ano-pendente').textContent  = fmtBRL(pendAno);
+  document.getElementById('fat-ano-vandressa').textContent = fmtBRL(totalAno / 2);
+  document.getElementById('fat-ano-thaynar').textContent   = fmtBRL(totalAno / 2);
+}
+
 /* ── HOOK: showModule → carrega os módulos novos ───────────────────────── */
 const origShowModule = window.showModule;
 window.showModule = function (mod) {
@@ -753,6 +1149,7 @@ window.showModule = function (mod) {
   if (mod === 'recursos')     loadRec();
   if (mod === 'prazos-civel') loadPrazosFiltrado('praz-civel-body', 'CIVEL');
   if (mod === 'prazos-saude') loadPrazosFiltrado('praz-saude-body', 'SAUDE');
+  if (mod === 'faturamento')  loadFaturamento();
   if (mod === 'dashboard')    loadDashboardCategorizado();
 };
 
@@ -762,12 +1159,16 @@ window.MODULOS = {
   recalcPrazoAdm, atualizarDecisaoAdm, atualizarParcelasAdm,
   recalcPrazoSalMat, atualizarDecisaoSalMat,
   renderGuiasSalMat, coletarGuiasSalMat, salvarGuiasSalMat, carregarGuiasSalMat,
+  vencimentoAutoGuia, recalcHonorariosSalMat,
+  renderParcelasBeneficio, atualizarParcelasSalMat, coletarParcelasSalMat,
+  gerarParcelasCobrancaSalMat, persistirParcelasCobrancaSalMat,
   recalcPrazoAxd, atualizarDecisaoAxd, atualizarNaturezaAxd, atualizarHonorAxd, loadAxd, axdData: () => axdData,
   recalcPrazoBpc, atualizarDecisaoBpc, atualizarNaturezaBpc, loadBpc, bpcData: () => bpcData,
-  atualizarParcelasJud,
+  atualizarParcelasJud, lookupAdmDoJud,
   loadRec, recData: () => recData, recalcPrazoRec, atualizarModalidadeRec, buscarRequerimento,
   selecionarRequerimento, criarRecursoDe,
-  loadDashboardCategorizado, criarCobrancaAutomatica,
+  loadDashboardCategorizado, criarCobrancaAutomatica, sincronizarRecursoAutomatico,
+  carregarMedicos, aplicarMedicoSelecionado, loadFaturamento,
   loadPrazosFiltrado, loadClientesModule,
 };
 
