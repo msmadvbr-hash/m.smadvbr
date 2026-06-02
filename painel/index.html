@@ -1038,21 +1038,21 @@
         <form id="form-praz">
           <input type="hidden" id="praz-id">
           <input type="hidden" id="praz-medico-id">
-          <div class="form-row">
+          <div class="form-row full">
             <div class="form-group">
-              <label>Buscar Médico/Cliente já cadastrado</label>
-              <input type="text" id="praz-busca-medico" list="lista-medicos-praz" placeholder="Digite o nome…" oninput="window.MODULOS && window.MODULOS.aplicarMedicoSelecionado(this.value)">
-              <datalist id="lista-medicos-praz"></datalist>
+              <label>👤 Selecionar Médico já cadastrado em "Médicos Residentes" <small style="color:var(--texto-suave); font-weight:400">(puxa CPF, processo, área, tipo de ação e fase)</small></label>
+              <select id="praz-busca-medico" onchange="window.MODULOS && window.MODULOS.aplicarMedicoSelecionado(this.value)">
+                <option value="">— Carregando médicos cadastrados… —</option>
+              </select>
             </div>
-            <div class="form-group"><label>Nº Processo</label><input type="text" id="praz-numero"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Cliente / Médico *</label><input type="text" id="praz-cliente" required></div>
             <div class="form-group"><label>CPF</label><input type="text" id="praz-cpf"></div>
           </div>
           <div class="form-row">
+            <div class="form-group"><label>Nº Processo</label><input type="text" id="praz-numero"></div>
             <div class="form-group"><label>Área / Tribunal</label><select id="praz-area"></select></div>
-            <div class="form-group"></div>
           </div>
           <div class="form-row">
             <div class="form-group"><label>Tipo de Ação</label><select id="praz-tipo-acao-sel"></select></div>

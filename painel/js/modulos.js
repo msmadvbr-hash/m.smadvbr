@@ -925,9 +925,13 @@ function buildPayload(type) {
       const nome = v('praz-cliente');
       if (!nome) { toast('Nome do cliente é obrigatório.', true); return null; }
       const escopo = document.getElementById('modal-praz')?.dataset?.escopo || null;
+      const medicoId = v('praz-medico-id');
       return { numero_processo:v('praz-numero'), cliente_medico:nome, cpf:v('praz-cpf'),
         area:v('praz-area'),
         escopo:escopo,
+        // Vínculo com médico cadastrado em "Médicos Residentes"
+        origem_tipo: medicoId ? 'aux' : null,
+        origem_id:   medicoId || null,
         tipo_acao_codigo:v('praz-tipo-acao-sel'),
         tipo_acao:document.getElementById('praz-tipo-acao-sel')?.selectedOptions[0]?.text || null,
         vara_tribunal:v('praz-vara'), juiz:v('praz-juiz'),

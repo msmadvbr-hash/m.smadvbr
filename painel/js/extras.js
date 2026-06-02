@@ -969,28 +969,62 @@ async function criarCobrancaAutomatica({ origem_tipo, origem_id, cliente_id, nom
 let _medicosCache = [];
 async function carregarMedicos() {
   const { data, error } = await sb.from('auxilio_moradia').select('*').order('nome_medico');
-  if (error) { console.error(error); return; }
+  if (error) { console.error('Erro ao carregar médicos:', error); return; }
   _medicosCache = data || [];
+
+  // Popula o <select> de médicos (substitui o input freeform anterior)
+  const sel = document.getElementById('praz-busca-medico');
+  if (sel) {
+    if (!_medicosCache.length) {
+      sel.innerHTML = '<option value="">— Nenhum médico cadastrado em Médicos Residentes —</option>';
+    } else {
+      sel.innerHTML = '<option value="">— Selecione um médico já cadastrado —</option>' +
+        _medicosCache.map(m =>
+          `<option value="${escHtml(m.id)}">${escHtml(m.nome_medico)}${m.crm ? ' · CRM '+escHtml(m.crm) : ''}${m.hospital ? ' · '+escHtml(m.hospital) : ''}</option>`
+        ).join('');
+    }
+  }
+
+  // Também mantém o datalist (legado) caso esteja no DOM
   const dl = document.getElementById('lista-medicos-praz');
   if (dl) {
     dl.innerHTML = _medicosCache.map(m =>
-      `<option value="${escHtml(m.nome_medico)}${m.crm ? ' · CRM '+escHtml(m.crm) : ''}">`).join('');
+      `<option value="${escHtml(m.nome_medico)}">`).join('');
   }
 }
 
-function aplicarMedicoSelecionado(valor) {
-  if (!valor) return;
-  const nome = valor.split('·')[0].trim();
-  const med = _medicosCache.find(m => m.nome_medico === nome);
-  if (!med) return;
+/* Chamada pelo onchange do <select id="praz-busca-medico"> — recebe o ID do médico */
+async function aplicarMedicoSelecionado(idMedico) {
+  if (!idMedico) {
+    set('praz-medico-id', '');
+    return;
+  }
+  const med = _medicosCache.find(m => m.id === idMedico);
+  if (!med) { toast('Médico não encontrado no cache.', true); return; }
+
+  // Garante que os selects de área/tipo/fase estão populados ANTES de setar valores
+  const selArea = document.getElementById('praz-area');
+  const selTipo = document.getElementById('praz-tipo-acao-sel');
+  const selFase = document.getElementById('praz-fase-sel');
+
+  if (window.UI?.popularAreas && selArea) window.UI.popularAreas(selArea);
+  if (med.area) { selArea.value = med.area; }
+  if (window.UI?.popularTiposAcao && selTipo) window.UI.popularTiposAcao(selTipo, med.area || '');
+  if (med.tipo_acao_codigo) { selTipo.value = med.tipo_acao_codigo; }
+  if (window.UI?.popularFases && selFase) window.UI.popularFases(selFase, med.area || '', med.tipo_acao_codigo || '');
+  if (med.fase_processo) { selFase.value = med.fase_processo; }
+
+  // Preenche os campos principais
   set('praz-medico-id', med.id);
   set('praz-cliente', med.nome_medico);
-  set('praz-cpf', med.cpf);
-  if (med.numero_processo) set('praz-numero', med.numero_processo);
-  if (med.area) set('praz-area', med.area);
-  if (med.tipo_acao_codigo) set('praz-tipo-acao-sel', med.tipo_acao_codigo);
-  if (med.fase_processo) set('praz-fase-sel', med.fase_processo);
-  toast(`Dados do(a) Dr(a). ${med.nome_medico} preenchidos.`);
+  set('praz-cpf', med.cpf || '');
+  set('praz-numero', med.numero_processo || '');
+  if (med.juiz) set('praz-juiz', med.juiz);
+
+  // Marca cliente_id se houver
+  if (med.cliente_id) set('praz-cliente-id', med.cliente_id);
+
+  toast(`✓ Dados de ${med.nome_medico} preenchidos.`);
 }
 
 /* ── SINCRONIZAÇÃO RECURSO INTERPOSTO ─────────────────────────────────── */
