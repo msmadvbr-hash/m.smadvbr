@@ -1104,39 +1104,46 @@ select.btn-sm option {
 }
 
 /* ── WhatsApp icon button (clientes / processos / cobranças / prazos) ─── */
+/* Usa o logotipo oficial do WhatsApp (verde #25D366) sem fundo circular —
+   a própria SVG já é um balão de fala, então um círculo de fundo duplica a
+   forma e fica visualmente "pesado". */
 .zap-icon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 22px;
   height: 22px;
-  margin-left: 6px;
-  vertical-align: -5px;
-  border-radius: 50%;
-  background: #25D366;
+  margin-left: 8px;
+  vertical-align: -6px;
+  background: transparent;
   cursor: pointer;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
-  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
   border: none;
+  padding: 0;
+  border-radius: 4px;
+  transition: transform 0.15s ease, filter 0.15s ease;
   flex-shrink: 0;
 }
 .zap-icon-btn svg {
-  width: 13px;
-  height: 13px;
-  fill: #fff;
+  width: 22px;
+  height: 22px;
+  fill: #25D366;
   display: block;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.12));
 }
 .zap-icon-btn:hover {
-  background: #1ebe5d;
-  transform: scale(1.1);
-  box-shadow: 0 2px 6px rgba(37, 211, 102, 0.5);
+  transform: scale(1.18);
+}
+.zap-icon-btn:hover svg {
+  fill: #128C7E;
+  filter: drop-shadow(0 2px 3px rgba(18, 140, 126, 0.45));
 }
 .zap-icon-btn:active {
   transform: scale(0.95);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
-/* Mantém o ícone "grudado" ao nome em células de tabela e impede quebra de
-   linha entre nome e ícone */
+.zap-icon-btn:focus-visible {
+  outline: 2px solid rgba(37, 211, 102, 0.55);
+  outline-offset: 2px;
+}
 td .zap-icon-btn {
   vertical-align: middle;
 }
