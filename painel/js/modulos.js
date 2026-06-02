@@ -122,7 +122,7 @@ function renderAdm() {
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)} ${escHtml(r.numero_beneficio)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}${r.numero_beneficio ? '<br><small style="color:var(--texto-suave)">NB: '+escHtml(r.numero_beneficio)+'</small>' : ''}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', origemTipo, r.id)}</td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${escHtml(r.tipo_beneficio)||'—'}<small style="color:var(--texto-suave)">${LABEL_ORIG[origemTipo]||''}</small></td>
       <td>${fmtDate(r.data_protocolo)}</td>
@@ -158,7 +158,7 @@ function renderJud() {
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', 'jud', r.id)}</td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${escHtml(r.tipo_beneficio)||'—'}</td>
       <td>${escHtml(r.vara_tribunal)||'—'}</td>
@@ -190,7 +190,7 @@ function renderSal() {
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', 'sal', r.id)}</td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${fmtDate(r.dpp)}</td>
       <td>${fmtDate(r.data_protocolo)}</td>
@@ -225,7 +225,7 @@ function renderAux() {
     const dias = diffDias(r.proximo_prazo);
     return `<tr data-search="${escHtml(r.nome_medico)} ${escHtml(r.cpf)} ${escHtml(r.crm)} ${escHtml(r.hospital)}">
       <td>${badgeHtml(dias)}</td>
-      <td><strong>${escHtml(r.nome_medico)}</strong></td>
+      <td><strong>${escHtml(r.nome_medico)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_medico, '', 'aux', r.id)}</td>
       <td>${escHtml(r.crm)||'—'}</td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${escHtml(r.hospital)||'—'}</td>
@@ -264,7 +264,7 @@ function renderPraz() {
     return `<tr data-search="${escHtml(r.cliente_medico)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
-      <td><strong>${escHtml(r.cliente_medico)}</strong></td>
+      <td><strong>${escHtml(r.cliente_medico)}</strong> ${window.APP.renderZapIcon('', r.cliente_medico, '', 'praz', r.id)}</td>
       <td>${escHtml(r.tipo_acao)||'—'}</td>
       <td>${escHtml(r.vara_tribunal)||'—'}</td>
       <td>${escHtml(r.fase_atual)||'—'}</td>
@@ -296,7 +296,7 @@ function renderCob() {
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', 'cobr', r.id)}</td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${escHtml(r.tipo_beneficio)||'—'}</td>
       <td>${fmtBRL(r.honorarios_totais)}</td>
@@ -1350,7 +1350,7 @@ function renderGen(area) {
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)} ${escHtml(r.vara_tribunal)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', 'gen', r.id)}</td>
       <td>${escHtml(r.parte_contraria)||'—'}</td>
       <td>${escHtml(r.tipo_acao)||'—'}</td>
       <td>${escHtml(r.comarca||'')}${r.vara_tribunal ? ' · '+escHtml(r.vara_tribunal):''}</td>

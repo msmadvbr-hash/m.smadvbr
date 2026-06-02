@@ -106,10 +106,10 @@ async function loadClientesModule() {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum cliente cadastrado.</td></tr>';
     return;
   }
-  const contagens = await contarProcessosPorCliente();
+  contagens = await contarProcessosPorCliente();
   tbody.innerHTML = clientesCache.map(c => `
     <tr data-search="${escHtml(c.nome)} ${escHtml(c.cpf)} ${escHtml(c.telefone)}">
-      <td><strong>${escHtml(c.nome)}</strong></td>
+      <td><strong>${escHtml(c.nome)}</strong> ${window.APP.renderZapIcon(c.id, c.nome, c.telefone)}</td>
       <td>${escHtml(c.cpf)||'—'}</td>
       <td>${escHtml(c.telefone)||'—'}</td>
       <td>${escHtml(c.email)||'—'}</td>
@@ -527,7 +527,7 @@ function renderAxd() {
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', 'axd', r.id)}</td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${escHtml(r.natureza)||'—'}</td>
       <td>${fmtDate(r.data_protocolo)}</td>
@@ -607,7 +607,7 @@ function renderBpc() {
     return `<tr data-search="${escHtml(r.nome_cliente)} ${escHtml(r.cpf)} ${escHtml(r.numero_processo)}">
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.numero_processo)||'—'}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', 'bpc', r.id)}</td>
       <td>${escHtml(r.cpf)||'—'}</td>
       <td>${escHtml(r.modalidade)||'—'}</td>
       <td>${escHtml(r.natureza)||'—'}</td>
@@ -1038,7 +1038,7 @@ function renderRec() {
       <td>${badgeHtml(dias)}</td>
       <td>${escHtml(r.modalidade)||'—'}</td>
       <td>${escHtml(r.numero_requerimento)||'—'}</td>
-      <td><strong>${escHtml(r.nome_cliente)}</strong></td>
+      <td><strong>${escHtml(r.nome_cliente)}</strong> ${window.APP.renderZapIcon(r.cliente_id, r.nome_cliente, '', 'rec', r.id)}</td>
       <td>${escHtml(r.tipo_beneficio)||'—'}</td>
       <td>${fmtDate(r.data_protocolo)}</td>
       <td>${statusBadge(r.resultado)}</td>
@@ -1417,28 +1417,28 @@ function renderDashboardComDadosCache() {
 
   // Render tabelas
   renderDashTabela('dash-guias-body', filteredGuias, row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)} ${window.APP.renderZapIcon('', row.nome, '')}</td>
         <td>${escHtml(row.competencia)||'—'}</td><td>${escHtml(row.numero)||'—'}</td>
         <td>${fmtDate(row.prazo)}</td><td>${row.dias} dias</td>
         <td>${statusBadge(row.status)}</td></tr>`,
     'Nenhuma guia pendente ✓');
 
   renderDashTabela('dash-cobr-body', filteredCobr, row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)} ${window.APP.renderZapIcon('', row.nome, '')}</td>
         <td>${escHtml(row.origem)}</td><td>${row.parcela||'—'}</td>
         <td>${fmtBRL(row.valor)}</td><td>${fmtDate(row.prazo)}</td>
         <td>${row.dias} dias</td><td>${statusBadge(row.status)}</td></tr>`,
     'Nenhuma cobrança em aberto ✓');
 
   renderDashTabela('dash-jud-body', filteredJud, row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)} ${window.APP.renderZapIcon('', row.nome, '')}</td>
         <td><span class="badge badge-azul">${escHtml(row.modulo)}</span></td>
         <td>${escHtml(row.tipo)}</td><td>${fmtDate(row.prazo)}</td>
         <td>${row.dias} dias</td><td>${statusBadge(row.status)}</td></tr>`,
     'Nenhum prazo judicial nos próximos 30 dias ✓');
 
   renderDashTabela('dash-adm-body', filteredAdm, row => `
-    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)}</td>
+    <tr><td>${badgeHtml(row.dias)}</td><td>${escHtml(row.nome)} ${window.APP.renderZapIcon('', row.nome, '')}</td>
         <td>${escHtml(row.beneficio)}</td><td>${escHtml(row.etapa)}</td>
         <td>${fmtDate(row.prazo)}</td><td>${row.dias} dias</td>
         <td>${statusBadge(row.status)}</td></tr>`,
@@ -1529,6 +1529,9 @@ async function loadDashboardCategorizado() {
 
   // Renderiza tabelas de acordo com filtro atual
   renderDashboardComDadosCache();
+
+  // Renderiza a Agenda Jurídica (Calendário consolidado)
+  renderCalendar();
 }
 
 function set_text(id, val) {
@@ -1798,6 +1801,279 @@ async function loadFaturamento() {
   // Renderizar gráficos de faturamento e divisão
   renderFaturamentoCharts(meses, sortedMeses);
 }
+
+/* ── AGENDA JURÍDICA & WHATSAPP NOTIFICAÇÕES ────────────────────────────── */
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth();
+
+window.APP.calendarPrevMonth = function() {
+  calMonth--;
+  if (calMonth < 0) {
+    calMonth = 11;
+    calYear--;
+  }
+  renderCalendar();
+};
+
+window.APP.calendarNextMonth = function() {
+  calMonth++;
+  if (calMonth > 11) {
+    calMonth = 0;
+    calYear++;
+  }
+  renderCalendar();
+};
+
+function renderCalendar() {
+  const monthNames = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+  ];
+  
+  const myEl = document.getElementById('calendar-month-year');
+  if (myEl) {
+    myEl.textContent = `${monthNames[calMonth]} ${calYear}`;
+  }
+  
+  const grid = document.getElementById('calendar-days');
+  if (!grid) return;
+  
+  grid.innerHTML = '';
+  
+  const firstDayIndex = new Date(calYear, calMonth, 1).getDay();
+  const lastDay = new Date(calYear, calMonth + 1, 0).getDate();
+  
+  const todosPrazos = [];
+  if (dashboardDataCache) {
+    const { guiasItens, cobrItens, judItens, admItens } = dashboardDataCache;
+    todosPrazos.push(...(guiasItens || []).map(r => ({ ...r, tipo_grupo: 'Guia INSS' })));
+    todosPrazos.push(...(cobrItens || []).map(r => ({ ...r, tipo_grupo: 'Cobrança' })));
+    todosPrazos.push(...(judItens || []).map(r => ({ ...r, tipo_grupo: 'Judicial' })));
+    todosPrazos.push(...(admItens || []).map(r => ({ ...r, tipo_grupo: 'Administrativo' })));
+  }
+  
+  for (let i = 0; i < firstDayIndex; i++) {
+    const emptyCell = document.createElement('div');
+    emptyCell.className = 'calendar-day empty';
+    grid.appendChild(emptyCell);
+  }
+  
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
+  for (let day = 1; day <= lastDay; day++) {
+    const dayCell = document.createElement('div');
+    const dayStr = String(day).padStart(2, '0');
+    const monthStr = String(calMonth + 1).padStart(2, '0');
+    const dateKey = `${calYear}-${monthStr}-${dayStr}`;
+    
+    dayCell.className = 'calendar-day';
+    if (dateKey === todayStr) {
+      dayCell.classList.add('today');
+    }
+    
+    const prazosDoDia = todosPrazos.filter(p => p.prazo && p.prazo.slice(0, 10) === dateKey);
+    
+    const numEl = document.createElement('div');
+    numEl.className = 'calendar-day-num';
+    numEl.textContent = day;
+    dayCell.appendChild(numEl);
+    
+    if (prazosDoDia.length > 0) {
+      const dotsContainer = document.createElement('div');
+      dotsContainer.className = 'calendar-day-dots';
+      
+      prazosDoDia.forEach(p => {
+        const dot = document.createElement('span');
+        dot.className = 'calendar-dot';
+        if (p.dias < 0) dot.classList.add('venc');
+        else if (p.dias <= 3) dot.classList.add('urg');
+        else if (p.dias <= 7) dot.classList.add('ate');
+        else dot.classList.add('ok');
+        dotsContainer.appendChild(dot);
+      });
+      dayCell.appendChild(dotsContainer);
+      
+      dayCell.onclick = () => window.APP.selecionarDiaCalendario(dateKey, prazosDoDia);
+    } else {
+      dayCell.onclick = () => window.APP.selecionarDiaCalendario(dateKey, []);
+    }
+    
+    grid.appendChild(dayCell);
+  }
+}
+
+window.APP.selecionarDiaCalendario = function(dateStr, prazos) {
+  document.querySelectorAll('.calendar-day').forEach(el => el.classList.remove('selected'));
+  const dayNum = parseInt(dateStr.slice(8, 10), 10);
+  const cells = document.querySelectorAll('.calendar-day:not(.empty)');
+  if (cells[dayNum - 1]) {
+    cells[dayNum - 1].classList.add('selected');
+  }
+
+  const detailsEl = document.getElementById('calendar-day-details');
+  const detailsTitle = document.getElementById('calendar-day-details-title');
+  const detailsList = document.getElementById('calendar-day-details-list');
+  if (!detailsEl || !detailsList || !detailsTitle) return;
+  
+  const [y, m, d] = dateStr.split('-');
+  detailsTitle.textContent = `📅 Prazos para o dia ${d}/${m}/${y}`;
+  
+  if (!prazos.length) {
+    detailsList.innerHTML = '<div style="color:var(--text-secondary); font-style:italic; font-size:0.85rem;">Nenhum prazo cadastrado para esta data.</div>';
+  } else {
+    detailsList.innerHTML = prazos.map(p => {
+      let badgeColor = 'badge-verde';
+      if (p.dias < 0) badgeColor = 'badge-vermelho';
+      else if (p.dias <= 3) badgeColor = 'badge-laranja';
+      else if (p.dias <= 7) badgeColor = 'badge-amarelo';
+      
+      const desc = p.nome + (p.tipo_grupo ? ` · ${p.tipo_grupo}` : '');
+      const descAdicional = p.tipo || p.beneficio || p.competencia || '—';
+      const labelBadge = p.dias < 0 ? 'Atrasado' : (p.dias <= 3 ? 'Urgente' : (p.dias <= 7 ? 'Atenção' : 'No Prazo'));
+      
+      return `
+        <div class="calendar-day-details-item">
+          <div class="item-desc">
+            <span class="badge ${badgeColor}" style="margin-right:8px;">${labelBadge}</span>
+            <strong>${escHtml(desc)}</strong> (${escHtml(descAdicional)})
+          </div>
+          <div class="item-meta">
+            ${p.dias !== null ? `${p.dias < 0 ? 'Atrasado há ' + Math.abs(p.dias) : 'Restam ' + p.dias} dias` : '—'}
+            ${window.APP.renderZapIcon('', p.nome, '')}
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  detailsEl.style.display = 'block';
+};
+
+window.APP.renderZapIcon = function(clienteId, clienteNome, telefone, origem = 'clientes', rowId = '') {
+  let tel = telefone || '';
+  if (!tel && clientesCache.length) {
+    const cli = clientesCache.find(c => c.id === clienteId || c.nome === clienteNome);
+    if (cli) tel = cli.telefone || '';
+  }
+  if (!tel) return ''; // Só renderiza se tiver telefone cadastrado
+  
+  const nomeEsc = (clienteNome || '').replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  const telEsc = tel.replace(/'/g, "\\'");
+  const origEsc = origem.replace(/'/g, "\\'");
+  const idEsc = rowId.replace(/'/g, "\\'");
+  
+  return `<span class="zap-icon-btn" onclick="window.APP.prepararNotificacaoZap('${nomeEsc}', '${telEsc}', '${origEsc}', '${idEsc}')" title="Enviar WhatsApp para ${escHtml(clienteNome)}" style="cursor:pointer; margin-left:6px; display:inline-block; vertical-align:middle; transition: transform 0.15s ease;">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" fill="#1e8744" style="display:block;"><path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.76.459 3.475 1.332 4.992L2 22l5.163-1.354c1.464.798 3.109 1.218 4.838 1.22h.005c5.505 0 9.988-4.483 9.988-9.988 0-2.669-1.039-5.177-2.926-7.064S14.68 2 12.012 2zm.006 17.525c-1.545 0-3.06-.416-4.385-1.2L7.33 18.15l-3.26.855.87-3.18-.184-.293c-.86-1.368-1.314-2.96-1.314-4.593 0-4.802 3.906-8.708 8.709-8.708 2.327 0 4.515.906 6.16 2.55s2.55 3.83 2.55 6.158c-.001 4.804-3.907 8.711-8.71 8.711zM16.8 13.91c-.26-.13-1.54-.76-1.78-.85-.24-.09-.415-.13-.59.13-.175.26-.68.85-.83.99-.15.15-.3.17-.56.04-.26-.13-1.1-.41-2.1-1.3-.778-.695-1.304-1.554-1.456-1.815-.152-.26-.016-.4.118-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.325-.02-.455-.06-.13-.59-1.42-.81-1.95-.21-.52-.45-.45-.615-.46-.15-.01-.325-.01-.5-.01-.175 0-.46.065-.7.325-.24.26-.92.9-1.07 1.2s.06 1.63.18 1.9c.12.27 1.34 2.05 3.25 2.88.455.195.81.31 1.085.4.455.14.87.12 1.2.07.365-.05 1.13-.46 1.285-.9.155-.44.155-.82.11-.9-.045-.08-.175-.13-.435-.26z"/></svg>
+  </span>`;
+};
+
+window.APP.prepararNotificacaoZap = function(nomeCliente, telefone, origem, id) {
+  let tel = telefone;
+  if (!tel && clientesCache.length) {
+    const cli = clientesCache.find(c => c.nome === nomeCliente);
+    if (cli) tel = cli.telefone || '';
+  }
+  
+  let beneficio = 'Processo';
+  let status = 'Em andamento';
+  let dataPrazo = '';
+  
+  let record = null;
+  if (origem === 'adm' && typeof admData !== 'undefined') record = admData.find(r => r.id === id);
+  else if (origem === 'jud' && typeof judData !== 'undefined') record = judData.find(r => r.id === id);
+  else if (origem === 'sal' && typeof salData !== 'undefined') record = salData.find(r => r.id === id);
+  else if (origem === 'axd' && typeof axdData !== 'undefined') record = axdData.find(r => r.id === id);
+  else if (origem === 'bpc' && typeof bpcData !== 'undefined') record = bpcData.find(r => r.id === id);
+  else if (origem === 'rec' && typeof recData !== 'undefined') record = recData.find(r => r.id === id);
+  else if (origem === 'aux' && typeof auxData !== 'undefined') record = auxData.find(r => r.id === id);
+  else if (origem === 'cobr' && typeof cobrData !== 'undefined') record = cobrData.find(r => r.id === id);
+
+  if (record) {
+    beneficio = record.tipo_beneficio || record.area || (origem === 'sal' ? 'Salário-Maternidade' : (origem === 'axd' ? 'Auxílio-Doença' : (origem === 'bpc' ? 'BPC/LOAS' : 'Processo')));
+    status = record.status || record.resultado_pedido || 'Em andamento';
+    const prazoRaw = record.proximo_prazo || record.prazo_recurso || record.data_proxima_audiencia || record.prazo_analise_inss || record.data_limite_pgto;
+    if (prazoRaw) dataPrazo = fmtDate(prazoRaw);
+  }
+
+  window._currentZapContext = {
+    nome: nomeCliente,
+    telefone: tel,
+    beneficio: beneficio,
+    status: status,
+    dataPrazo: dataPrazo
+  };
+
+  const nameInp = document.getElementById('zap-cliente-nome');
+  if (nameInp) nameInp.value = nomeCliente;
+  const telInp = document.getElementById('zap-cliente-telefone');
+  if (telInp) telInp.value = tel || '';
+  
+  const select = document.getElementById('zap-template-select');
+  if (select) {
+    if (origem === 'axd' || (record && String(record.tipo_prazo || '').toLowerCase().includes('perí'))) {
+      select.value = 'pericia';
+    } else if (origem === 'bpc') {
+      select.value = 'documento';
+    } else {
+      select.value = 'andamento';
+    }
+  }
+
+  window.APP.atualizarMensagemZapPreview();
+  window.openModal('zap');
+};
+
+window.APP.atualizarMensagemZapPreview = function() {
+  const ctx = window._currentZapContext;
+  if (!ctx) return;
+  
+  const selectEl = document.getElementById('zap-template-select');
+  const templateType = selectEl ? selectEl.value : 'geral';
+  const msgArea = document.getElementById('zap-mensagem-text');
+  if (!msgArea) return;
+  
+  let msg = '';
+  const dataStr = ctx.dataPrazo || '___/___/______';
+  
+  if (templateType === 'pericia') {
+    msg = `Olá ${ctx.nome}, sua perícia médica para o ${ctx.beneficio} foi agendada para o dia ${dataStr}. Por favor, lembre-se de levar todos os laudos médicos atualizados, receitas e documentos pessoais originais. Se tiver dúvidas, fale conosco!`;
+  } else if (templateType === 'documento') {
+    msg = `Olá ${ctx.nome}, precisamos que nos envie o seu CadÚnico atualizado e demais documentos pendentes para darmos andamento ao seu pedido de ${ctx.beneficio}. Você pode enviar fotos legíveis por aqui ou trazer ao escritório.`;
+  } else if (templateType === 'andamento') {
+    msg = `Olá ${ctx.nome}, tudo bem? Passando para informar sobre o andamento do seu processo de ${ctx.beneficio}. A situação atual é: "${ctx.status}". Continuamos acompanhando todas as atualizações.`;
+  } else {
+    msg = `Olá ${ctx.nome}, tudo bem? Gostaria de saber se você possui alguma novidade ou dúvida em relação ao seu processo de ${ctx.beneficio}. Estamos à disposição.`;
+  }
+  
+  msgArea.value = msg;
+};
+
+window.APP.dispararMensagemZap = function() {
+  const telField = document.getElementById('zap-cliente-telefone');
+  const msgField = document.getElementById('zap-mensagem-text');
+  if (!telField || !msgField) return;
+  
+  let tel = telField.value.trim().replace(/\D/g, '');
+  const msg = msgField.value.trim();
+  
+  if (!tel) {
+    alert('Por favor, informe o telefone do cliente.');
+    return;
+  }
+  if (!msg) {
+    alert('Por favor, digite a mensagem a ser enviada.');
+    return;
+  }
+  
+  if (tel.length === 10 || tel.length === 11) {
+    tel = '55' + tel;
+  }
+  
+  const zapUrl = `https://api.whatsapp.com/send?phone=${tel}&text=${encodeURIComponent(msg)}`;
+  window.open(zapUrl, '_blank');
+  window.closeModal('zap');
+};
 
 /* ── HOOK: showModule → carrega os módulos novos ───────────────────────── */
 const origShowModule = window.showModule;

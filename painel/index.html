@@ -110,6 +110,34 @@
         </div>
       </div>
 
+      <!-- AGENDA JURÍDICA (CALENDÁRIO MENSAL) -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📅 Agenda Jurídica <small>(Calendário Mensal de Prazos Consolidado)</small></div>
+          <div class="calendar-controls">
+            <button class="btn btn-secondary btn-sm" onclick="window.APP.calendarPrevMonth()" style="padding: 4px 10px;">←</button>
+            <span id="calendar-month-year" style="font-family:'Cormorant Garamond', serif; font-size:1.15rem; font-weight:600; color:var(--text-primary); margin:0 0.8rem; display:inline-block; vertical-align:middle; min-width:120px; text-align:center;">—</span>
+            <button class="btn btn-secondary btn-sm" onclick="window.APP.calendarNextMonth()" style="padding: 4px 10px;">→</button>
+          </div>
+        </div>
+        <div style="padding: 1.5rem;">
+          <div class="calendar-grid-header">
+            <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+          </div>
+          <div class="calendar-grid" id="calendar-days">
+            <!-- Gerado dinamicamente via JS -->
+          </div>
+          
+          <!-- Painel de detalhes para o dia selecionado -->
+          <div class="calendar-day-details-card" id="calendar-day-details" style="display:none;">
+            <div class="calendar-day-details-title" id="calendar-day-details-title">Prazos para o dia</div>
+            <div id="calendar-day-details-list">
+              <!-- Detalhes do dia selecionado -->
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Categoria 1: GUIAS INSS (pagamento de boletos / guias) -->
       <div class="card">
         <div class="card-header"><div class="card-title">💳 Pagamento de Guia INSS <small>(salário-maternidade)</small></div></div>
@@ -1354,6 +1382,43 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('cob')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveRecord('cob')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL WHATSAPP NOTIFICAÇÕES -->
+<div class="modal-overlay" id="modal-zap">
+  <div class="modal" style="max-width: 500px;">
+    <div class="modal-header">
+      <div class="modal-title">💬 Enviar Notificação WhatsApp</div>
+      <button class="modal-close" onclick="closeModal('zap')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label>Cliente</label>
+        <input type="text" id="zap-cliente-nome" readonly>
+      </div>
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label>Telefone</label>
+        <input type="text" id="zap-cliente-telefone">
+      </div>
+      <div class="form-group" style="margin-bottom: 1.2rem;">
+        <label>Modelo de Mensagem</label>
+        <select id="zap-template-select" onchange="window.APP.atualizarMensagemZapPreview()" class="btn-sm" style="width:100%; height:40px; padding:8px 12px; font-size:0.85rem; text-transform:none;">
+          <option value="pericia">🩺 Aviso de Perícia Médica</option>
+          <option value="documento">📂 Pedido de Documentos / CadÚnico</option>
+          <option value="andamento">📋 Atualização de Andamento</option>
+          <option value="geral">💬 Mensagem Geral / Personalizada</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Mensagem Preview</label>
+        <textarea id="zap-mensagem-text" style="width: 100%; min-height: 120px; font-family: inherit; font-size: 0.88rem;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('zap')">Cancelar</button>
+      <button class="btn btn-primary" onclick="window.APP.dispararMensagemZap()">Enviar WhatsApp</button>
     </div>
   </div>
 </div>
