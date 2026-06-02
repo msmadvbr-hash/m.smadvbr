@@ -106,7 +106,7 @@ async function loadClientesModule() {
     tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum cliente cadastrado.</td></tr>';
     return;
   }
-  contagens = await contarProcessosPorCliente();
+  const contagens = await contarProcessosPorCliente();
   tbody.innerHTML = clientesCache.map(c => `
     <tr data-search="${escHtml(c.nome)} ${escHtml(c.cpf)} ${escHtml(c.telefone)}">
       <td><strong>${escHtml(c.nome)}</strong> ${window.APP.renderZapIcon(c.id, c.nome, c.telefone)}</td>
@@ -1447,7 +1447,7 @@ function renderDashboardComDadosCache() {
 
 /* ── DASHBOARD CATEGORIZADO ────────────────────────────────────────────── */
 async function loadDashboardCategorizado() {
-  const [adm, jud, aux, sal, praz, gen, axd, bpc, rec, cobr, guias] = await Promise.all([
+  const [adm, jud, aux, sal, praz, gen, axd, bpc, rec, cobr, guias, comp] = await Promise.all([
     sb.from('processos_administrativos').select('id,nome_cliente,proximo_prazo,prazo_analise_inss,prazo_recurso,resultado_pedido,tipo_beneficio,status'),
     sb.from('processos_judiciais_inss').select('id,nome_cliente,data_proxima_audiencia,tipo_prazo,status,tipo_beneficio'),
     sb.from('auxilio_moradia').select('id,nome_medico,proximo_prazo,status'),
@@ -1459,6 +1459,7 @@ async function loadDashboardCategorizado() {
     sb.from('recursos').select('id,nome_cliente,proximo_prazo,prazo_resposta,modalidade,status,tipo_beneficio'),
     sb.from('controle_cobrancas').select('id,nome_cliente,tipo_beneficio,numero_parcela,valor_parcela,data_limite_pgto,status,origem_tipo'),
     sb.from('guias_sal_mat').select('id,ordem,competencia,numero_guia,data_vencimento,status_guia,sal_mat_id'),
+    sb.from('agenda_compromissos').select('id,titulo,descricao,data_hora,cliente_id,nome_cliente').order('data_hora', { ascending: true }),
   ]);
 
   // Mapeia nome do cliente do sal_mat para suas guias
@@ -1506,7 +1507,20 @@ async function loadDashboardCategorizado() {
   ].filter(r => r.prazo).map(r => ({ ...r, dias: diffDias(r.prazo) }))
    .sort((a,b) => (a.dias??9999)-(b.dias??9999));
 
-  // Contadores agregados
+  // ── 5) Compromissos avulsos da agenda jurídica
+  const compItens = (comp.data || []).map(c => ({
+    id: c.id,
+    nome: c.nome_cliente || '—',
+    cliente_id: c.cliente_id,
+    titulo: c.titulo,
+    descricao: c.descricao,
+    data_hora: c.data_hora,
+    prazo: c.data_hora ? c.data_hora.slice(0, 10) : null,
+    dias: c.data_hora ? diffDias(c.data_hora.slice(0, 10)) : null,
+    status: 'Compromisso',
+  })).filter(c => c.prazo);
+
+  // Contadores agregados (compromissos não entram nos semáforos de prazos)
   const todos = [...guiasItens, ...cobrItens, ...judItens, ...admItens];
   let venc=0, urg=0, ate=0, ok=0;
   todos.forEach(r => {
@@ -1525,7 +1539,7 @@ async function loadDashboardCategorizado() {
   renderDashboardPrazosChart(venc, urg, ate, ok);
 
   // Salva no cache local para filtragem instantânea sem nova requisição
-  dashboardDataCache = { guiasItens, cobrItens, judItens, admItens };
+  dashboardDataCache = { guiasItens, cobrItens, judItens, admItens, compItens };
 
   // Renderiza tabelas de acordo com filtro atual
   renderDashboardComDadosCache();
@@ -1845,11 +1859,12 @@ function renderCalendar() {
   
   const todosPrazos = [];
   if (dashboardDataCache) {
-    const { guiasItens, cobrItens, judItens, admItens } = dashboardDataCache;
+    const { guiasItens, cobrItens, judItens, admItens, compItens } = dashboardDataCache;
     todosPrazos.push(...(guiasItens || []).map(r => ({ ...r, tipo_grupo: 'Guia INSS' })));
     todosPrazos.push(...(cobrItens || []).map(r => ({ ...r, tipo_grupo: 'Cobrança' })));
     todosPrazos.push(...(judItens || []).map(r => ({ ...r, tipo_grupo: 'Judicial' })));
     todosPrazos.push(...(admItens || []).map(r => ({ ...r, tipo_grupo: 'Administrativo' })));
+    todosPrazos.push(...(compItens || []).map(r => ({ ...r, tipo_grupo: 'Compromisso' })));
   }
   
   for (let i = 0; i < firstDayIndex; i++) {
@@ -1886,7 +1901,8 @@ function renderCalendar() {
       prazosDoDia.forEach(p => {
         const dot = document.createElement('span');
         dot.className = 'calendar-dot';
-        if (p.dias < 0) dot.classList.add('venc');
+        if (p.tipo_grupo === 'Compromisso') dot.classList.add('comp');
+        else if (p.dias < 0) dot.classList.add('venc');
         else if (p.dias <= 3) dot.classList.add('urg');
         else if (p.dias <= 7) dot.classList.add('ate');
         else dot.classList.add('ok');
@@ -1920,18 +1936,41 @@ window.APP.selecionarDiaCalendario = function(dateStr, prazos) {
   detailsTitle.textContent = `📅 Prazos para o dia ${d}/${m}/${y}`;
   
   if (!prazos.length) {
-    detailsList.innerHTML = '<div style="color:var(--text-secondary); font-style:italic; font-size:0.85rem;">Nenhum prazo cadastrado para esta data.</div>';
+    detailsList.innerHTML = '<div style="color:var(--text-secondary); font-style:italic; font-size:0.85rem;">Nenhum prazo ou compromisso cadastrado para esta data.</div>';
   } else {
     detailsList.innerHTML = prazos.map(p => {
+      const ehCompromisso = p.tipo_grupo === 'Compromisso';
+
+      if (ehCompromisso) {
+        const horaStr = p.data_hora ? p.data_hora.slice(11, 16) : '';
+        const tituloEsc = escHtml(p.titulo || 'Compromisso');
+        const nomeEsc = p.nome && p.nome !== '—' ? ` · ${escHtml(p.nome)}` : '';
+        const descEsc = p.descricao ? `<div style="font-size:0.78rem; color:var(--text-secondary); margin-top:2px;">${escHtml(p.descricao)}</div>` : '';
+        return `
+          <div class="calendar-day-details-item">
+            <div class="item-desc">
+              <span class="compromisso-chip">📌 ${horaStr || 'Compromisso'}</span>
+              <strong>${tituloEsc}</strong>${nomeEsc}
+              ${descEsc}
+            </div>
+            <div class="item-meta item-actions">
+              ${window.APP.renderZapIcon(p.cliente_id || '', p.nome, '')}
+              <button class="btn btn-secondary btn-sm" onclick="editRecord('comp','${p.id}')" style="padding:2px 8px; font-size:0.7rem;">Editar</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteRecord('comp','${p.id}')" style="padding:2px 8px; font-size:0.7rem;">Del</button>
+            </div>
+          </div>
+        `;
+      }
+
       let badgeColor = 'badge-verde';
       if (p.dias < 0) badgeColor = 'badge-vermelho';
       else if (p.dias <= 3) badgeColor = 'badge-laranja';
       else if (p.dias <= 7) badgeColor = 'badge-amarelo';
-      
+
       const desc = p.nome + (p.tipo_grupo ? ` · ${p.tipo_grupo}` : '');
       const descAdicional = p.tipo || p.beneficio || p.competencia || '—';
       const labelBadge = p.dias < 0 ? 'Atrasado' : (p.dias <= 3 ? 'Urgente' : (p.dias <= 7 ? 'Atenção' : 'No Prazo'));
-      
+
       return `
         <div class="calendar-day-details-item">
           <div class="item-desc">
@@ -1963,8 +2002,8 @@ window.APP.renderZapIcon = function(clienteId, clienteNome, telefone, origem = '
   const origEsc = origem.replace(/'/g, "\\'");
   const idEsc = rowId.replace(/'/g, "\\'");
   
-  return `<span class="zap-icon-btn" onclick="window.APP.prepararNotificacaoZap('${nomeEsc}', '${telEsc}', '${origEsc}', '${idEsc}')" title="Enviar WhatsApp para ${escHtml(clienteNome)}" style="cursor:pointer; margin-left:6px; display:inline-block; vertical-align:middle; transition: transform 0.15s ease;">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="15" height="15" fill="#1e8744" style="display:block;"><path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.76.459 3.475 1.332 4.992L2 22l5.163-1.354c1.464.798 3.109 1.218 4.838 1.22h.005c5.505 0 9.988-4.483 9.988-9.988 0-2.669-1.039-5.177-2.926-7.064S14.68 2 12.012 2zm.006 17.525c-1.545 0-3.06-.416-4.385-1.2L7.33 18.15l-3.26.855.87-3.18-.184-.293c-.86-1.368-1.314-2.96-1.314-4.593 0-4.802 3.906-8.708 8.709-8.708 2.327 0 4.515.906 6.16 2.55s2.55 3.83 2.55 6.158c-.001 4.804-3.907 8.711-8.71 8.711zM16.8 13.91c-.26-.13-1.54-.76-1.78-.85-.24-.09-.415-.13-.59.13-.175.26-.68.85-.83.99-.15.15-.3.17-.56.04-.26-.13-1.1-.41-2.1-1.3-.778-.695-1.304-1.554-1.456-1.815-.152-.26-.016-.4.118-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.325-.02-.455-.06-.13-.59-1.42-.81-1.95-.21-.52-.45-.45-.615-.46-.15-.01-.325-.01-.5-.01-.175 0-.46.065-.7.325-.24.26-.92.9-1.07 1.2s.06 1.63.18 1.9c.12.27 1.34 2.05 3.25 2.88.455.195.81.31 1.085.4.455.14.87.12 1.2.07.365-.05 1.13-.46 1.285-.9.155-.44.155-.82.11-.9-.045-.08-.175-.13-.435-.26z"/></svg>
+  return `<span class="zap-icon-btn" onclick="window.APP.prepararNotificacaoZap('${nomeEsc}', '${telEsc}', '${origEsc}', '${idEsc}')" title="Enviar WhatsApp para ${escHtml(clienteNome)}" role="button" aria-label="Enviar WhatsApp">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.76.459 3.475 1.332 4.992L2 22l5.163-1.354c1.464.798 3.109 1.218 4.838 1.22h.005c5.505 0 9.988-4.483 9.988-9.988 0-2.669-1.039-5.177-2.926-7.064S14.68 2 12.012 2zm.006 17.525c-1.545 0-3.06-.416-4.385-1.2L7.33 18.15l-3.26.855.87-3.18-.184-.293c-.86-1.368-1.314-2.96-1.314-4.593 0-4.802 3.906-8.708 8.709-8.708 2.327 0 4.515.906 6.16 2.55s2.55 3.83 2.55 6.158c-.001 4.804-3.907 8.711-8.71 8.711zM16.8 13.91c-.26-.13-1.54-.76-1.78-.85-.24-.09-.415-.13-.59.13-.175.26-.68.85-.83.99-.15.15-.3.17-.56.04-.26-.13-1.1-.41-2.1-1.3-.778-.695-1.304-1.554-1.456-1.815-.152-.26-.016-.4.118-.53.12-.12.26-.3.39-.45.13-.15.17-.26.26-.43.09-.17.04-.325-.02-.455-.06-.13-.59-1.42-.81-1.95-.21-.52-.45-.45-.615-.46-.15-.01-.325-.01-.5-.01-.175 0-.46.065-.7.325-.24.26-.92.9-1.07 1.2s.06 1.63.18 1.9c.12.27 1.34 2.05 3.25 2.88.455.195.81.31 1.085.4.455.14.87.12 1.2.07.365-.05 1.13-.46 1.285-.9.155-.44.155-.82.11-.9-.045-.08-.175-.13-.435-.26z"/></svg>
   </span>`;
 };
 

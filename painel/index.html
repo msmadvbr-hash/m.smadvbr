@@ -114,7 +114,8 @@
       <div class="card">
         <div class="card-header">
           <div class="card-title">📅 Agenda Jurídica <small>(Calendário Mensal de Prazos Consolidado)</small></div>
-          <div class="calendar-controls">
+          <div class="calendar-controls" style="display: flex; gap: 0.5rem; align-items: center;">
+            <button class="btn btn-primary btn-sm" onclick="openModal('comp')" style="padding: 4px 8px; text-transform: none; font-size: 0.8rem;">+ Novo Compromisso</button>
             <button class="btn btn-secondary btn-sm" onclick="window.APP.calendarPrevMonth()" style="padding: 4px 10px;">←</button>
             <span id="calendar-month-year" style="font-family:'Cormorant Garamond', serif; font-size:1.15rem; font-weight:600; color:var(--text-primary); margin:0 0.8rem; display:inline-block; vertical-align:middle; min-width:120px; text-align:center;">—</span>
             <button class="btn btn-secondary btn-sm" onclick="window.APP.calendarNextMonth()" style="padding: 4px 10px;">→</button>
@@ -1782,6 +1783,56 @@
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('rec')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveRecord('rec')">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Compromisso à Parte -->
+<div class="modal-overlay" id="modal-comp">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-comp-title">Novo Compromisso</div>
+      <button class="modal-close" onclick="closeModal('comp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-comp">
+        <input type="hidden" id="comp-id">
+        <input type="hidden" id="comp-cliente-id">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Título do Compromisso *</label>
+            <input type="text" id="comp-titulo" placeholder="Ex: Audiência, Reunião com Cliente, Perícia…" required>
+          </div>
+          <div class="form-group">
+            <label>Data & Hora *</label>
+            <input type="datetime-local" id="comp-data-hora" required>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Buscar cliente já cadastrado (Opcional)</label>
+            <input type="text" id="comp-cli-busca" list="lista-clientes-comp" placeholder="Digite nome ou CPF…" oninput="window.MODULOS.aplicarClienteSelecionado('comp', this.value)">
+            <datalist id="lista-clientes-comp"></datalist>
+          </div>
+          <div class="form-group">
+            <label>Nome do Cliente Vinculado</label>
+            <input type="text" id="comp-nome" placeholder="Preenchido automaticamente ou digite...">
+          </div>
+        </div>
+        
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Descrição / Observações</label>
+            <textarea id="comp-obs" placeholder="Detalhes adicionais sobre o compromisso..."></textarea>
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('comp')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveRecord('comp')">Salvar</button>
     </div>
   </div>
 </div>

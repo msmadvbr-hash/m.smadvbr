@@ -358,7 +358,7 @@ function getNewTitle(t) {
     sal:'Nova — Salário-Maternidade', aux:'Novo Médico — Auxílio-Moradia',
     praz:'Novo Prazo Judicial', cob:'Nova Cobrança / Honorário',
     cli:'Novo Cliente', axd:'Novo Auxílio-Doença', bpc:'Novo BPC / LOAS',
-    rec:'Novo Recurso',
+    rec:'Novo Recurso', comp:'Novo Compromisso',
   };
   return titles[t];
 }
@@ -645,8 +645,8 @@ function initCobModal() {
 async function saveRecord(type) {
   const id = document.getElementById(type + '-id').value;
 
-  // Upsert cliente central (exceto para 'cli' que já é o próprio cliente)
-  if (type !== 'cli' && window.MODULOS?.upsertClienteDoFormulario) {
+  // Upsert cliente central (exceto para 'cli' e 'comp', que não devem auto-criar cliente)
+  if (type !== 'cli' && type !== 'comp' && window.MODULOS?.upsertClienteDoFormulario) {
     try { await window.MODULOS.upsertClienteDoFormulario(type); } catch(e) { console.warn(e); }
   }
 
@@ -785,12 +785,14 @@ function tableFor(t) {
   return { adm:'processos_administrativos', jud:'processos_judiciais_inss',
     sal:'salario_maternidade', aux:'auxilio_moradia',
     praz:'prazos_judiciais_auxilio', cob:'controle_cobrancas',
-    cli:'clientes', axd:'auxilio_doenca', bpc:'bpc_loas', rec:'recursos' }[t];
+    cli:'clientes', axd:'auxilio_doenca', bpc:'bpc_loas', rec:'recursos',
+    comp:'agenda_compromissos' }[t];
 }
 function moduleFor(t) {
   return { adm:'proc-adm', jud:'proc-jud', sal:'sal-mat',
     aux:'aux-mor', praz:'prazos-aux', cob:'cobrancas',
-    cli:'clientes', axd:'aux-doenca', bpc:'bpc', rec:'recursos' }[t];
+    cli:'clientes', axd:'aux-doenca', bpc:'bpc', rec:'recursos',
+    comp:'dashboard' }[t];
 }
 
 function buildPayload(type) {
@@ -1005,6 +1007,20 @@ function buildPayload(type) {
         data_recebimento:vd('cob-data-rec'), valor_recebido:vn('cob-valor-rec'),
         status:v('cob-status'), observacoes:v('cob-obs') };
     }
+    case 'comp': {
+      const titulo = v('comp-titulo');
+      if (!titulo) { toast('Título do compromisso é obrigatório.', true); return null; }
+      const dataHora = v('comp-data-hora');
+      if (!dataHora) { toast('Data e hora do compromisso são obrigatórias.', true); return null; }
+      const clienteIdRaw = v('comp-cliente-id');
+      return {
+        titulo,
+        data_hora: dataHora,
+        cliente_id: clienteIdRaw || null,
+        nome_cliente: v('comp-nome') || null,
+        descricao: v('comp-obs') || null,
+      };
+    }
   }
 }
 
@@ -1015,7 +1031,7 @@ async function editRecord(type, id) {
                     axd: window.MODULOS?.axdData?.() || [],
                     bpc: window.MODULOS?.bpcData?.() || [],
                     rec: window.MODULOS?.recData?.() || [] };
-  let rec = dataMap[type].find(r => r.id === id);
+  let rec = (dataMap[type] || []).find(r => r.id === id);
   // Fallback: busca do DB (caso editado via aba unificada de Adm)
   if (!rec) {
     const tbl = tableFor(type);
@@ -1289,6 +1305,14 @@ function fillForm(type, r) {
       set('cob-data-rec', r.data_recebimento?.slice(0,10));
       set('cob-valor-rec', r.valor_recebido); set('cob-status', r.status);
       set('cob-obs', r.observacoes); break;
+    case 'comp':
+      set('comp-titulo', r.titulo);
+      // data_hora vem como ISO timestamptz; input datetime-local espera 'YYYY-MM-DDTHH:MM'
+      if (r.data_hora) set('comp-data-hora', r.data_hora.slice(0, 16));
+      set('comp-cliente-id', r.cliente_id);
+      set('comp-nome', r.nome_cliente);
+      set('comp-obs', r.descricao);
+      break;
   }
 }
 

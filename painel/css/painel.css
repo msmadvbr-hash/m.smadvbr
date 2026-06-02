@@ -1060,6 +1060,7 @@ select.btn-sm option {
 .calendar-dot.urg  { background: var(--laranja); }
 .calendar-dot.ate  { background: var(--amarelo); }
 .calendar-dot.ok   { background: var(--verde); }
+.calendar-dot.comp { background: var(--caramelo, #b8914a); }
 
 .calendar-day.selected {
   background: rgba(156, 124, 79, 0.08);
@@ -1100,4 +1101,57 @@ select.btn-sm option {
 .calendar-day-details-item .item-meta {
   font-size: 0.75rem;
   color: var(--text-secondary);
+}
+
+/* ── WhatsApp icon button (clientes / processos / cobranças / prazos) ─── */
+.zap-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-left: 6px;
+  vertical-align: middle;
+  border-radius: 50%;
+  background: #25D366;
+  color: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+  border: none;
+}
+.zap-icon-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: #fff;
+  display: block;
+}
+.zap-icon-btn:hover {
+  background: #1ebe5d;
+  transform: translateY(-1px) scale(1.06);
+  box-shadow: 0 3px 8px rgba(37, 211, 102, 0.45);
+}
+.zap-icon-btn:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* ── Compromisso avulso (chip na agenda) ─────────────────────────────── */
+.compromisso-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: rgba(184, 145, 74, 0.15);
+  color: var(--caramelo, #b8914a);
+  border: 1px solid rgba(184, 145, 74, 0.35);
+  margin-right: 6px;
+}
+.calendar-day-details-item .item-actions {
+  display: inline-flex;
+  gap: 4px;
+  margin-left: 8px;
 }
