@@ -58,6 +58,8 @@ async function upsertClienteDoFormulario(prefix) {
   const nome = v(prefix + '-nome');
   const cpf  = v(prefix + '-cpf');
   if (!nome) return null;
+
+  // 1. Tenta achar no cache local
   if (cpf) {
     const exist = clientesCache.find(c => c.cpf === cpf);
     if (exist) {
@@ -65,16 +67,34 @@ async function upsertClienteDoFormulario(prefix) {
       return exist.id;
     }
   }
-  const { data, error } = await sb.from('clientes').insert({
+
+  // 2. Tenta inserir; se falhar por UNIQUE, faz SELECT pelo CPF
+  const payload = {
     nome, cpf,
     telefone: v(prefix + '-telefone'),
     email:    v(prefix + '-email'),
     endereco: v(prefix + '-endereco'),
-  }).select('id').single();
-  if (error) { console.warn('cliente já existe ou erro:', error.message); return null; }
-  set(prefix + '-cliente-id', data.id);
-  await carregarClientes();
-  return data.id;
+  };
+  const { data, error } = await sb.from('clientes').insert(payload).select('id').single();
+
+  if (!error && data) {
+    set(prefix + '-cliente-id', data.id);
+    await carregarClientes();
+    return data.id;
+  }
+
+  // 3. Se erro de duplicidade, busca cliente existente pelo CPF
+  if (error && cpf) {
+    const { data: found } = await sb.from('clientes').select('id').eq('cpf', cpf).limit(1);
+    if (found && found.length) {
+      set(prefix + '-cliente-id', found[0].id);
+      await carregarClientes();
+      return found[0].id;
+    }
+  }
+
+  console.warn('upsertClienteDoFormulario: não foi possível vincular cliente:', error?.message);
+  return null;
 }
 
 /* ── CADASTRO DE CLIENTES (módulo) ─────────────────────────────────────── */
@@ -116,6 +136,9 @@ async function contarProcessosPorCliente() {
 function editCliente(id) {
   const c = clientesCache.find(x => x.id === id);
   if (!c) return;
+  // Limpa o formulário antes de preencher (evita resíduo entre edições)
+  const form = document.getElementById('form-cli');
+  if (form) form.reset();
   document.getElementById('modal-cli-title').textContent = 'Editar Cliente';
   document.getElementById('modal-cli').classList.add('open');
   set('cli-id', c.id); set('cli-nome', c.nome); set('cli-cpf', c.cpf);
@@ -175,7 +198,7 @@ function atualizarDecisaoAdm() {
   const rowPgto = document.getElementById('adm-row-prevpgto');
   const rowMot  = document.getElementById('adm-row-motivo-indef');
   if (rowRec)  rowRec.style.display  = (result === 'Indeferido') ? '' : 'none';
-  if (rowPgto) rowPgto.style.display = (result === 'Deferido')   ? '' : '';
+  if (rowPgto) rowPgto.style.display = (result === 'Deferido')   ? '' : 'none';
   if (rowMot)  rowMot.style.display  = (result === 'Indeferido') ? '' : 'none';
   if (result === 'Indeferido' && dataDec) {
     set('adm-prazo-recurso', window.PRAZOS.somarDias(dataDec, 30));
@@ -524,8 +547,10 @@ function atualizarDecisaoAxd() {
   const dataDec = vd('axd-data-decisao');
   const rowRec  = document.getElementById('axd-row-recurso');
   const rowMot  = document.getElementById('axd-row-motivo-indef');
-  if (rowRec) rowRec.style.display = (result === 'Indeferido') ? '' : 'none';
-  if (rowMot) rowMot.style.display = (result === 'Indeferido') ? '' : 'none';
+  const rowPgto = document.getElementById('axd-row-prevpgto');
+  if (rowRec)  rowRec.style.display  = (result === 'Indeferido') ? '' : 'none';
+  if (rowMot)  rowMot.style.display  = (result === 'Indeferido') ? '' : 'none';
+  if (rowPgto) rowPgto.style.display = (result === 'Deferido')   ? '' : 'none';
   if (result === 'Indeferido' && dataDec) {
     set('axd-prazo-recurso', window.PRAZOS.somarDias(dataDec, 30));
   }
@@ -724,8 +749,10 @@ function recalcPrazoRec() {
 function atualizarModalidadeRec() {
   const modal = v('rec-modalidade');
   const ehJud = (modal === 'Processo Judicial');
-  document.getElementById('rec-row-judicial').style.display = ehJud ? '' : 'none';
-  document.getElementById('rec-row-judicial-2').style.display = ehJud ? '' : 'none';
+  const r1 = document.getElementById('rec-row-judicial');
+  const r2 = document.getElementById('rec-row-judicial-2');
+  if (r1) r1.style.display = ehJud ? '' : 'none';
+  if (r2) r2.style.display = ehJud ? '' : 'none';
   recalcPrazoRec();
 }
 
@@ -795,10 +822,27 @@ function criarRecursoDe(prefix) {
   set('rec-num-req',  v(prefix + '-numero'));
   set('rec-nome',     v(prefix + '-nome'));
   set('rec-cpf',      v(prefix + '-cpf'));
-  set('rec-tipo-beneficio', v(prefix + '-tipo') || (prefix === 'sal' ? 'Salário-Maternidade' :
-                                                    prefix === 'axd' ? 'Auxílio-Doença' :
-                                                    prefix === 'bpc' ? 'BPC/LOAS' : ''));
+  // Mapeia tipo de benefício corretamente conforme origem
+  // (em 'sal', sal-tipo guarda CÓDIGO da modalidade do sal-mat, não o tipo de benefício)
+  const tipoBenef = (prefix === 'sal') ? 'Salário-Maternidade'
+                  : (prefix === 'axd') ? 'Auxílio-Doença'
+                  : (prefix === 'bpc') ? 'BPC/LOAS'
+                  : v(prefix + '-tipo') || '';
+  set('rec-tipo-beneficio', tipoBenef);
   set('rec-cliente-id', v(prefix + '-cliente-id'));
+  // Sugere modalidade padrão: Recurso Administrativo (mais comum como próxima etapa)
+  set('rec-modalidade', 'Recurso Administrativo');
+  atualizarModalidadeRec();
+  // Tenta usar a data da decisão do registro de origem como data de protocolo do recurso
+  const dataDecisao = vd(prefix + '-data-decisao');
+  if (dataDecisao) {
+    set('rec-data-protocolo', dataDecisao);
+    recalcPrazoRec();
+  }
+  // Reset card/preview e linhas condicionais
+  set('rec-busca-req', '');
+  const buscaRes = document.getElementById('rec-busca-resultado');
+  if (buscaRes) buscaRes.innerHTML = '<span style="color:var(--verde)">✓ Pré-vinculado ao registro atual.</span>';
   document.getElementById('modal-rec-title').textContent = 'Novo Recurso vinculado';
 }
 
@@ -915,7 +959,9 @@ function renderDashTabela(tbodyId, itens, rowFn, emptyMsg) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
   if (!itens.length) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${emptyMsg}</td></tr>`;
+    // Calcula colspan dinamicamente a partir do <thead>
+    const ncols = tbody.closest('table')?.querySelectorAll('thead th')?.length || 8;
+    tbody.innerHTML = `<tr><td colspan="${ncols}" class="empty-state">${emptyMsg}</td></tr>`;
     return;
   }
   tbody.innerHTML = itens.map(rowFn).join('');
@@ -1021,9 +1067,6 @@ async function aplicarMedicoSelecionado(idMedico) {
   set('praz-numero', med.numero_processo || '');
   if (med.juiz) set('praz-juiz', med.juiz);
 
-  // Marca cliente_id se houver
-  if (med.cliente_id) set('praz-cliente-id', med.cliente_id);
-
   toast(`✓ Dados de ${med.nome_medico} preenchidos.`);
 }
 
@@ -1062,9 +1105,11 @@ async function sincronizarRecursoAutomatico(origemTipo, origemId, payload) {
 /* ── PRAZOS JUDICIAIS POR ESCOPO ───────────────────────────────────────── */
 function openPrazoEscopo(escopo) {
   window.openModal('praz');
-  set('praz-escopo', escopo);
-  // adiciona campo escopo via dataset
+  // O buildPayload do 'praz' lê de modal-praz.dataset.escopo
   document.getElementById('modal-praz').dataset.escopo = escopo;
+  // Mostra "Buscar Médico" apenas para Auxílio-Moradia
+  const row = document.getElementById('praz-busca-medico-row');
+  if (row) row.style.display = (escopo === 'AUX_MORADIA') ? '' : 'none';
 }
 window.openPrazoEscopo = openPrazoEscopo;
 

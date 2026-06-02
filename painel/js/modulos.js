@@ -362,27 +362,40 @@ function clearForm(type) {
   // Limpa hidden cliente_id se existir
   const ci = document.getElementById(type + '-cliente-id'); if (ci) ci.value = '';
   // limpa previews
-  ['aux-calc-preview','sal-calc-preview','praz-prazo-preview','adm-prazo-preview',
+  ['aux-calc-preview','sal-calc-preview','praz-prazo-preview',
    'aux-prazo-preview','gen-prazo-preview','gen-calc-preview',
    'aux-docs-list','sal-docs-list','praz-docs-list','adm-docs-list','gen-docs-list',
    'cob-calc-preview','sal-guias-container','rec-busca-resultado',
-   'adm-prazo-info','adm-honor-preview','axd-honor-preview'].forEach(id => {
+   'adm-prazo-info','adm-honor-preview','axd-honor-preview',
+   'sal-parcelas-cobranca-preview','sal-parcelas-controle',
+   'adm-sugestao-especifica'].forEach(id => {
     const el = document.getElementById(id); if (el) el.innerHTML = '';
   });
+  // Reset do card de auto-fill judicial (limpa innerHTML, esconde e remove dataset)
+  const judAdmInfo = document.getElementById('jud-adm-info');
+  if (judAdmInfo) {
+    judAdmInfo.innerHTML = '';
+    judAdmInfo.style.display = 'none';
+    delete judAdmInfo.dataset.motivo;
+  }
+  // Reset do buffer de docs pendentes
+  if (window._pendingDocs) window._pendingDocs = {};
+  // Reset do buffer de parcelas de cobrança
+  if (window._parcelasCobrancaPendente) window._parcelasCobrancaPendente = null;
   // reset comp-list (auxílio)
   const comp = document.getElementById('aux-comp-list');
   if (comp) comp.innerHTML = '';
   // Esconde linhas condicionais para começar limpo
-  ['adm-row-recurso','adm-row-parcelas','adm-row-valor',
-   'sal-row-prevpgto','sal-row-recurso',
-   'axd-row-recurso','axd-row-judicial','axd-row-judicial-2',
-   'bpc-row-recurso','bpc-row-judicial','bpc-row-judicial-2',
+  ['adm-row-recurso','adm-row-parcelas','adm-row-valor','adm-row-motivo-indef',
+   'sal-row-prevpgto','sal-row-recurso','sal-motivo-indef-row','sal-parcelas-row',
+   'axd-row-recurso','axd-row-judicial','axd-row-judicial-2','axd-row-motivo-indef','axd-row-prevpgto',
+   'bpc-row-recurso','bpc-row-judicial','bpc-row-judicial-2','bpc-row-motivo-indef','bpc-row-prevpgto',
    'jud-row-parcelas','jud-row-valor-mensal',
    'rec-row-judicial','rec-row-judicial-2'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = 'none';
   });
-  // Reativa as linhas que devem ficar visíveis por padrão
-  ['adm-row-prevpgto','bpc-row-prevpgto'].forEach(id => {
+  // Reativa as linhas que devem ficar visíveis por padrão (de "Deferido" inicial)
+  ['adm-row-prevpgto'].forEach(id => {
     const el = document.getElementById(id); if (el) el.style.display = '';
   });
 }
@@ -643,6 +656,11 @@ async function saveRecord(type) {
       const guias = window.MODULOS.coletarGuiasSalMat();
       await window.MODULOS.salvarGuiasSalMat(novoId, guias);
     }
+    // Gera automaticamente as parcelas de cobrança se ainda não foram geradas
+    // (mas só se houver valor e data — caso contrário não cria nada)
+    if (!window._parcelasCobrancaPendente && window.MODULOS?.gerarParcelasCobrancaSalMat) {
+      window.MODULOS.gerarParcelasCobrancaSalMat();
+    }
     if (window.MODULOS?.persistirParcelasCobrancaSalMat) {
       await window.MODULOS.persistirParcelasCobrancaSalMat(novoId, {
         cliente_id: payload.cliente_id, nome_cliente: payload.nome_cliente,
@@ -683,6 +701,15 @@ async function tentarCriarCobranca(type, novoId, payload) {
   // 'sal' tem fluxo dedicado (persistirParcelasCobrancaSalMat) → ignora aqui
   if (type === 'sal') return;
   const mapa = {
+    adm: () => ({
+      origem_tipo:'adm', origem_id:novoId,
+      cliente_id:payload.cliente_id, nome_cliente:payload.nome_cliente, cpf:payload.cpf,
+      tipo_beneficio:payload.tipo_beneficio,
+      valor_mensal:payload.valor_mensal_beneficio,
+      qtd_parcelas:payload.qtd_parcelas_deferidas,
+      indeterminado:payload.tempo_indeterminado,
+      numero_processo:payload.numero_processo,
+    }),
     aux: () => ({
       origem_tipo:'aux', origem_id:novoId,
       nome_cliente:payload.nome_medico, cpf:payload.cpf,
@@ -1049,6 +1076,12 @@ function initPrazModalAfterFill(rec) {
   window.UI.popularPecas(document.getElementById('praz-peca-sel'));
   if (rec.peca_codigo) document.getElementById('praz-peca-sel').value = rec.peca_codigo;
   if (rec.fazenda_publica) document.getElementById('praz-fazenda').checked = true;
+  // Restaura escopo + vínculo médico
+  if (rec.escopo) document.getElementById('modal-praz').dataset.escopo = rec.escopo;
+  if (rec.origem_tipo === 'aux' && rec.origem_id) set('praz-medico-id', rec.origem_id);
+  // Mostra "Buscar Médico" só em Aux-Moradia
+  const buscaRow = document.getElementById('praz-busca-medico-row');
+  if (buscaRow) buscaRow.style.display = (rec.escopo === 'AUX_MORADIA' || !rec.escopo) ? '' : 'none';
   renderPrazDocs();
 }
 
@@ -1310,15 +1343,14 @@ function renderGen(area) {
 }
 
 function openAcaoGen(area) {
-  document.getElementById('form-gen').reset();
-  document.getElementById('gen-id').value = '';
+  clearForm('gen');
   document.getElementById('gen-area').value = area;
   document.getElementById('modal-gen-title').textContent = AREA_TO_TITULO[area];
-  document.getElementById('gen-docs-list').innerHTML = '';
   document.getElementById('gen-calc-preview').innerHTML =
     '<em style="color:var(--texto-suave)">Digite o valor da causa para ver o cálculo.</em>';
-  document.getElementById('gen-prazo-preview').innerHTML = '';
   document.getElementById('modal-gen').classList.add('open');
+  // Atualiza datalist de clientes
+  if (window.MODULOS?.popularDatalists) window.MODULOS.popularDatalists();
   setTimeout(() => initGenModal(area), 0);
 }
 window.openAcaoGen = openAcaoGen;
@@ -1463,7 +1495,8 @@ window.saveAcaoGen = saveAcaoGen;
 function editAcaoGen(area, id) {
   const rec = (genCache[area] || []).find(r => r.id === id);
   if (!rec) return;
-  document.getElementById('form-gen').reset();
+  // Limpa o formulário e previews antes de preencher
+  clearForm('gen');
   document.getElementById('gen-id').value = id;
   document.getElementById('gen-area').value = area;
   document.getElementById('modal-gen-title').textContent = 'Editar Ação';
